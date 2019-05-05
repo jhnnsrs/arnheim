@@ -38,7 +38,17 @@ services:
     links:
       - web
       - worker
+  vscode:
+    build: vscode
+    restart: always
+    command: codercom/code-server --allow-http --no-auth
+    ports:
+      - "8443:8443"
+    volumes:
+      - vscode:/root/project
+      - ./bergen:/code
 
 volumes:
+  vscode:
   dbdata:
   media:
