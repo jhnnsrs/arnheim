@@ -1,0 +1,21 @@
+FROM nginx:latest
+
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
+
+# Create hashed temporary upload locations
+RUN mkdir -p /media/_upload/0 && \
+    mkdir -p /media/_upload/1 && \
+    mkdir -p /media/_upload/2 && \
+    mkdir -p /media/_upload/3 && \
+    mkdir -p /media/_upload/4 && \
+    mkdir -p /media/_upload/5 && \
+    mkdir -p /media/_upload/6 && \
+    mkdir -p /media/_upload/7 && \
+    mkdir -p /media/_upload/8 && \
+    mkdir -p /media/_upload/9 && \
+    chmod 777 -R /media/_upload
+
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]
