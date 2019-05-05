@@ -4,7 +4,7 @@ EXPOSE 8443
 
 VOLUME [ "${PWD}:/root/project" ]
 
-RUN mkdir /code
+RUN sudo mkdir /code
 RUN sudo apt-get update
 # 1. Create a fonts, downloads and assets directory for the container.
 # 2. Install `git` for SCM, `make` for `curl`, `curl` for downloading files, `unzip` for ZIP files and `fontconfig` for managing fonts.
