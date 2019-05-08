@@ -52,3 +52,7 @@ volumes:
   vscode:
   dbdata:
   media:
+    driver_opts:
+        type: none
+        device: /home/ubuntu/arnheim/media
+        o: bind

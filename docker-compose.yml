@@ -39,8 +39,8 @@ services:
       - web
       - worker
 
-
 volumes:
+  vscode:
   dbdata:
   media:
     driver_opts:
