@@ -4,6 +4,7 @@ from django.db import models
 
 
 # Create your models here.
+from flow.models import Flow, FilterFlow
 from mutaters.models import Mutater
 
 
@@ -39,11 +40,23 @@ class NodeElement(models.Model):
     variety = models.ForeignKey(NodeVariety, on_delete=models.CASCADE)
     entity = models.IntegerField()
 
+class Layout(models.Model):
+    name = models.CharField(max_length=100)
+    layout = models.TextField()
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    flows = models.ManyToManyField(FilterFlow)
+
+
+class ForeignNodeRequest(models.Model):
+    nodeid = models.CharField(max_length=100)
+    data = models.TextField()
+
+
+
 class Node(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     entityid = models.IntegerField(null=True, blank=True)
     name = models.CharField(max_length=100)
-    variety = models.ForeignKey(NodeVariety, on_delete=models.CASCADE)
     nodeclass = models.CharField(max_length=300, default="classic-node")
     path = models.CharField(max_length=500)
     channel = models.CharField(max_length=100, null=True, blank=True)

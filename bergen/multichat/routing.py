@@ -6,9 +6,12 @@ from bioconverter.consumers import BioConverter, ConvertBioSeriesOsloJob
 from biouploader.consumers import BioAnalyzer
 from evaluators.consumers import AISDataConsumer, ClusterDataConsumer
 from filterbank.consumers import MaxISP, PrewittFilter, SlicedMaxISP, Mapping
+from kafkaconsumers.kafkaconsumer import ChannelKafkaConsumer
+from kafkaconsumers.parsers import Parsing
 from metamorphers.consumers import NiftiMetamorpher, ImageMetamorpher
 from mutaters.consumers import ImageMutator
-from transformers.consumers import LineRectifierTransformer
+from revamper.consumers import MaskingRevamper
+from transformers.consumers import LineRectifierTransformer, SliceLineTransformer
 from trontheim.middleware import QueryAuthMiddleware
 from chat.consumers import ChatConsumer
 from trontheim.consumers import OsloConsumer, OsloJobConsumer
@@ -44,8 +47,13 @@ application = ProtocolTypeRouter({
         "image": ImageMetamorpher,
         "test": ConvertBioSeriesOsloJob,
         "linerect": LineRectifierTransformer,
+        "sliceline": SliceLineTransformer,
         "transformimage": ImageMutator,
         "aisdata": AISDataConsumer,
-        "analyzer": BioAnalyzer
+        "analyzer": BioAnalyzer,
+        "kafka": Parsing,
+        "kafkain": ChannelKafkaConsumer,
+        "clusterdata": ClusterDataConsumer,
+        "masker": MaskingRevamper
     }),
 })

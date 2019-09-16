@@ -9,12 +9,28 @@ def translateImageFromLine(image, line, scale) -> (np.array, list, list, list):
     if len(image.shape) == 2:
         print(" X,Y ")
         newimage = image[:,:]
+
+        # Automatic using the first for transformation
+        boxes, boxeswidths = getBoxesFromLine(line, scale)
+        outimage, pixelwidths = straightenImageFromBoxes(newimage, boxes, scale)
+
     elif len(image.shape) == 3:
         print(" X,Y C Image")
         newimage = image[:,:,:]
+
+        # Automatic using the first for transformation
+        boxes, boxeswidths = getBoxesFromLine(line, scale)
+        outimage, pixelwidths = straightenImageFromBoxes(newimage, boxes, scale)
+
     elif len(image.shape) == 4:
         print(" X,Y C, Z Image")
         newimage = image[:,:,:,0]
+
+        # This is then a 3D Representation
+        boxes, boxeswidths = getBoxesFromLine(line, scale)
+        outimage, pixelwidths = straightenImageFromBoxes(newimage, boxes, scale)
+
+
     elif len(image.shape) == 5:
         print(" X,Y C, Z, T Image")
         newimage = image[:,:,:,0,0]
@@ -22,9 +38,7 @@ def translateImageFromLine(image, line, scale) -> (np.array, list, list, list):
         print("ERROR FROM REP")
         newimage = np.zeros((1025,1025,3))
 
-    # Automatic using the first for transformation
-    boxes, boxeswidths = getBoxesFromLine(line,scale)
-    outimage, pixelwidths = straightenImageFromBoxes(newimage,boxes,scale)
+
 
     return outimage, boxeswidths, pixelwidths, boxes
 
@@ -94,7 +108,6 @@ def straightenImageFromBoxes(image, boxes, scale) ->(np.array, float):
 
     print("Straightened Image has shape of {0}".format(straigtened_image.shape))
     return straigtened_image, widthincrement
-
 
 
 

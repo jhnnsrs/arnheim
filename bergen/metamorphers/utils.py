@@ -134,6 +134,7 @@ def update_nifti_on_exhibit(request: Metamorphing, nifti) -> (Exhibit, str):
     """
     exhibit: Exhibit = Exhibit.objects.filter(representation=request.representation).filter(nodeid=request.nodeid).first()
     method = "update"
+    name = "Exhibit of" + request.representation.name
     if exhibit is None:
         #TODO make creation of outputvid
         niftipaths = "sample_{0}_nodeid_{1}.nii.gz".format(request.sample_id, request.nodeid)
@@ -141,7 +142,7 @@ def update_nifti_on_exhibit(request: Metamorphing, nifti) -> (Exhibit, str):
         nib.save(nifti, niftipath)
         niftiwebpath = os.path.join(os.path.join(MEDIA_ROOT,"/nifti"),niftipaths)
 
-        exhibit = Exhibit.objects.create(representation=request.representation, creator=request.creator, nodeid=request.nodeid, shape=request.representation.shape,
+        exhibit = Exhibit.objects.create(representation=request.representation, name=name, creator=request.creator, nodeid=request.nodeid, shape=request.representation.shape,
                                                   sample=request.sample, experiment=request.representation.experiment, niftipath=niftiwebpath)
 
 
@@ -166,9 +167,10 @@ def update_image_on_display(request: Metamorphing, image) -> (Display, str):
     """
     display: Display = Display.objects.filter(representation=request.representation).filter(nodeid=request.nodeid).first()
     method = "update"
+    name = "Display of" + request.representation.name
     if display is None:
         #TODO make creation of outputvid
-        display = Display.objects.create(representation=request.representation, creator=request.creator, nodeid=request.nodeid,
+        display = Display.objects.create(representation=request.representation, name=name, creator=request.creator, nodeid=request.nodeid,
                                                   sample=request.sample, shape=request.representation.shape, experiment=request.representation.experiment)
         method = "create"
 

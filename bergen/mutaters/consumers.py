@@ -108,6 +108,7 @@ class ImageMutator(MutatingOsloJob):
             target[:x.shape[0], :x.shape[1], 0] = x
 
             array = target
+
         print(array.shape)
         print("MUTATEED")
         img = toimage(array)

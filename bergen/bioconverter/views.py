@@ -25,7 +25,7 @@ class ConversingViewSet(OsloActionViewSet):
     queryset = Conversing.objects.all()
     serializer_class = ConversingSerializer
     publishers = [["creator"]]
-    actionpublishers = {"sample": [("experiment",),("creator",)], "representation": [("experiment", "sample", "creator")]}
+    actionpublishers = {"sample": [("experiment",),("creator",),("nodeid",)], "representation": [("experiment", "sample", "creator"),("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "bioconverter"
     actiontype = "convertseries"
@@ -60,7 +60,7 @@ class ConvertRequestOsloActionViewSet(OsloActionViewSet):
     serializer_class = ConvertToSampleSerializer
     viewset_delegates = {"sample": [["creator"]]}
     publishers = [("experiment", "creator"),["creator"]]
-    actionpublishers = {"sample": [("creator", "experiment"),["experiment"]], "representation": [["creator"]]}
+    actionpublishers = {"sample": [("creator", "experiment","nodeid"),["experiment"]], "representation": [["creator"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "bioconverter"
     actiontype = "convertsample"

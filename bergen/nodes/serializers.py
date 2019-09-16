@@ -25,4 +25,14 @@ class NodeElementSerializer(serializers.ModelSerializer):
         model = NodeElement
         fields = "__all__"
 
+class LayoutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Layout
+        fields = "__all__"
+
+
+class ForeignNodeRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ForeignNodeRequest
+        fields = "__all__"
 

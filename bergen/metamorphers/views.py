@@ -5,9 +5,9 @@ from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
-
-from metamorphers.models import Metamorpher, Metamorphing, Display, Exhibit
-from metamorphers.serializers import MetamorpherSerializer, MetamorphingSerializer, DisplaySerializer, ExhibitSerializer
+from metamorphers.models import Metamorpher, Metamorphing, Display, Exhibit, Kafkaing
+from metamorphers.serializers import MetamorpherSerializer, MetamorphingSerializer, DisplaySerializer, \
+    ExhibitSerializer, KafkaingSerializer
 from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
@@ -16,7 +16,7 @@ class DisplayViewSet(OsloViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment","creator","representation")
+    filter_fields = ("experiment","creator","representation","sample")
     queryset = Display.objects.all()
     serializer_class = DisplaySerializer
     publishers = [["creator"],["sample"]]
@@ -49,7 +49,7 @@ class ExhibitViewSet(OsloViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment","creator")
+    filter_fields = ("experiment","creator","sample")
     queryset = Exhibit.objects.all()
     serializer_class = ExhibitSerializer
     publishers = [["creator"],["sample"]]
@@ -88,3 +88,17 @@ class MetamorphingViewSet(OsloActionViewSet):
         return [self.create_job(data=serializer.data,job=serializer.data,channel=metamorpher.channel)]
 
 
+class KafkaingViewSet(OsloActionViewSet):
+    '''Enables publishing to the channel Layed.
+    Publishers musst be Provided'''
+    queryset = Kafkaing.objects.all()
+    serializer_class = KafkaingSerializer
+    # this publishers will be send to the Action Handles and then they can send to the according
+    actiontype = "startconverting"
+    publishers = [["creator"]]
+    actionpublishers = {"sample": [("creator", "experiment")], "display": [("sample",), ("creator",), ("nodeid",)],
+                        "exhibit": [("sample",), ("creator",), ("nodeid",)]}
+    channel = "kafka"
+
+    def preprocess_jobs(self, serializer):
+        return [self.create_job(data=serializer.data,job=serializer.data,channel="kafka")]

@@ -18,7 +18,6 @@ from filterbank.serializers import RepresentationSerializer
 from trontheim.consumers import OsloJobConsumer
 
 
-
 class ConvertBioSeriesOsloJob(OsloJobConsumer):
 
     def __init__(self, scope):
@@ -69,8 +68,9 @@ javabridge.start_vm(class_path=bioformats.JARS, run_headless=True)
 class BioConverter(ConvertBioSeriesOsloJob):
     async def convert(self, settings: dict, bioseries: BioSeries):
         filepath = bioseries.bioimage.file.path
-
+        print("TRYING THE BEST")
         meta, array = loadSeriesFromFile(filepath, bioseries.index)
+
 
         return array, meta
 

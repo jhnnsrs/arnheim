@@ -12,6 +12,7 @@ import filterbank.routes
 import metamorphers.routes
 import mutaters.routes
 import nodes.routes
+import revamper.routes
 import social.routes
 import bioconverter.routes
 import frontend.routes
@@ -37,6 +38,8 @@ router.registry.extend(evaluators.routes.router.registry)
 router.registry.extend(mutaters.routes.router.registry)
 router.registry.extend(flow.routes.router.registry)
 router.registry.extend(nodes.routes.router.registry)
+router.registry.extend(nodes.routes.router.registry)
+router.registry.extend(revamper.routes.router.registry)
 
 
 urlpatterns = [

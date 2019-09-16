@@ -13,8 +13,8 @@ from representations.models import Experiment
 
 
 class NpArray(models.Model):
-    file = models.FilePathField() # aka h5files/$sampleid.h5
-    position = models.CharField(max_length=100) # aca vid0, vid1, vid2, vid3
+    file = models.FilePathField(max_length=1000) # aka h5files/$sampleid.h5
+    position = models.CharField(max_length=1000) # aca vid0, vid1, vid2, vid3
 
     # Custom Manager to simply create an array
     objects = NpArrayManager()
@@ -90,7 +90,7 @@ class Nifti(models.Model):
     file = models.FilePathField()
 
 class Representation(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=1000)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     vid = models.IntegerField(blank=True, null=True)
     inputrep = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null= True)

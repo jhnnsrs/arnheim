@@ -48,7 +48,7 @@ class MutatingViewSet(OsloActionViewSet):
     queryset = Mutating.objects.all()
     serializer_class = MutatingSerializer
     publishers = [["creator"]]
-    actionpublishers = {"sample": [("creator", "experiment")], "reflection": [["creator"],["roi"]]}
+    actionpublishers = {"sample": [("creator", "experiment")], "reflection": [["creator"],["roi"],["nodeid"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "image"
     actiontype = "startconverting"

@@ -34,8 +34,10 @@ def loadBioMetaFromFile(filepath) -> BioMetaStructure:
         print(filepath)
         print(bioformats.JARS)
         biometa.unparsed = bioformats.get_omexml_metadata(filepath)
+        print(biometa.unparsed)
         biometa.metadata = BeautifulSoup(biometa.unparsed, "xml")
     except Exception as e:
+        print("Error in the BioMetaParsing")
         raise e
     return biometa
 

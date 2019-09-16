@@ -21,6 +21,8 @@ DOCKER = True
 UPLOAD_ROOT = '%s/_upload' % MEDIA_ROOT
 NIFTI_ROOT = '%s/nifti' % MEDIA_ROOT
 
+
+
 # Application definition
 INSTALLED_APPS = [
     'registration',
@@ -53,8 +55,10 @@ INSTALLED_APPS = [
     'elements',
     'corsheaders',
     'taggit',
+    'revamper',
     'django_extensions',
-    'flow'
+    'flow',
+    'logpipe'
 ]
 
 TAGGIT_CASE_INSENSITIVE = True # for the tags system
@@ -214,8 +218,28 @@ NOTEBOOK_ARGUMENTS = [
     '--ip', '0.0.0.0',
     '--allow-root',
     '--no-browser',
-    "--notebook-dir=/code/notebook"
+    "--notebook-dir=/code/"
 ]
+
+LOGPIPE = {
+    # Required Settings
+    'OFFSET_BACKEND': 'logpipe.backend.kafka.ModelOffsetStore',
+    'CONSUMER_BACKEND': 'logpipe.backend.kafka.Consumer',
+    'PRODUCER_BACKEND': 'logpipe.backend.kafka.Producer',
+    'KAFKA_BOOTSTRAP_SERVERS': [
+        'kafka:9092'
+    ],
+    'KAFKA_CONSUMER_KWARGS': {
+        'group_id': 'django-logpipe',
+    },
+
+    # Optional Settings
+    # 'KAFKA_SEND_TIMEOUT': 10,
+    # 'KAFKA_MAX_SEND_RETRIES': 0,
+    # 'MIN_MESSAGE_LAG_MS': 0,
+    # 'DEFAULT_FORMAT': 'json',
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
@@ -234,3 +258,5 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
     os.path.join(BASE_DIR, "build/static")
 ]
+
+FIXTURE_DIRS =  [ "fixtures"]

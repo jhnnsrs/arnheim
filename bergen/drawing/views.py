@@ -23,7 +23,7 @@ class SampleViewSet(OsloViewSet):
     serializer_class = SampleSerializer
 
     filter_backends = (DjangoFilterBackend,)
-    publishers = [("experiment",),("creator",)]
+    publishers = [("experiment",),("creator",),("nodeid",)]
     filter_fields = ("creator","experiment","bioseries")
 
 

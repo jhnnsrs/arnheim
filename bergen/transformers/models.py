@@ -29,9 +29,10 @@ class NumpyManager(models.Manager):
 
 
 class Numpy(models.Model):
-    file = models.FilePathField() # aka h5files/$sampleid.h5
+    file = models.FilePathField(max_length=400) # aka h5files/$sampleid.h5
     position = models.CharField(max_length=100) # aca vid0, vid1, vid2, vid3
     type = models.CharField(max_length=100)
+    shape = models.CharField(max_length=400, blank=True, null=True)
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
     # Custom Manager to simply create an array
     objects = NumpyManager()
@@ -49,6 +50,15 @@ class Numpy(models.Model):
             hf = file[self.type]
             if self.position in hf: del hf[self.position]
             hf.create_dataset(self.position, data=array)
+
+    def get_z_bounded_array(self,zl,zu):
+        with h5py.File(self.file, "a") as file:
+            print("Trying to access file {0} to set array".format(self.file))
+            hf = file[self.type]
+            ## This is not working great so far
+            array = hf.get(self.position)[:,:,:,zl:zu,:]
+        return array
+
 
 
 
@@ -72,7 +82,7 @@ class TransformationManager(models.Manager):
 
 
 class Transformation(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=1000)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     vid = models.CharField(max_length=200)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
@@ -110,6 +120,36 @@ class Transforming(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE,blank=True, null=True)
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE)
+    nodeid = models.CharField(max_length=400, null=True, blank=True)
+    roi = models.ForeignKey(ROI, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "Parsing Request for Filter: {0}".format(self.transformer)
+
+
+
+
+
+
+class Masker(models.Model):
+    path = models.CharField(max_length=500)
+    inputmodel = models.CharField(max_length=1000, null=True, blank=True)
+    outputmodel = models.CharField(max_length=1000, null=True, blank=True)
+    name = models.CharField(max_length=100)
+    channel = models.CharField(max_length=100,null=True, blank=True)
+    defaultsettings = models.CharField(max_length=400) #json decoded standardsettings
+
+    def __str__(self):
+        return "{0} at Path {1}".format(self.name, self.channel)
+
+
+class Masking(models.Model):
+    masker = models.ForeignKey(Masker, on_delete=models.CASCADE)
+    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
+    settings = models.CharField(max_length=1000) # jsondecoded
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE,blank=True, null=True)
+    transformation = models.ForeignKey(Representation, on_delete=models.CASCADE)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE)
 

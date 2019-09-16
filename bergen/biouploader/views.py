@@ -38,7 +38,9 @@ class LockerViewSet(OsloViewSet):
 
     queryset = Locker.objects.all()
     serializer_class = LockerSerializer
-    publishers = [["experiment"]]
+    publishers = [["creator"]]
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ("creator",)
 
 class AnalyzingViewSet(OsloActionViewSet):
     '''Enables publishing to the channel Layed.
@@ -48,7 +50,7 @@ class AnalyzingViewSet(OsloActionViewSet):
     queryset = Analyzing.objects.all()
     serializer_class = AnalyzingSerializer
     publishers = [["experiment"]]
-    actionpublishers = {"bioseries": [("experiment",),("creator",),("locker",)]}
+    actionpublishers = {"bioseries": [("experiment",),("creator",),("locker",),("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "analyzer"
     actiontype = "startparsing"

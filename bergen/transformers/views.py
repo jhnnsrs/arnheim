@@ -49,7 +49,7 @@ class TransformingViewSet(OsloActionViewSet):
     queryset = Transforming.objects.all()
     serializer_class = TransformingSerializer
     publishers = [["sample"]]
-    actionpublishers = {"sample": [("creator", "experiment")], "transformation": [["representation"],["creator"],["roi"]]}
+    actionpublishers = {"sample": [("creator", "experiment")], "transformation": [["representation"],["creator"],["roi"],["nodeid"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "maxisp"
     actiontype = "startparsing"
@@ -58,6 +58,9 @@ class TransformingViewSet(OsloActionViewSet):
         transformer = Transformer.objects.get(pk=serializer.data["transformer"])
         print(transformer.channel)
         return [self.create_job(data=serializer.data,job=serializer.data,channel=transformer.channel)]
+
+
+
 
 
 

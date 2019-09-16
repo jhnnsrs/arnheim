@@ -18,7 +18,18 @@ def get_transforming_or_error(request: dict):
     print(request["id"])
     parsing = Transforming.objects.get(pk=request["id"])
     if parsing is None:
-        raise ClientError("ParsingRequest {0} does not exist".format(str(request["id"])))
+        raise ClientError("Transforming {0} does not exist".format(str(request["id"])))
+    return parsing
+
+@database_sync_to_async
+def get_masking_or_error(request: dict):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    print(request["id"])
+    parsing = Masking.objects.get(pk=request["id"])
+    if parsing is None:
+        raise ClientError("Masking {0} does not exist".format(str(request["id"])))
     return parsing
 
 
@@ -68,6 +79,9 @@ def update_outputtransformation_or_create(request: Transforming, numpyarray, vid
         transformation.nodeid = request.nodeid
         transformation.save()
     return transformation, method
+
+
+
 
 @database_sync_to_async
 def update_image_onoutputrepresentation_or_error(request: Parsing, original_image, path):

@@ -1,7 +1,7 @@
 from asgiref.sync import async_to_sync
 from django.db import models
-from rest_framework import viewsets, serializers
 from channels.layers import get_channel_layer
+from rest_framework import viewsets, serializers
 
 channel_layer = get_channel_layer()
 

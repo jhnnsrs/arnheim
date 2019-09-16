@@ -100,8 +100,7 @@ def update_sample_with_meta(sampleid, meta: BioMetaStructure):
         raise ClientError("Sample {0} does not exist".format(str(sampleid)))
     elif sample is not None:
         # TODO: update array of output
-        outputmeta = BioMeta.objects.create(json=meta.unparsed,
-                                            channellist=json.dumps(meta.channellist),
+        outputmeta = BioMeta.objects.create(channellist=json.dumps(meta.channellist),
                                             xresolution=meta.sizex,
                                             yresolution=meta.sizey,
                                             zresolution=meta.sizez,

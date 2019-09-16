@@ -1,3 +1,4 @@
+kafka
 Django>=2.0.0
 channels>=2.0.2
 channels_redis~=2.0
@@ -17,6 +18,7 @@ django-pandas
 djangorestframework
 django-oauth-toolkit
 matplotlib
+django-logpipe
 
 docutils
 et-xmlfile
@@ -47,3 +49,4 @@ django-mptt
 easy_thumbnails
 django-polymorphic
 psycopg2
+kafka-python

@@ -11,7 +11,7 @@ from multichat import settings
 from representations.models import Experiment
 
 class BioMeta(models.Model):
-    json = models.CharField(max_length=2000)
+    json = models.CharField(max_length=2000, blank=True, null=True)
     channellist = models.CharField(max_length=2000)
     xresolution = models.IntegerField()
     yresolution = models.IntegerField()

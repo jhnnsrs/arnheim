@@ -8,6 +8,7 @@ from representations.models import Experiment
 
 
 class Display(models.Model):
+    name = models.CharField(max_length=400, blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True, blank=True)
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -18,6 +19,7 @@ class Display(models.Model):
 
 
 class Exhibit(models.Model):
+    name = models.CharField(max_length=400, blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True, blank=True)
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -60,3 +62,9 @@ class Metamorphing(models.Model):
 
     def __str__(self):
         return "ConversionRequest for Converter: {0}".format(self.metamorpher)
+
+
+class Kafkaing(models.Model):
+
+    nodeid = models.CharField(max_length=100, null=True, blank=True)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)

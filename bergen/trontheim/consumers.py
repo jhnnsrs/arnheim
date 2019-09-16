@@ -140,6 +140,7 @@ class OsloJobConsumer(AsyncConsumer):
         self.publishers = dict(data["publishers"])
         self.job = data["job"]
         self.data = data
+        print("Starting a Job" + type(self).__name__)
 
     async def modelCreated(self, model: models.Model, serializerclass: serializers.ModelSerializer.__class__, method: str):
         '''Make sure to call this if you created a new Model on the Database so that the actionpublishers can do their work'''

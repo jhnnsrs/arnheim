@@ -41,6 +41,25 @@ class NodeElementViewSet(OsloViewSet):
     publishers = [["variety"],["creator"]]
 
 
+class LayoutViewSet(OsloViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ("flows",)
+    queryset = Layout.objects.all()
+    serializer_class = LayoutSerializer
+    publishers = [["creator"]]
+
+class ForeignNodeRequestViewSet(OsloViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    filter_backends = (DjangoFilterBackend,)
+    queryset = ForeignNodeRequest.objects.all()
+    serializer_class = ForeignNodeRequestSerializer
+    publishers = [["nodeid"]]
+
 class ArnheimHostViewSet(OsloViewSet):
     """
     API endpoint that allows users to be viewed or edited.
