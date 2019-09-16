@@ -4,7 +4,7 @@ from channels.auth import AuthMiddlewareStack
 
 from bioconverter.consumers import BioConverter, ConvertBioSeriesOsloJob
 from biouploader.consumers import BioAnalyzer
-from evaluators.consumers import AISDataConsumer
+from evaluators.consumers import AISDataConsumer, ClusterDataConsumer
 from filterbank.consumers import MaxISP, PrewittFilter, SlicedMaxISP, Mapping
 from metamorphers.consumers import NiftiMetamorpher, ImageMetamorpher
 from mutaters.consumers import ImageMutator

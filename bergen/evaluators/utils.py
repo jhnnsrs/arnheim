@@ -1,5 +1,5 @@
 from channels.db import database_sync_to_async
-from evaluators.models import Evaluating, Data, VolumeData
+from evaluators.models import Evaluating, Data, VolumeData, ClusterData
 
 
 @database_sync_to_async
@@ -53,6 +53,37 @@ def update_data_or_create(request: Evaluating, putdata: VolumeData, vid):
         method = "update"
         # TODO: set name of newly generated and timestamp
         data.vectorlength = putdata.vectorlength,
+
+    return data, method
+
+@database_sync_to_async
+def update_clusterdata_or_create(request: Evaluating, putdata: ClusterData, vid):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    method = "error"
+    data: ClusterData = ClusterData.objects.filter(sample=request.sample).filter(vid=vid).first()
+    if data is None:
+        method = "create"
+        # TODO make creation of outputvid
+        data = ClusterData.objects.create(
+            name=request.evaluator.name + " of " + request.transformation.name + " of " + str(request.roi),
+            creator=request.creator,
+            vid=vid,
+            nodeid=putdata.nodeid,
+            sample=putdata.sample,
+            experiment=putdata.experiment,
+            transformation=putdata.transformation,
+            roi=putdata.roi,
+            tags=putdata.tags,
+            meta=putdata.meta,
+            clusternumber=putdata.clusternumber,
+        )
+    elif data is not None:
+        # TODO: update array of output
+        method = "update"
+        # TODO: set name of newly generated and timestamp
+        data.clusternumber = putdata.clusternumber,
 
     return data, method
 

@@ -14,7 +14,7 @@ class Data(models.Model):
     signature = models.CharField(max_length=300, null=True, blank=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     vid = models.CharField(max_length=300)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=4000)
     items = models.CharField(max_length=600) # jsondecoded?
     type = models.CharField(max_length=100) #includes the type of data generations
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -42,7 +42,9 @@ class VolumeData(Data):
     intensitycurves = models.CharField(max_length=5000)
 
 
-
+class ClusterData(Data):
+    meta = models.ForeignKey(BioMeta, on_delete=models.CASCADE)
+    clusternumber = models.IntegerField()
 
 class Evaluator(models.Model):
     path = models.CharField(max_length=500)

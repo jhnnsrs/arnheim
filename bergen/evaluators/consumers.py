@@ -5,9 +5,10 @@ from django.utils.crypto import get_random_string
 from taggit.models import Tag
 
 from drawing.models import ROI, BioMeta
-from evaluators.models import Evaluating, VolumeData
-from evaluators.serializers import DataSerializer, EvaluatingSerializer, VolumeDataSerializer
-from evaluators.utils import get_evaluating_or_error, update_data_or_create
+from evaluators.logic.clusterAnalysis import findConnectedCluster
+from evaluators.models import Evaluating, VolumeData, ClusterData
+from evaluators.serializers import DataSerializer, EvaluatingSerializer, VolumeDataSerializer, ClusterDataSerializer
+from evaluators.utils import get_evaluating_or_error, update_data_or_create, update_clusterdata_or_create
 from transformers.models import Transformation
 from trontheim.consumers import OsloJobConsumer
 
@@ -175,6 +176,30 @@ class AISDataConsumer(EvaluatingConsumer):
                           physicallength=physicallength,
                           tags=",".join(tags),
                           intensitycurves=intensitycurves,
+                          meta=meta,
+                          nodeid=evaluating.nodeid)
+
+        return data
+
+
+class ClusterDataConsumer(EvaluatingConsumer):
+
+    def getSerializer(self):
+        return ClusterDataSerializer
+
+    def getDataFunction(self):
+        return update_clusterdata_or_create
+
+    async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
+
+        array = transformation.numpy.get_array()
+        cluster, n_cluster = findConnectedCluster(array)
+        data = ClusterData(roi=roi,
+                          transformation=transformation,
+                          sample=transformation.sample,
+                          experiment=transformation.experiment,
+                          clusternumber= n_cluster,
+                          tags=",".join(["Cluster"]),
                           meta=meta,
                           nodeid=evaluating.nodeid)
 
