@@ -63,14 +63,14 @@ class LargeFile(models.Model):
 
 class Locker(models.Model):
     creator = models.ForeignKey(User,on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    location = models.CharField(max_length=100)
+    name = models.CharField(max_length=1000)
+    location = models.CharField(max_length=1000)
 
 
 class BioImage(models.Model):
     creator = models.ForeignKey(User,on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    file = models.FileField(verbose_name="bioimage",upload_to="bioimagefiles")
+    name = models.CharField(max_length=1000)
+    file = models.FileField(verbose_name="bioimage",upload_to="bioimagefiles", max_length=1000)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True, related_name="bioimages")
     locker = models.ForeignKey(Locker,  on_delete=models.CASCADE, blank=True, null=True)
 
@@ -89,7 +89,7 @@ class BioSeries(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True)
     index = models.IntegerField()
-    name = models.CharField(max_length=400)
+    name = models.CharField(max_length=1000)
     image = models.ImageField(blank=True,null=True)
     isconverted = models.BooleanField()
     nodeid = models.CharField(max_length=300, null=True, blank=True)
