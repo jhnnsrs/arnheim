@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/images/"
-DOCKER = True
+DOCKER = False
 UPLOAD_ROOT = '%s/_upload' % MEDIA_ROOT
 NIFTI_ROOT = '%s/nifti' % MEDIA_ROOT
 
