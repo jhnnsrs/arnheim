@@ -56,11 +56,12 @@ services:
     build: jupjup
     command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/code/
     environment:
-      - HOME=code
+      - HOME=test
     volumes:
       - ./notebooks:/code/notebooks
       - ./bergen:/code/
       - media:/code/media/
+      - files:/code/files/
     ports:
       - "90:90"
   parsers:
@@ -79,5 +80,10 @@ volumes:
   media:
     driver_opts:
       type: none
-      device: /c/Users/jhnns/PycharmProjects/arnheim/media
+      device: /c/Programme/Trontheim/arnheim/media
+      o: bind
+  files:
+    driver_opts:
+      type: none
+      device: /c/Data/Files
       o: bind
