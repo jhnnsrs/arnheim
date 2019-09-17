@@ -18,7 +18,7 @@ services:
     links:
       - redis
       - worker
-      - db:db
+      - db
   worker:
     build: bergen
     depends_on:
