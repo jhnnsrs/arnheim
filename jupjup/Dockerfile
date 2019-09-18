@@ -1,18 +1,30 @@
-FROM python:3.7
+FROM jupyter/scipy-notebook
+
+RUN conda install --quiet --yes \
+    'mlflow=1.0.0' \
+    'psycopg2' \
+    'django' \
+    'django-cors-headers' \
+    'django-crispy-forms' \
+    'django-filter' \
+    'django-pandas' \
+    'django-taggit'\
+    'djangorestframework' \
+    'django-extensions' \
+    'django-mptt'
+
+
+
+USER root
 
 RUN mkdir -p /code
-ADD . /code/
-
-WORKDIR /code
-
-# install dependencies
-
-RUN apt-get update; apt-get install -y libncurses5-dev libreadline-dev libgsl0-dev
-RUN pip install --no-cache-dir jupyterlab
-
-# install neuron
-
-
+RUN mkdir -p /config
+RUN mkdir -p /notebooks
+RUN mkdir -p /tmp
+ADD . /tmp
+WORKDIR /tmp
 RUN pip install -r requirements.txt
-
-# Specify the default command to run
+# install neuron
+ENV PYTHONPATH="$PYTHONPATH:/code"
+ENV DJANGO_SETTINGS_MODULE="multichat.settings"
+WORKDIR /config

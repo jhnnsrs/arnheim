@@ -159,17 +159,12 @@ class NiftiMetamorpher(MetamorphingOsloJobConsumer):
 
             array = target
 
-        print(array.shape)
-
         a = array
         a = np.interp(a, (a.min(), a.max()), (0, 256))
         array = a[:, :, :, :]
         array = array.swapaxes(2, 3)
-        print(array.max())
         test_stack = array.astype('u1')
-        print(test_stack.mean())
         shape_3d = test_stack.shape[0:3]
-        print(shape_3d)
         rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
         nana = test_stack.copy().view(rgb_dtype).reshape(shape_3d)
         img1 = nib.Nifti1Image(nana, np.eye(4))

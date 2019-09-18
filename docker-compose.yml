@@ -54,11 +54,11 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
   notebook:
     build: jupjup
-    command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/code/
+    command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/notebooks/
     environment:
-      - HOME=test
+      - HOME=home
     volumes:
-      - ./notebooks:/code/notebooks
+      - ./notebooks:/notebooks
       - ./bergen:/code/
       - media:/code/media/
       - files:/code/files/

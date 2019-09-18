@@ -41,7 +41,7 @@ class Numpy(models.Model):
         with h5py.File(self.file, 'a') as file:
             print("Trying to access file {0} to get array".format(self.file))
             hf = file[self.type]
-            array = hf.get(self.position).value
+            array = hf.get(self.position)[()]
         return array
 
     def set_array(self,array):

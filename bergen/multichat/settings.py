@@ -120,7 +120,7 @@ MESSAGE_TYPES_LIST = [
 # SECURITY WARNING: keep the secret key used in production secret! And don't use debug=True in production!
 SECRET_KEY = 'imasecret'
 DEBUG = True
-ALLOWED_HOSTS = ['129.206.5.200','127.0.0.1',"localhost",'johannesroos.de']
+ALLOWED_HOSTS = ['129.206.5.200','127.0.0.1',"localhost",'johannesroos.de','129.206.173.171']
 
 
 CORS_ORIGIN_ALLOW_ALL = True
