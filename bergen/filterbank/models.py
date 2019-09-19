@@ -33,6 +33,14 @@ class NpArray(models.Model):
             if self.position in hf: del hf[self.position]
             hf.create_dataset(self.position, data=array)
 
+    def get_z_bounded_array(self,zl,zu):
+        with h5py.File(self.file, "a") as file:
+            print("Trying to access file {0} to set array".format(self.file))
+            hf = file["representations"]
+            ## This is not working great so far
+            array = hf.get(self.position)[:,:,:,zl:zu,:]
+        return array
+
 class OverwriteStorage(FileSystemStorage):
 
     def get_available_name(self, name):

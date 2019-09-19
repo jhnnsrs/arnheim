@@ -29,6 +29,7 @@ class MetamorphingOsloJobConsumer(OsloJobConsumer):
         inputrep, array = await get_inputrepresentation_or_error(request)
 
         file = await self.convert(array, settings)
+        if not file: return
 
         func = self.getDatabaseFunction()
         model, method = await func(request, file)
@@ -76,98 +77,31 @@ class NiftiMetamorpher(MetamorphingOsloJobConsumer):
 
     async def convert(self, array, conversionsettings: dict):
         print(array.shape)
-        if len(array.shape) == 5:
-            array = array[:, :, :, :, 0]
-            if array.shape[2] == 1:
-                x = array[:, :, 0, :]
+        if len(array.shape) != 5:
+            print("Not Original Shape")
 
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3, array.shape[3]))
+            return False
 
-                # do expand
-                target[:x.shape[0], :x.shape[1], 0, :] = x
 
-                array = target
-            elif array.shape[2] == 2:
-                x = array[:, :, :1, :]
-
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3, array.shape[3]))
-
-                # do expand
-                target[:x.shape[0], :x.shape[1], :1, : ] = x
-
-                array = target
-            else:
-                array =  array[:,:,:3, :]
-        if len(array.shape) == 4:
-            array = array[:, :, :, :]
-            if array.shape[2] == 1:
-                x = array[:, :, 0, :]
-
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3, array.shape[3]))
-
-                # do expand
-                target[:x.shape[0], :x.shape[1], 0, :] = x
-
-                array = target
-            elif array.shape[2] == 2:
-                x = array[:, :, :1,: ]
-
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3, array.shape[3]))
-
-                # do expand
-                target[:x.shape[0], :x.shape[1], :1, : ] = x
-
-                array = target
-            else:
-                array =  array[:,:,:3, :]
-        if len(array.shape) == 3:
-            array = array[:, :, :]
-            if array.shape[2] == 1:
-                x = array[:, :, 0]
-
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3,1))
-
-                # do expand
-                target[:x.shape[0], :x.shape[1], 0,0] = x
-
-                array = target
-            elif array.shape[2] == 2:
-                x = array[:, :, :1]
-
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3, 1))
-
-                # do expand
-                target[:x.shape[0], :x.shape[1], :1,0] = x
-
-                array = target
-            else:
-                array =  array[:,:,:3]
-        if len(array.shape) == 2:
-            x = array[:, :]
-
-            # expand to what shape
-            target = np.zeros((array.shape[0], array.shape[1], 3, 1))
-
-            # do expand
-            target[:x.shape[0], :x.shape[1], 0, 0] = x
-
-            array = target
-
-        a = array
-        a = np.interp(a, (a.min(), a.max()), (0, 256))
-        array = a[:, :, :, :]
+        print(array.dtype)
+        array = array[:, :, :, :,0]
+        min = array.min()
+        max = array.max()
+        print(array.shape)
+        print("Interpolatiion of Array from ",min,"to",max)
+        array = array * 255
+        print("Changing Type")
+        array = array.astype("u1")
+        print("Swaping Axes")
         array = array.swapaxes(2, 3)
-        test_stack = array.astype('u1')
-        shape_3d = test_stack.shape[0:3]
+        shape_3d = array.shape[0:3]
+        print("New Shape is",shape_3d)
         rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
-        nana = test_stack.copy().view(rgb_dtype).reshape(shape_3d)
-        img1 = nib.Nifti1Image(nana, np.eye(4))
+
+        array = np.ascontiguousarray(array, dtype='u1')
+        print("Continued Array")
+        array = array.view(rgb_dtype).reshape(shape_3d)
+        img1 = nib.Nifti1Image(array, np.eye(4))
 
         return img1
 

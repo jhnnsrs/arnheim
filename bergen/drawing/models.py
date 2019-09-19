@@ -30,8 +30,8 @@ class BioMeta(models.Model):
 
 class Sample(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    location = models.CharField(max_length=100)
-    name = models.CharField(max_length=100)
+    location = models.CharField(max_length=400)
+    name = models.CharField(max_length=1000)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True)
     bioseries = models.ForeignKey(BioSeries, on_delete=models.CASCADE, blank=True, null=True)
     meta = models.ForeignKey(BioMeta, on_delete=models.CASCADE, blank=True, null=True)

@@ -98,7 +98,8 @@ def loadBioMetaSeriesFromFile(filepath, series):
 def loadBioImageSeriesFromFile(filepath, meta: BioMeta) -> np.ndarray:
 
     assert meta.shape is not None, "No parsed BioMeta provided"
-    file = np.zeros(meta.shape)
+    print("BioImageFile has shape", meta.shape)
+    file = np.zeros(meta.shape, dtype=np.float16)
     try:
         # loads a cached reader that reads every frame
         with bioformats.ImageReader(filepath, perform_init=True) as reader:
@@ -132,6 +133,7 @@ def loadBioImageSeriesFromFile(filepath, meta: BioMeta) -> np.ndarray:
     finally:
         bioformats.clear_image_reader_cache()
 
+    print("Returning Bioimage of Dtype",file.dtype)
     return file
 
 def loadSeriesFromFile(filepath,series) -> (BioMeta,np.ndarray):

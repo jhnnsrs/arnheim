@@ -76,28 +76,45 @@ class SliceLineTransformer(TransformerConsumer):
 
     async def parse(self, settings: dict, rep: Representation, roi: ROI) -> np.array:
 
-        numpyarray = rep.nparray.get_array()
+        shape = json.loads(rep.shape)
+        z_size = shape[3]
+
+
         vectors = json.loads(roi.vectors)
 
         vertices = [[key["x"],key["y"]] for key in vectors]
 
-
+        scale = settings["scale"]  if settings["scale"] else 10
         # We Have to Slice the Array first in order to make the transformation work
-        lowerBound: int = settings["lower"]  if settings["lower"] else 0
-        upperBound: int = settings["upper"]  if settings["upper"] and settings["upper"] is not -1 else numpyarray.shape[3] -1
+        lowerBound1: int = settings["lower"]  if settings["lower"] else 0
+        upperBound1: int = settings["upper"]  if settings["upper"] and settings["upper"] is not -1 else z_size -1
 
-        array = numpyarray
+        if lowerBound1 > upperBound1:
+            lowerBound = upperBound1
+            upperBound = lowerBound1
+        else:
+            lowerBound = lowerBound1
+            upperBound = upperBound1
+
+
+        array = rep.nparray.get_z_bounded_array(lowerBound,upperBound)
+
+        print("Collection Array of Shape ", array.shape)
+        print("With Vertices like",vertices)
+        print("Scale: ",scale)
+
         if len(array.shape) == 5:
-            array = np.nanmax(array[:, :, :3, lowerBound:upperBound, 0], axis=3)
+            array = np.nanmax(array[:, :, :3, :, 0], axis=3)
         if len(array.shape) == 4:
-            array = np.nanmax(array[:, :, :3, lowerBound:upperBound], axis=3)
+            array = np.nanmax(array[:, :, :3, :], axis=3)
         if len(array.shape) == 3:
             array = array[:, :, :3]
         if len(array.shape) == 2:
             array = array[:, :]
 
-
-        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(settings["scale"]))
+        print("Final array",array.shape)
+        array = np.float64(array)
+        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(scale))
 
 
         return image
