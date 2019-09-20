@@ -3,10 +3,6 @@ import json
 import numpy as np
 from rest_framework import serializers
 
-from filterbank.addins import toimage
-from mutaters.models import Mutating
-from mutaters.serializers import ReflectionSerializer
-from mutaters.utils import update_image_on_transformation, get_mutating_or_error, update_image_on_reflection
 from revamper.models import Revamping, Mask
 from revamper.utils import get_revamping_or_error, update_outputtransformation_or_create
 from transformers.serializers import TransformationSerializer
@@ -32,8 +28,7 @@ class RevampingOsloJob(OsloJobConsumer):
         newarray = await self.convert(array, mask, settings)
 
         func = self.getDatabaseFunction()
-        vid = "transformation_mask-{0}_transformer-{1}".format(str(request.mask.id), str(request.revamper.id))
-        model, method = await func(request, newarray, vid)
+        model, method = await func(request, newarray, settings)
 
         await self.modelCreated(model, self.getSerializer(), method)
 

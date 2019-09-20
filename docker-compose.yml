@@ -10,6 +10,8 @@ services:
   web:
     build: bergen
     command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      - DJANGO_LOG_LOVEL=INFO
     volumes:
       - ./bergen:/code
       - media:/code/media/
@@ -21,8 +23,6 @@ services:
       - db
   worker:
     build: bergen
-    depends_on:
-      - kafka
     command: python manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata
     volumes:
       - ./bergen:/code
@@ -40,18 +40,6 @@ services:
     links:
       - web
       - worker
-  zookeeper:
-    image: wurstmeister/zookeeper
-    ports:
-      - "2181:2181"
-  kafka:
-    image: wurstmeister/kafka
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
-      KAFKA_CREATE_TOPICS: "test:1:1,web:1:1"
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
   notebook:
     build: jupjup
     command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/notebooks/
@@ -64,15 +52,6 @@ services:
       - files:/code/files/
     ports:
       - "90:90"
-  parsers:
-    build: parsers
-    depends_on:
-      - kafka
-    command: python parse-engine.py
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./parsers:/code
 
 volumes:
   vscode:

@@ -1,20 +1,14 @@
-import javabridge as javabridge
 import bioformats
-import numpy as np
-import nibabel as nib
-from channels.consumer import AsyncConsumer
+import javabridge as javabridge
 
-from bioconverter.models import ConversionRequest, Conversing
-from bioconverter.utils import get_inputmodel_or_error, \
-    update_outputrepresentation_or_create, update_sample_with_meta, create_sample_or_override, get_conversing_or_error, \
+from bioconverter.models import Conversing
+from bioconverter.utils import update_outputrepresentation_or_create, update_sample_with_meta, \
+    create_sample_or_override, get_conversing_or_error, \
     get_sample_or_error
-from biouploader.models import BioImage, BioSeries
-from chat.logic.bioparser import loadSeriesFromFile
-from drawing.models import Sample
-from drawing.serializers import SampleSerializer
-from filterbank.addins import toimage
-from filterbank.models import Representation
-from filterbank.serializers import RepresentationSerializer
+from biouploader.models import BioSeries
+from bioconverter.logic.bioparser import loadSeriesFromFile
+from elements.serializers import SampleSerializer
+from bioconverter.serializers import RepresentationSerializer
 from trontheim.consumers import OsloJobConsumer
 
 
@@ -27,15 +21,15 @@ class ConvertBioSeriesOsloJob(OsloJobConsumer):
         await self.register(data)
         print(data)
         request: Conversing = await get_conversing_or_error(data["data"])
-        sample, method = await create_sample_or_override(request)
         settings: dict = await self.getsettings(request.settings, request.converter.defaultsettings)
+        sample, method = await create_sample_or_override(request, settings)
         bioseries: BioSeries = request.bioserie
         sample_id: int = sample.id
 
         convertedarray, meta = await self.convert(settings, bioseries)
 
-        sample, method2 = await update_sample_with_meta(sample_id, meta)
-        outputrep, method = await update_outputrepresentation_or_create(request, sample, convertedarray, meta)
+        sample, method2 = await update_sample_with_meta(sample_id, meta, settings)
+        outputrep, method = await update_outputrepresentation_or_create(request, sample, convertedarray, meta, settings)
         await self.modelCreated(outputrep, RepresentationSerializer, method)
 
         sample = await get_sample_or_error(sample)
@@ -61,8 +55,6 @@ class ConvertBioSeriesOsloJob(OsloJobConsumer):
         defaultsettings.update(settings)
         return defaultsettings
 
-
-javabridge.start_vm(class_path=bioformats.JARS, run_headless=True)
 
 
 class BioConverter(ConvertBioSeriesOsloJob):

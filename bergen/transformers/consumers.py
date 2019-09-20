@@ -2,15 +2,14 @@ import json
 
 import numpy as np
 
+from bioconverter.models import Representation
 from drawing.models import ROI
-from filterbank.models import Representation
-from transformers.linerectifier_logic import translateImageFromLine
-from transformers.models import Transforming, Masking, Transformation
+from transformers.logic.linerectifier_logic import translateImageFromLine
+from transformers.models import Transforming
 from transformers.serializers import TransformationSerializer
-from transformers.utils import get_transforming_or_error, get_inputrepresentation_or_error, \
-    update_outputtransformation_or_create
+from transformers.utils import get_transforming_or_error, update_outputtransformation_or_create
 from trontheim.consumers import OsloJobConsumer
-
+# import the logging library
 
 class TransformerConsumer(OsloJobConsumer):
 
@@ -25,8 +24,8 @@ class TransformerConsumer(OsloJobConsumer):
 
         parsedarray = await self.parse(settings,rep,roi)
 
-        vid = "transformation_roi-{0}_transformer-{1}".format(str(request.roi_id),str(request.transformer_id))
-        transformation, method = await update_outputtransformation_or_create(request, parsedarray, vid)
+
+        transformation, method = await update_outputtransformation_or_create(request, settings, parsedarray)
 
         await self.modelCreated(transformation, TransformationSerializer, method)
 

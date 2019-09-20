@@ -1,10 +1,8 @@
-from django.shortcuts import render
-
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
 
-from flow.models import ConversionFlow, FilterFlow
-from flow.serializers import FlowSerializer, Flow, ConversionFlowSerializer, FilterFlowSerializer
+from flow.models import Layout, ForeignNodeRequest, Node
+from flow.serializers import FlowSerializer, Flow, NodeSerializer, LayoutSerializer, ForeignNodeRequestSerializer
 from trontheim.viewsets import OsloViewSet
 
 
@@ -13,29 +11,39 @@ class FlowViewSet(OsloViewSet):
     # MAKE THIS AN ACTION PUBLISHER THAT WILL PIPE IT THROUGH A META OBJECT CREATOR
 
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("creator","group")
+    filter_fields = ("creator","group","type")
     queryset = Flow.objects.all()
     serializer_class = FlowSerializer
     publishers = [["creator"]]
 
 
-class FilterFlowViewSet(OsloViewSet):
-
-    # MAKE THIS AN ACTION PUBLISHER THAT WILL PIPE IT THROUGH A META OBJECT CREATOR
-
+class LayoutViewSet(OsloViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("creator","group","type")
-    queryset = FilterFlow.objects.all()
-    serializer_class = FilterFlowSerializer
+    filter_fields = ("flows",)
+    queryset = Layout.objects.all()
+    serializer_class = LayoutSerializer
     publishers = [["creator"]]
 
-class ConversionFlowViewSet(OsloViewSet):
 
-    # MAKE THIS AN ACTION PUBLISHER THAT WILL PIPE IT THROUGH A META OBJECT CREATOR
-
+class ForeignNodeRequestViewSet(OsloViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("creator","group")
-    queryset = ConversionFlow.objects.all()
-    serializer_class = ConversionFlowSerializer
-    publishers = [["creator"]]
+    queryset = ForeignNodeRequest.objects.all()
+    serializer_class = ForeignNodeRequestSerializer
+    publishers = [["nodeid"]]
 
+
+class NodeViewSet(OsloViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ("creator",)
+    queryset = Node.objects.all()
+    serializer_class = NodeSerializer
+    publishers = [["variety"],["creator"]]

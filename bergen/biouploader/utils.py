@@ -1,24 +1,10 @@
-import io
-import json
-import os
-
-import nibabel as nib
-import numpy as np
 from channels.db import database_sync_to_async
-from django.core.files.base import ContentFile
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db import models
 
-from bioconverter.logic.structures import BioMetaStructure
-from bioconverter.models import ConversionRequest
 from biouploader.models import Analyzing, BioSeries
-from drawing.models import Sample, BioMeta
-from filterbank.models import Parsing, Representation, AImage, Nifti
-from multichat.settings import MEDIA_ROOT
 
 
 @database_sync_to_async
-def get_analyzing_or_error(request: dict) -> ConversionRequest:
+def get_analyzing_or_error(request: dict) -> Analyzing:
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
@@ -42,7 +28,6 @@ def update_bioseries_or_create(request: Analyzing, bio: BioSeries):
         outputseries = BioSeries.objects.create(name=bio.name,
                                                 creator=request.creator,
                                                 index=bio.index,
-                                                experiment= request.bioimage.experiment,
                                                 isconverted=False,
                                                 bioimage=request.bioimage,
                                                 nodeid=bio.nodeid,
@@ -53,7 +38,6 @@ def update_bioseries_or_create(request: Analyzing, bio: BioSeries):
         method = "update"
         outputseries.name = bio.name
         outputseries.creator = request.creator
-        outputseries.experiment = request.bioimage.experiment
         outputseries.index = bio.index
         outputseries.nodeid = bio.nodeid
         outputseries.locker_id = bio.locker_id

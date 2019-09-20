@@ -1,8 +1,9 @@
 
 from rest_framework import routers
 
-from drawing.views import RoiViewSet, SampleViewSet, ExperimentViewSet, RepresentationViewSet, BioMetaViewSet
-from social.views import UserViewSet, CommentsViewSet
+from biouploader.views import BioMetaViewSet
+from drawing.views import RoiViewSet, RepresentationViewSet
+from elements.views import SampleViewSet, ExperimentViewSet
 
 router = routers.SimpleRouter()
 router.register(r"rois", RoiViewSet)

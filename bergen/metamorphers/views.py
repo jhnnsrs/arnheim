@@ -1,13 +1,12 @@
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
-
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from metamorphers.models import Metamorpher, Metamorphing, Display, Exhibit, Kafkaing
+
+from metamorphers.models import Metamorpher, Metamorphing, Display, Exhibit
 from metamorphers.serializers import MetamorpherSerializer, MetamorphingSerializer, DisplaySerializer, \
-    ExhibitSerializer, KafkaingSerializer
+    ExhibitSerializer
 from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
@@ -86,19 +85,3 @@ class MetamorphingViewSet(OsloActionViewSet):
         metamorpher = Metamorpher.objects.get(pk=serializer.data["metamorpher"])
         print(metamorpher.channel)
         return [self.create_job(data=serializer.data,job=serializer.data,channel=metamorpher.channel)]
-
-
-class KafkaingViewSet(OsloActionViewSet):
-    '''Enables publishing to the channel Layed.
-    Publishers musst be Provided'''
-    queryset = Kafkaing.objects.all()
-    serializer_class = KafkaingSerializer
-    # this publishers will be send to the Action Handles and then they can send to the according
-    actiontype = "startconverting"
-    publishers = [["creator"]]
-    actionpublishers = {"sample": [("creator", "experiment")], "display": [("sample",), ("creator",), ("nodeid",)],
-                        "exhibit": [("sample",), ("creator",), ("nodeid",)]}
-    channel = "kafka"
-
-    def preprocess_jobs(self, serializer):
-        return [self.create_job(data=serializer.data,job=serializer.data,channel="kafka")]

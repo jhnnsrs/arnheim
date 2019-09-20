@@ -4,12 +4,9 @@ import os
 import nibabel as nib
 import numpy as np
 from channels.db import database_sync_to_async
-from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db import models
 
-from bioconverter.models import ConversionRequest
-from filterbank.models import Parsing, Representation, AImage, Nifti
+from bioconverter.models import Representation
 from metamorphers.models import Metamorphing, Display, Exhibit
 from multichat.settings import MEDIA_ROOT, NIFTI_ROOT
 
@@ -27,75 +24,13 @@ def get_metamorphing_or_error(request: dict) -> Metamorphing:
 
 
 @database_sync_to_async
-def update_outputrepresentation_or_create(request: ConversionRequest, numpyarray):
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
-    method = "error"
-    outputrep: Representation = Representation.objects.filter(sample=request.sample).filter(vid=request.outputvid).first()
-    if outputrep is None:
-        method = "create"
-        #TODO make creation of outputvid
-        outputrep = Representation.objects.create(name="Initial Stack",creator=request.creator,vid=request.outputvid,sample=request.sample,experiment=request.experiment,numpy=numpyarray)
-    elif outputrep is not None:
-        #TODO: update array of output
-        method = "update"
-        outputrep.nparray.set_array(numpyarray)
-    return outputrep, method
-
-
-@database_sync_to_async
-def get_inputmodel_or_error(model,pk) -> models.Model:
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
-
-    print(pk)
-    print(model)
-    inputmodel = model.objects.get(pk=pk)
-    if inputmodel is None:
-        raise ClientError("Inputmodel {0} does not exist".format(str(pk)))
-    return inputmodel
-
-
-
-
-@database_sync_to_async
-def update_image_on_outputrepresentation_or_error(request: ConversionRequest, original_image, path) -> Representation:
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
-    outputrep: Representation = Representation.objects.filter(sample=request.sample).filter(vid=request.outputvid).first()
-    if outputrep is None:
-        #TODO make creation of outputvid
-        raise ClientError("VID {0} does nots exist on Sample {1}".format(str(request.outputvid), request.sample))
-    elif outputrep is not None:
-        #TODO: update array of output
-        img_io = io.BytesIO()
-        original_image.save(img_io, format='jpeg', quality=100)
-        thumb_file = InMemoryUploadedFile(img_io, None, path + ".jpeg", 'image/jpeg',
-                                          img_io.tell, None)
-
-        if outputrep.image is None:
-            outputrep.image = AImage()
-            outputrep.image.save()
-
-        model_image = AImage.objects.create(image=thumb_file)
-
-        outputrep.image.image = thumb_file
-        outputrep.image.save()
-        outputrep.save()
-        print("YES")
-    return outputrep
-
-@database_sync_to_async
 def get_inputrepresentation_or_error(request: Metamorphing) -> (Representation, np.array):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
     inputrep: Representation = request.representation
-    if inputrep.nparray is not None:
-        array = inputrep.nparray.get_array()
+    if inputrep.numpy is not None:
+        array = inputrep.numpy.get_array()
     else:
         #TODO: This should never be called because every representation should have a nparray on creation
         print("ERROR ON INPUTREPRESENTATION")
@@ -104,31 +39,11 @@ def get_inputrepresentation_or_error(request: Metamorphing) -> (Representation, 
         raise ClientError("Inputvid {0} does not exist on Sample {1}".format(str(request.nodeid), request.sample))
     return inputrep, array
 
-@database_sync_to_async
-def update_nifti_on_representation(request: Metamorphing, nifti) -> (Representation, str):
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
-    outputrep: Representation = request.representation
-    if outputrep is None:
-        #TODO make creation of outputvid
-        raise ClientError("VID {0} does not exist on Sample {1}".format(str(request.nodeid), request.sample))
-    elif outputrep is not None:
-        #TODO: update array of output
-        niftipath = "representation_nifti/sample_{0}_vid_{1}.nii.gz".format(request.sample_id, request.nodeid)
-        niftipath = os.path.join(MEDIA_ROOT, niftipath)
-        nib.save(nifti,niftipath)
 
-        nifti = Nifti.objects.create(file=niftipath)
-        outputrep.nifti = nifti
-        outputrep.nodeid = request.nodeid
-        outputrep.save()
-        print("YES")
-    return outputrep, "update"
 
 
 @database_sync_to_async
-def update_nifti_on_exhibit(request: Metamorphing, nifti) -> (Exhibit, str):
+def update_exhibit_or_create(request: Metamorphing, nifti) -> (Exhibit, str):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
@@ -137,7 +52,7 @@ def update_nifti_on_exhibit(request: Metamorphing, nifti) -> (Exhibit, str):
     name = "Exhibit of" + request.representation.name
     if exhibit is None:
         #TODO make creation of outputvid
-        niftipaths = "sample_{0}_nodeid_{1}.nii.gz".format(request.sample_id, request.nodeid)
+        niftipaths = "sample-{0}_representation-{1}_nodeid-{2}.nii.gz".format(request.sample_id, request.representation_id,request.nodeid)
         niftipath = os.path.join(NIFTI_ROOT, niftipaths)
         nib.save(nifti, niftipath)
         niftiwebpath = os.path.join(os.path.join(MEDIA_ROOT,"/nifti"),niftipaths)
@@ -151,7 +66,7 @@ def update_nifti_on_exhibit(request: Metamorphing, nifti) -> (Exhibit, str):
         method = "create"
     else:
         #TODO: update array of output
-        niftipath = "sample_{0}_nodeid_{1}.nii.gz".format(request.sample_id, request.nodeid)
+        niftipath = "sample-{0}_representation-{1}_node-{2}.nii.gz".format(request.sample_id, request.representation_id,request.nodeid)
         niftiwebpath = os.path.join(os.path.join(MEDIA_ROOT, "/nifti"), niftipath)
         niftilocalpath = os.path.join(NIFTI_ROOT, niftipath)
         nib.save(nifti, niftilocalpath)
@@ -161,7 +76,7 @@ def update_nifti_on_exhibit(request: Metamorphing, nifti) -> (Exhibit, str):
     return exhibit, method
 
 @database_sync_to_async
-def update_image_on_display(request: Metamorphing, image) -> (Display, str):
+def update_display_or_create(request: Metamorphing, image) -> (Display, str):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
@@ -175,7 +90,7 @@ def update_image_on_display(request: Metamorphing, image) -> (Display, str):
         method = "create"
 
     #TODO: update array of output
-    path = "sample_{0}_nodeid_{1}".format(str(display.sample.id), str(request.nodeid))
+    path = "sample-{0}_representation-{1}_node-{2}".format(str(display.sample.id), str(display.representation.id), str(request.nodeid))
     img_io = io.BytesIO()
     image.save(img_io, format='jpeg', quality=100)
     thumb_file = InMemoryUploadedFile(img_io, None, path + ".jpeg", 'image/jpeg',
@@ -186,33 +101,7 @@ def update_image_on_display(request: Metamorphing, image) -> (Display, str):
     print("YES")
     return display, method
 
-@database_sync_to_async
-def update_image_on_representation(request: Metamorphing, convertedfile) -> (Representation, str):
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
 
-    path = "sample_{0}_vid_{1}".format(str(request.sample.pk), str(request.nodeid))
-    outputrep: Representation = request.representation
-    if outputrep is None:
-        #TODO make creation of outputvid
-        raise ClientError("VID {0} does nots exist on Sample {1}".format(str(request.nodeid), request.sample))
-    elif outputrep is not None:
-        #TODO: update array of output
-        img_io = io.BytesIO()
-        convertedfile.save(img_io, format='jpeg', quality=100)
-        thumb_file = InMemoryUploadedFile(img_io, None, path + ".jpeg", 'image/jpeg',
-                                          img_io.tell, None)
-
-
-
-        model_image = AImage.objects.create(image=thumb_file)
-        outputrep.image = model_image
-        outputrep.image.save()
-        outputrep.nodeid = request.nodeid
-        outputrep.save()
-        print("YES")
-    return outputrep, "update"
 
 class ClientError(Exception):
     """

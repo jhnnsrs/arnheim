@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from flow.models import *
+from flow.models import Flow, Node, Layout, ForeignNodeRequest
 
 
 class FlowSerializer(serializers.ModelSerializer):
@@ -9,13 +9,19 @@ class FlowSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FilterFlowSerializer(serializers.ModelSerializer):
+class NodeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FilterFlow
+        model = Node
         fields = "__all__"
 
 
-class ConversionFlowSerializer(serializers.ModelSerializer):
+class LayoutSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ConversionFlow
+        model = Layout
+        fields = "__all__"
+
+
+class ForeignNodeRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ForeignNodeRequest
         fields = "__all__"

@@ -1,15 +1,8 @@
-import javabridge as javabridge
-import bioformats
-from channels.consumer import SyncConsumer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
 
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
-
-from chat.logic.bioparser import loadBioMetaSeriesFromFile, loadBioImageSeriesFromFile
 from .exceptions import ClientError
 from .utils import get_room_or_error
-
-
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):

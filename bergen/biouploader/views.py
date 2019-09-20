@@ -1,25 +1,24 @@
 from asgiref.sync import async_to_sync
 from django.http import JsonResponse
-from django.shortcuts import render
+
 
 # Create your views here.
 from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 
-from biouploader.models import BioImage, BioSeries, Analyzing, Analyzer, Locker
+from biouploader.models import BioImage, BioSeries, Analyzing, Analyzer, Locker, BioMeta
 from biouploader.serializers import BioImageSerializer, BioSeriesSerializer, AnalyzingSerializer, AnalyzerSerializer, \
-    LockerSerializer
+    LockerSerializer, BioMetaSerializer
 from biouploader.upload_utils import upload_file
 from trontheim.viewsets import OsloViewSet, OsloActionViewSet, channel_layer
-
 
 class BioImageViewSet(OsloViewSet):
 
     # MAKE THIS AN ACTION PUBLISHER THAT WILL PIPE IT THROUGH A META OBJECT CREATOR
 
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment","creator","locker")
+    filter_fields = ("creator","locker")
     queryset = BioImage.objects.all()
     serializer_class = BioImageSerializer
     publishers = [["experiment"],["locker"]]
@@ -29,7 +28,7 @@ class BioImageViewSet(OsloViewSet):
 class BioSeriesViewSet(OsloViewSet):
 
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment", "creator", "locker", "bioimage")
+    filter_fields = ("creator", "locker", "bioimage")
     queryset = BioSeries.objects.all()
     serializer_class = BioSeriesSerializer
     publishers = [["experiment"]]
@@ -49,7 +48,7 @@ class AnalyzingViewSet(OsloActionViewSet):
     filter_fields = ("experiment",)
     queryset = Analyzing.objects.all()
     serializer_class = AnalyzingSerializer
-    publishers = [["experiment"]]
+    publishers = [["nodeid"]]
     actionpublishers = {"bioseries": [("experiment",),("creator",),("locker",),("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "analyzer"
@@ -67,9 +66,7 @@ class AnalyzerViewSet(viewsets.ModelViewSet):
     serializer_class = AnalyzerSerializer
 
 
-
-
-
+## THIS IS THE UPLOAD SECTION
 @csrf_exempt
 def upload_complete(request):
     '''view called on /upload/complete after nginx upload module finishes.
@@ -100,20 +97,8 @@ def upload_complete(request):
 
         # Redirect to main view if not terminal
         serializer = BioImageSerializer(bioimage)
-        experiment = serializer.data["experiment"]
         creator = serializer.data["creator"]
-        print("experiment_{0}".format(experiment))
         print(serializer.data)
-        async_to_sync(channel_layer.group_send)(
-            "experiment_{0}".format(experiment),
-            {
-                "type": "stream",
-                "stream": "bioimage",
-                "room": "experiment_{0}".format(experiment),
-                "method": "create",
-                "data": serializer.data
-            }
-        )
         async_to_sync(channel_layer.group_send)(
             "locker_{0}".format(locker),
             {
@@ -138,3 +123,10 @@ def upload_complete(request):
         return JsonResponse({"message":"Upload Complete"})
 
     return JsonResponse({"message":"No Data sent Complete"})
+
+
+class BioMetaViewSet(OsloViewSet):
+    queryset = BioMeta.objects.all()
+    serializer_class = BioMetaSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ("sample",)

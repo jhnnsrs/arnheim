@@ -1,8 +1,8 @@
 from django.contrib import admin
 
 # Register your models here.
-from flow.models import Flow, ConversionFlow, FilterFlow
+from flow.models import Flow, Node, Layout
 
 admin.site.register(Flow)
-admin.site.register(FilterFlow)
-admin.site.register(ConversionFlow)
+admin.site.register(Node)
+admin.site.register(Layout)

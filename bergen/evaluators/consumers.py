@@ -1,14 +1,13 @@
 import json
 
 import numpy as np
-from django.utils.crypto import get_random_string
-from taggit.models import Tag
 
-from drawing.models import ROI, BioMeta
+from biouploader.models import BioMeta
+from drawing.models import ROI
 from evaluators.logic.clusterAnalysis import findConnectedCluster
 from evaluators.models import Evaluating, VolumeData, ClusterData
 from evaluators.serializers import DataSerializer, EvaluatingSerializer, VolumeDataSerializer, ClusterDataSerializer
-from evaluators.utils import get_evaluating_or_error, update_data_or_create, update_clusterdata_or_create
+from evaluators.utils import get_evaluating_or_error, update_volumedata_or_create, update_clusterdata_or_create
 from transformers.models import Transformation
 from trontheim.consumers import OsloJobConsumer
 
@@ -26,12 +25,7 @@ class EvaluatingConsumer(OsloJobConsumer):
         meta: BioMeta = request.sample.meta
 
         datamodel = await self.parse(settings, transformation, roi, meta, request)
-        if request.override:
-            vid = "data_roi-{0}_transformation-{1}".format(str(request.roi_id), str(request.evaluator_id))
-        else:
-            vid = "data_roi-{0}_transformation-{1}_{2}".format(str(request.roi_id), str(request.evaluator_id),
-                                                               get_random_string(length=13))
-        volumedata, method = await self.getDataFunction()(request, datamodel, vid)
+        volumedata, method = await self.getDataFunction()(request, datamodel, settings)
 
 
         await self.modelCreated(volumedata, DataSerializer, method)
@@ -81,7 +75,7 @@ class AISDataConsumer(EvaluatingConsumer):
         return VolumeDataSerializer
 
     def getDataFunction(self):
-        return update_data_or_create
+        return update_volumedata_or_create
 
     async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
 

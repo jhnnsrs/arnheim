@@ -2,9 +2,8 @@ from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
-from drawing.models import Sample
-from filterbank.models import Representation, Nifti, AImage
-from representations.models import Experiment
+from elements.models import Experiment, Sample
+from bioconverter.models import Representation
 
 
 class Display(models.Model):
@@ -26,22 +25,16 @@ class Exhibit(models.Model):
     shape = models.CharField(max_length=100, blank=True, null=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE, blank=True, null=True)
-    nifti = models.ForeignKey(Nifti, on_delete=models.CASCADE, blank=True, null=True)
     niftipath = models.FileField(upload_to="nifti",blank=True, null=True)
 
 
-class Test(models.Model):
-    name = models.CharField(max_length=100)
-
 class Metamorpher(models.Model):
     name = models.CharField(max_length=100)
-    path = models.CharField(max_length=500)
-    outputtype = models.CharField(max_length=200) #should contain a list of the model it can convert
     channel = models.CharField(max_length=100) # not the colour but the django channel
     defaultsettings = models.CharField(max_length=400) #json decoded standardsettings
 
     def __str__(self):
-        return "{0} at Path {1}".format(self.name, self.path)
+        return "{0} at Path {1}".format(self.name, self.channel)
 
 
 
@@ -64,7 +57,5 @@ class Metamorphing(models.Model):
         return "ConversionRequest for Converter: {0}".format(self.metamorpher)
 
 
-class Kafkaing(models.Model):
 
-    nodeid = models.CharField(max_length=100, null=True, blank=True)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+

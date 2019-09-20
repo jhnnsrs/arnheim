@@ -1,19 +1,7 @@
-import io
 import json
-import os
 
-import nibabel as nib
-import numpy as np
 from channels.db import database_sync_to_async
-from django.core.files.base import ContentFile
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db import models
 
-from bioconverter.models import ConversionRequest
-from filterbank.models import Parsing, Representation, AImage, Nifti
-from metamorphers.models import Metamorphing
-from multichat.settings import MEDIA_ROOT
-from mutaters.models import Mutating, Reflection
 from revamper.models import Revamping
 from transformers.models import Transformation
 
@@ -31,13 +19,22 @@ def get_revamping_or_error(request: dict):
 
 
 @database_sync_to_async
-def update_outputtransformation_or_create(request: Revamping, numpyarray, vid):
+def update_outputtransformation_or_create(request: Revamping, numpyarray, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
     method = "error"
-    transformation: Transformation = Transformation.objects.filter(sample=request.sample).filter(vid=vid).first()
-    if transformation is None:
+
+    ## Get Correct
+    vidfirst = "transformation_mask-{0}_revamper-{1}_node-{2}".format(str(request.mask_id),
+                                                                        str(request.revamper_id),
+                                                                        str(request.nodeid))
+    transformations = Transformation.objects.filter(vid__startswith=vidfirst)
+    vidsub = "_{0}".format(str(transformations.count) if transformations.count else 0)
+    vid = vidfirst + vidsub
+    transformation = transformations.last()  # TODO: CHeck if that makes sense
+
+    if transformation is None or not settings.get("overwrite",False):
         method = "create"
         #TODO make creation of outputvid
         transformation = Transformation.objects.create(name=request.revamper.name + " of " + request.transformation.name ,
@@ -57,6 +54,7 @@ def update_outputtransformation_or_create(request: Revamping, numpyarray, vid):
         transformation.numpy.set_array(numpyarray)
         transformation.shape = json.dumps(numpyarray.shape)
         transformation.nodeid = request.nodeid
+        transformation.vid = vid
         transformation.save()
     return transformation, method
 

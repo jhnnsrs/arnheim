@@ -1,15 +1,12 @@
-from channels.consumer import AsyncConsumer
 import numpy as np
 import nibabel as nib
 from rest_framework import serializers
 
-from filterbank.addins import toimage
-from filterbank.models import Representation
-from filterbank.serializers import RepresentationSerializer
+from filterbank.logic.addins import toimage
 from metamorphers.models import Metamorphing
 from metamorphers.serializers import DisplaySerializer, ExhibitSerializer
 from metamorphers.utils import get_metamorphing_or_error, get_inputrepresentation_or_error, \
-    update_nifti_on_representation, update_image_on_representation, update_nifti_on_exhibit, update_image_on_display
+    update_exhibit_or_create, update_display_or_create
 from trontheim.consumers import OsloJobConsumer
 
 
@@ -66,11 +63,10 @@ class MetamorphingOsloJobConsumer(OsloJobConsumer):
         return defaultsettings
 
 
-
 class NiftiMetamorpher(MetamorphingOsloJobConsumer):
 
     def getDatabaseFunction(self):
-        return update_nifti_on_exhibit
+        return update_exhibit_or_create
 
     def getSerializer(self) -> serializers.ModelSerializer:
         return ExhibitSerializer
@@ -82,20 +78,19 @@ class NiftiMetamorpher(MetamorphingOsloJobConsumer):
 
             return False
 
-
         print(array.dtype)
-        array = array[:, :, :, :,0]
+        array = array[:, :, :, :, 0]
         min = array.min()
         max = array.max()
         print(array.shape)
-        print("Interpolatiion of Array from ",min,"to",max)
+        print("Interpolatiion of Array from ", min, "to", max)
         array = array * 255
         print("Changing Type")
         array = array.astype("u1")
         print("Swaping Axes")
         array = array.swapaxes(2, 3)
         shape_3d = array.shape[0:3]
-        print("New Shape is",shape_3d)
+        print("New Shape is", shape_3d)
         rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
 
         array = np.ascontiguousarray(array, dtype='u1')
@@ -106,11 +101,10 @@ class NiftiMetamorpher(MetamorphingOsloJobConsumer):
         return img1
 
 
-
 class ImageMetamorpher(MetamorphingOsloJobConsumer):
 
     def getDatabaseFunction(self):
-        return update_image_on_display
+        return update_display_or_create
 
     def getSerializer(self) -> serializers.ModelSerializer:
         return DisplaySerializer
@@ -157,4 +151,3 @@ class ImageMetamorpher(MetamorphingOsloJobConsumer):
         print(array.shape)
         img = toimage(array)
         return img
-

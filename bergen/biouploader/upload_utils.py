@@ -1,9 +1,8 @@
-from biouploader.models import LargeFile, BioImage
-from multichat.settings import MEDIA_ROOT, BASE_DIR
-import shutil
-import uuid
-import json
 import os
+import shutil
+
+from biouploader.models import BioImage
+from multichat.settings import MEDIA_ROOT
 
 
 def move_upload_to_storage(source, name, creatorid, lockerid):
@@ -47,7 +46,6 @@ def upload_file(name, version, path, size, experiment, creator, locker):
         new_path = move_upload_to_storage(path, name, creator, locker)
         print(new_path)
         image = BioImage.objects.create(file=new_path,
-                                        experiment_id= experiment,
                                         creator_id=creator,
                                         locker_id=locker,
                                         name=os.path.basename(new_path))

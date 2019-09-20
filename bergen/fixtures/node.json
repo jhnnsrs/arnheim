@@ -1,1 +1,0 @@
-[{"model": "nodes.node", "pk": 1, "fields": {"creator": 1, "entityid": 1, "name": "MaxISP", "nodeclass": "classic-node", "path": "MaxISP", "channel": "maxisp", "inputmodel": "[\"REPRESENTATION\"]", "outputmodel": "[\"REPRESENTATION\"]", "defaultsettings": "{\"scale\":\"5\",\"overwrite\":true,\"channels\":0, \"lower\": 0, \"upper\":-1}"}}]

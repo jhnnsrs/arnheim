@@ -1,6 +1,10 @@
 from channels.db import database_sync_to_async
 from evaluators.models import Evaluating, Data, VolumeData, ClusterData
+# import the logging library
+import logging
 
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 @database_sync_to_async
 def get_evaluating_or_error(request: dict):
@@ -15,15 +19,21 @@ def get_evaluating_or_error(request: dict):
 
 
 @database_sync_to_async
-def update_data_or_create(request: Evaluating, putdata: VolumeData, vid):
+def update_volumedata_or_create(request: Evaluating, putdata: VolumeData, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
     method = "error"
-    data: VolumeData = VolumeData.objects.filter(sample=request.sample).filter(vid=vid).first()
-    if data is None:
+    vidfirst = "data_roi-{0}_transformation-{1}_evaluator-{2}_node-{3}".format(str(request.roi_id),str(request.transformation_id),str(request.evaluator_id),str(request.nodeid))
+    datas = VolumeData.objects.filter(vid__startswith=vidfirst)
+    vidsub = "_{0}".format(str(datas.count()) if datas.count() else 0)
+    vid = vidfirst + vidsub
+    data: VolumeData = datas.last()
+
+    if data is None or not settings["override"]:
         method = "create"
         # TODO make creation of outputvid
+        logger.info("Creating New VolumeData with VID "+vid)
         data = VolumeData.objects.create(
             name=request.evaluator.name + " of " + request.transformation.name + " of " + str(request.roi),
             creator=request.creator,
@@ -57,15 +67,23 @@ def update_data_or_create(request: Evaluating, putdata: VolumeData, vid):
     return data, method
 
 @database_sync_to_async
-def update_clusterdata_or_create(request: Evaluating, putdata: ClusterData, vid):
+def update_clusterdata_or_create(request: Evaluating, putdata: ClusterData, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
     method = "error"
-    data: ClusterData = ClusterData.objects.filter(sample=request.sample).filter(vid=vid).first()
-    if data is None:
+    vidfirst = "data_roi-{0}_transformation-{1}_evaluator-{2}_node-{3}".format(str(request.roi_id),
+                                                                               str(request.transformation_id),
+                                                                               str(request.evaluator_id),
+                                                                               str(request.nodeid))
+    datas = ClusterData.objects.filter(vid__startswith=vidfirst)
+    vidsub = "_{0}".format(str(datas.count()) if datas.count() else 0)
+    vid = vidfirst + vidsub
+    data: ClusterData = datas.last()
+    if data is None or not settings.get("overwrite", False):
         method = "create"
         # TODO make creation of outputvid
+        logger.info("Creating New ClusterData with VID " + vid)
         data = ClusterData.objects.create(
             name=request.evaluator.name + " of " + request.transformation.name + " of " + str(request.roi),
             creator=request.creator,

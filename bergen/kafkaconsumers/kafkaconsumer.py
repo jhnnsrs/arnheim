@@ -1,9 +1,5 @@
-from asgiref.sync import async_to_sync
 from channels.consumer import AsyncConsumer
-from django.db import models
-from channels.layers import get_channel_layer
 from kafka import KafkaConsumer
-
 
 
 class ChannelKafkaConsumer(AsyncConsumer):

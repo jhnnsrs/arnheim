@@ -5,5 +5,8 @@ from flow.views import *
 
 router = routers.SimpleRouter()
 router.register(r"flows", FlowViewSet)
-router.register(r"filterflows", FilterFlowViewSet)
-router.register(r"conversionflows", ConversionFlowViewSet)
+# DEPRECETAD
+router.register(r"filterflows", FlowViewSet)
+router.register(r"nodes", NodeViewSet)
+router.register(r"layouts", LayoutViewSet)
+router.register(r"foreignnode", ForeignNodeRequestViewSet)

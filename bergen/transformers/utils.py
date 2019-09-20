@@ -1,13 +1,14 @@
-import io
 import json
+import logging
 
 import numpy as np
 from channels.db import database_sync_to_async
-from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from bioconverter.models import ConversionRequest
-from filterbank.models import Parsing, Representation, AImage
+from bioconverter.models import Representation
 from transformers.models import Transforming, Transformation
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 
 @database_sync_to_async
@@ -51,14 +52,20 @@ def get_inputrepresentation_or_error(request: Transforming):
 
 
 @database_sync_to_async
-def update_outputtransformation_or_create(request: Transforming, numpyarray, vid):
+def update_outputtransformation_or_create(request: Transforming, settings, numpyarray):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
     method = "error"
-    transformation: Transformation = Transformation.objects.filter(sample=request.sample).filter(vid=vid).first()
-    if transformation is None:
+    vidfirst = "transformation_roi-{0}_transformer-{1}_node-{2}".format(str(request.roi_id), str(request.transformer_id), str(request.nodeid))
+
+    transformations = Transformation.objects.filter(vid__startswith=vidfirst)
+    vidsub = "_{1}".format(str(transformations.count) if transformations.count else 0)
+    vid = vidfirst + vidsub
+    transformation = transformations.last() #TODO: CHeck if that makes sense
+    if transformation is None or not settings["override"]:
         method = "create"
+        logger.info("Creating Transformation with VID: " + vid)
         #TODO make creation of outputvid
         transformation = Transformation.objects.create(name=request.transformer.name + " of " + request.representation.name + " of " + str(request.roi) ,
                                                        creator=request.creator,
@@ -73,6 +80,7 @@ def update_outputtransformation_or_create(request: Transforming, numpyarray, vid
     elif transformation is not None:
         #TODO: update array of output
         method = "update"
+        logger.info("Updating Transformation with VID: " + vid)
         #TODO: set name of newly generated and timestamp
         transformation.numpy.set_array(numpyarray)
         transformation.shape = json.dumps(numpyarray.shape)
@@ -81,33 +89,6 @@ def update_outputtransformation_or_create(request: Transforming, numpyarray, vid
     return transformation, method
 
 
-
-
-@database_sync_to_async
-def update_image_onoutputrepresentation_or_error(request: Parsing, original_image, path):
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
-    outputrep: Representation = Representation.objects.filter(sample=request.sample).filter(vid=request.outputvid).first()
-    if outputrep is None:
-        #TODO make creation of outputvid
-        raise ClientError("VID {0} does not exist on Sample {1}".format(str(request.outputvid), request.sample))
-    elif outputrep is not None:
-        #TODO: update array of output
-        img_io = io.BytesIO()
-        original_image.save(img_io, format='jpeg', quality=100)
-        thumb_file = InMemoryUploadedFile(img_io, None, path + ".jpeg", 'image/jpeg',
-                                          img_io.tell, None)
-
-        if outputrep.image is None:
-            outputrep.image = AImage()
-            outputrep.image.save()
-
-        outputrep.image.image = thumb_file
-        outputrep.image.save()
-        outputrep.save()
-        print("YES")
-    return outputrep
 
 class ClientError(Exception):
     """

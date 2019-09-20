@@ -1,8 +1,6 @@
-import numpy as np
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 
-from filterbank.models import NpArray
 from .models import Room
 
 

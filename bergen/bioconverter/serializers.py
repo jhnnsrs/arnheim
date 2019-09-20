@@ -1,8 +1,6 @@
-from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from bioconverter.models import ConversionRequest, Converter, ConvertToSampleRequest, JobRequest, Conversing
-from filterbank.models import Parsing, Filter, Representation
+from bioconverter.models import Converter, Conversing, Representation
 
 
 class ConverterSerializer(serializers.ModelSerializer):
@@ -11,26 +9,13 @@ class ConverterSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ConversionRequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ConversionRequest
-        fields = "__all__"
-
 class ConversingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Conversing
         fields = "__all__"
 
-class ConvertToSampleSerializer(serializers.ModelSerializer):
+
+class RepresentationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ConvertToSampleRequest
+        model = Representation
         fields = "__all__"
-
-class JobRequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobRequest
-        fields = "__all__"
-
-
-
-

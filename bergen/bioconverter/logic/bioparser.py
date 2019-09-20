@@ -7,6 +7,8 @@ import logging, os
 from bioconverter.logic.structures import BioMetaStructure, BioImage
 
 
+javabridge.start_vm(class_path=bioformats.JARS, run_headless=True)
+
 def loadBioImageFromFile(filepath) -> BioImage:
     pass
 
@@ -34,8 +36,8 @@ def loadBioMetaFromFile(filepath) -> BioMetaStructure:
         print(filepath)
         print(bioformats.JARS)
         biometa.unparsed = bioformats.get_omexml_metadata(filepath)
-        print(biometa.unparsed)
         biometa.metadata = BeautifulSoup(biometa.unparsed, "xml")
+        print("Loaded Biometa successfully")
     except Exception as e:
         print("Error in the BioMetaParsing")
         raise e
@@ -100,6 +102,7 @@ def loadBioMetaSeriesFromFile(filepath, series):
 def loadBioImageSeriesFromFile(filepath, meta: BioMetaStructure) -> np.ndarray:
 
     assert meta.shape is not None, "No parsed BioMeta provided"
+    print("BioImageFile has shape", meta.shape)
     file = np.zeros(meta.shape, dtype=np.float16)
     try:
         # loads a cached reader that reads every frame
@@ -143,7 +146,6 @@ def loadSeriesFromFile(filepath,series) -> (BioMetaStructure, np.ndarray):
     meta = loadBioMetaSeriesFromFile(filepath,series)
     image = loadBioImageSeriesFromFile(filepath,meta)
 
-    javabridge.kill_vm()
 
     return meta, image
 

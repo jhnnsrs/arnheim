@@ -1,8 +1,6 @@
 from rest_framework import serializers
 
 from evaluators.models import Data, Evaluating, Evaluator, VolumeData, ClusterData
-from transformers.models import Transformer, Transforming, Transformation
-from trontheim.serializers import TagListSerializerField
 
 
 class EvaluatorSerializer(serializers.ModelSerializer):

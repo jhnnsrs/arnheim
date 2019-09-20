@@ -34,31 +34,27 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels',
-    'chat',
-    'social',
-    'nodes',
-    'metamorphers',
-    'transformers',
-    'evaluators',
-    'frontend',
-    'mutaters',
-    'representations',
-    'filterbank',
-    'bioconverter',
-    'dicom',
-    'biouploader',
     'oauth2_provider',
     'rest_framework',
     'django_filters',
-    'drawing',
-    'elements',
+    'django_extensions',
+    'channels',
     'corsheaders',
     'taggit',
+    'logpipe',
+    'chat',
+    'social',
+    'metamorphers',
+    'transformers',
+    'evaluators',
+    'mutaters',
+    'filterbank',
+    'bioconverter',
+    'biouploader',
+    'drawing',
+    'elements',
     'revamper',
-    'django_extensions',
     'flow',
-    'logpipe'
 ]
 
 TAGGIT_CASE_INSENSITIVE = True # for the tags system
@@ -240,7 +236,21 @@ LOGPIPE = {
     # 'DEFAULT_FORMAT': 'json',
 }
 
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+    },
+}
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
 LANGUAGE_CODE = 'en-us'

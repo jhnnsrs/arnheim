@@ -1,15 +1,11 @@
 import json
 
-import javabridge as javabridge
-import bioformats
 import numpy as np
-from channels.consumer import SyncConsumer, AsyncConsumer
 
-from chat.logic.bioparser import loadBioMetaSeriesFromFile, loadBioImageSeriesFromFile
-from filterbank.addins import toimage
-from filterbank.models import Parsing, Representation, Filtering
-from filterbank.serializers import RepresentationSerializer, FilteringSerializer
-from filterbank.utils import  get_inputrepresentationbynode_or_error, get_filtering_or_error, \
+from filterbank.models import Filtering
+from filterbank.serializers import FilteringSerializer
+from bioconverter.serializers import RepresentationSerializer
+from filterbank.utils import get_inputrepresentationbynode_or_error, get_filtering_or_error, \
     update_outputrepresentationbynode_or_create
 from trontheim.consumers import OsloJobConsumer
 

@@ -1,64 +1,10 @@
-import hashlib
 import os
-import time
 
 from django.contrib.auth.models import User
-from django.core.files.storage import FileSystemStorage
 from django.db import models
 
+
 # Create your models here.
-from multichat import settings
-from representations.models import Experiment
-
-
-def get_upload_to(instance, filename):
-    filename = os.path.join(settings.UPLOAD_PATH, instance.upload_id + '.simg')
-    return time.strftime(filename)
-
-
-class OverwriteStorage(FileSystemStorage):
-
-    def get_available_name(self, name, max_length=None):
-        if self.exists(name):
-            os.remove(os.path.join(settings.MEDIA_ROOT, name))
-        return name
-
-
-class LargeFile(models.Model):
-    ''' a base image upload to hold a file temporarily during upload
-            based off of django-chunked-uploads BaseChunkedUpload model
-        '''
-
-    file = models.FileField(upload_to=get_upload_to, storage=OverwriteStorage())
-    filename = models.CharField(max_length=255)
-    version = models.CharField(max_length=255)
-    size = models.BigIntegerField()
-    created_on = models.DateTimeField(auto_now_add=True)
-
-    def get_label(self):
-        return "imagefile"
-
-    def get_abspath(self):
-        return os.path.join(settings.MEDIA_ROOT, self.file.name)
-
-    @property
-    def md5(self):
-        '''calculate the md5 sum of the file'''
-        if getattr(self, '_md5', None) is None:
-            md5 = hashlib.md5()
-            for chunk in self.file.chunks():
-                md5.update(chunk)
-            self._md5 = md5.hexdigest()
-        return self._md5
-
-    def delete(self, delete_file=True, *args, **kwargs):
-        '''delete the file and make sure to also delete from storage'''
-        if self.file:
-            storage, path = self.file.storage, self.file.path
-        super(LargeFile, self).delete(*args, **kwargs)
-        if self.file and delete_file:
-            storage.delete(path)
-
 
 
 class Locker(models.Model):
@@ -71,7 +17,6 @@ class BioImage(models.Model):
     creator = models.ForeignKey(User,on_delete=models.CASCADE)
     name = models.CharField(max_length=1000)
     file = models.FileField(verbose_name="bioimage",upload_to="bioimagefiles", max_length=1000)
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True, related_name="bioimages")
     locker = models.ForeignKey(Locker,  on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
@@ -87,7 +32,6 @@ class BioImage(models.Model):
 class BioSeries(models.Model):
     bioimage = models.ForeignKey(BioImage, on_delete=models.CASCADE)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True)
     index = models.IntegerField()
     name = models.CharField(max_length=1000)
     image = models.ImageField(blank=True,null=True)
@@ -112,13 +56,24 @@ class Analyzer(models.Model):
 
 class Analyzing(models.Model):
     analyzer = models.ForeignKey(Analyzer, on_delete=models.CASCADE, blank=True, null=True)
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True)
     bioimage = models.ForeignKey(BioImage, on_delete=models.CASCADE)
     nodeid = models.CharField(max_length=300, null=True, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     settings = models.CharField(max_length=800)
 
 
+class BioMeta(models.Model):
+    json = models.CharField(max_length=2000, blank=True, null=True)
+    channellist = models.CharField(max_length=2000)
+    xresolution = models.IntegerField()
+    yresolution = models.IntegerField()
+    cresolution = models.IntegerField()
+    zresolution = models.IntegerField()
+    tresolution = models.IntegerField()
 
-
-
+    xphysical = models.FloatField()
+    yphysical = models.FloatField()
+    zphysical = models.FloatField()
+    spacial_units = models.CharField(max_length=30)
+    temporal_units = models.CharField(max_length=30)
+    seriesname = models.CharField(max_length=100, blank=True,null=True)
