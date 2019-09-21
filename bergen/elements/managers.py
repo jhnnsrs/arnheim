@@ -5,23 +5,21 @@ import os
 import h5py
 from django.db import models
 
-from multichat import settings
+from elements.utils import toFileName
+from mandal import settings
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
-def toFileName(sampleName):
-    return sampleName + ".h5"
 
 class NumpyManager(models.Manager):
 
     def create(self, **obj_data):
         if obj_data["numpy"] is not None:
-            directory = os.path.join(settings.MEDIA_ROOT + "/h5files/")
-            joinedpath = os.path.join(directory, toFileName(obj_data["sample"].name))
-            if not os.path.exists(directory):
-                logger.warning("Creating Directory "+str(directory))
-                os.makedirs(directory)
+            joinedpath = os.path.join(settings.H5FILES_ROOT, toFileName(obj_data["sample"]))
+            if not os.path.exists(settings.H5FILES_ROOT):
+                logger.warning("Creating Directory for H5Files"+str(settings.H5FILES_ROOT))
+                os.makedirs(settings.H5FILES_ROOT)
 
             type = obj_data["type"]
             vid = obj_data["vid"]

@@ -56,13 +56,13 @@ class LineRectifierTransformer(TransformerConsumer):
 
     async def parse(self, settings: dict, rep: Representation, roi: ROI) -> np.array:
 
-        array = rep.nparray.get_array()
+        array = rep.numpy.get_array()
         vectors = json.loads(roi.vectors)
 
         vertices = [[key["x"],key["y"]] for key in vectors]
 
         print(array.max())
-
+        array = np.float64(array)
         image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(settings["scale"]))
 
 
@@ -96,7 +96,7 @@ class SliceLineTransformer(TransformerConsumer):
             upperBound = upperBound1
 
 
-        array = rep.nparray.get_z_bounded_array(lowerBound,upperBound)
+        array = rep.numpy.get_z_bounded_array(lowerBound,upperBound)
 
         print("Collection Array of Shape ", array.shape)
         print("With Vertices like",vertices)

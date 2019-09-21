@@ -1,10 +1,8 @@
 import json
 import logging
 
-import numpy as np
 from channels.db import database_sync_to_async
 
-from bioconverter.models import Representation
 from transformers.models import Transforming, Transformation
 
 # Get an instance of a logger
@@ -22,33 +20,7 @@ def get_transforming_or_error(request: dict):
         raise ClientError("Transforming {0} does not exist".format(str(request["id"])))
     return parsing
 
-@database_sync_to_async
-def get_masking_or_error(request: dict):
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
-    print(request["id"])
-    parsing = Masking.objects.get(pk=request["id"])
-    if parsing is None:
-        raise ClientError("Masking {0} does not exist".format(str(request["id"])))
-    return parsing
 
-
-@database_sync_to_async
-def get_inputrepresentation_or_error(request: Transforming):
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
-    inputrep: Representation = Representation.objects.get(pk=request.representation)
-    if inputrep.nparray is not None:
-        array = inputrep.nparray.get_array()
-    else:
-        #TODO: This should never be called because every representation should have a nparray on creation
-        print("ERROR ON THE REPRESENTATION")
-        array = np.zeros((1024,1024,3))
-    if inputrep is None:
-        raise ClientError("Representation {0} does not exist".format(str(request.representation)))
-    return inputrep, array
 
 
 @database_sync_to_async
@@ -60,10 +32,10 @@ def update_outputtransformation_or_create(request: Transforming, settings, numpy
     vidfirst = "transformation_roi-{0}_transformer-{1}_node-{2}".format(str(request.roi_id), str(request.transformer_id), str(request.nodeid))
 
     transformations = Transformation.objects.filter(vid__startswith=vidfirst)
-    vidsub = "_{1}".format(str(transformations.count) if transformations.count else 0)
+    vidsub = "_{0}".format(str(transformations.count()) if transformations.count() else 0)
     vid = vidfirst + vidsub
     transformation = transformations.last() #TODO: CHeck if that makes sense
-    if transformation is None or not settings["override"]:
+    if transformation is None or not settings["overwrite"]:
         method = "create"
         logger.info("Creating Transformation with VID: " + vid)
         #TODO make creation of outputvid

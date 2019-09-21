@@ -1,6 +1,7 @@
 from django.db import models
 
 from elements.models import Sample, Numpy
+from mandal import settings
 
 
 class RepresentationManager(models.Manager):
@@ -13,7 +14,13 @@ class RepresentationManager(models.Manager):
             vid = str(obj_data["vid"])
 
             # TODO: if sample is not provided this should raise an exception
-            numpy = Numpy.objects.create(vid=vid, numpy=obj_data["nparray"], sample=sample, type="representation", dtype=obj_data.get("dtype", None), compression=obj_data.get("compression", None))
+            numpy = Numpy.objects.create(vid=vid,
+                                         numpy=obj_data["nparray"],
+                                         sample=sample,
+                                         type="representation",
+                                         dtype=obj_data.get("dtype",settings.REPRESENTATION_DTYPE),
+                                         compression=obj_data.get("compression", settings.REPRESENTATION_COMPRESSION)
+                                         )
 
             obj_data["numpy"] = numpy
             del obj_data["nparray"]

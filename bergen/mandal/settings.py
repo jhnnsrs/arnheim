@@ -16,10 +16,12 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+BIOIMAGE_ROOT = os.path.join(MEDIA_ROOT, "bioimages")
+H5FILES_ROOT = os.path.join(MEDIA_ROOT, "h5files")
+NIFTI_ROOT = os.path.join(MEDIA_ROOT, "nifti")
+UPLOAD_ROOT = os.path.join(MEDIA_ROOT, "_upload")
 MEDIA_URL = "/images/"
 DOCKER = False
-UPLOAD_ROOT = '%s/_upload' % MEDIA_ROOT
-NIFTI_ROOT = '%s/nifti' % MEDIA_ROOT
 DEBUG = True
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'e+uck-nbb+_%(d@%s-@l@*o!xp__p7rssglb74xr*6=m5lh=vx'
@@ -231,3 +233,9 @@ STATICFILES_DIRS = [
 
 
 FIXTURE_DIRS =  [ "fixtures"]
+
+
+TRANSFORMATION_DTYPE = None
+TRANSFORMATION_COMPRESSION = None
+REPRESENTATION_DTYPE = None
+REPRESENTATION_COMPRESSION = None

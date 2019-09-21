@@ -1,6 +1,7 @@
 from django.db import models
 
 from elements.models import Sample, Numpy
+from mandal import settings
 
 
 class TransformationManager(models.Manager):
@@ -13,7 +14,7 @@ class TransformationManager(models.Manager):
             vid = str(obj_data["vid"])
 
             # TODO: if sample is not provided this should raise an exception
-            numpy = Numpy.objects.create(vid=vid, numpy=obj_data["nparray"], sample=sample, type="transformations", dtype=obj_data["dtype"], compression=obj_data["compression"])
+            numpy = Numpy.objects.create(vid=vid, numpy=obj_data["nparray"], sample=sample, type="transformations", dtype=obj_data.get("dtype",settings.TRANSFORMATION_DTYPE), compression=obj_data.get("compression",settings.TRANSFORMATION_COMPRESSION))
 
             obj_data["numpy"] = numpy
             del obj_data["nparray"]

@@ -49,7 +49,7 @@ services:
       - ./notebooks:/notebooks
       - ./bergen:/code/
       - media:/code/media/
-      - files:/code/files/
+      - files:/files/
     ports:
       - "90:90"
 

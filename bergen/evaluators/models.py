@@ -46,6 +46,9 @@ class VolumeData(Data):
 class ClusterData(Data):
     meta = models.ForeignKey(BioMeta, on_delete=models.CASCADE)
     clusternumber = models.IntegerField()
+    clusterareapixels = models.IntegerField()
+    clusterarea = models.FloatField()
+    spatialunit = models.CharField(max_length=100)
 
 class Evaluator(models.Model):
     name = models.CharField(max_length=100)

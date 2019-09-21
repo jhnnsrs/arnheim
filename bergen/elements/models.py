@@ -1,4 +1,7 @@
+import os
+
 import h5py
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
 # Create your models here.
@@ -6,6 +9,12 @@ from taggit.managers import TaggableManager
 
 from biouploader.models import BioSeries, BioMeta
 from elements.managers import NumpyManager
+from elements.utils import toFileName
+from mandal import settings
+
+
+def get_sentinel_user():
+    return get_user_model().objects.get_or_create(username='deleted')[0]
 
 
 class Antibody(models.Model):
@@ -21,24 +30,37 @@ class Experiment(models.Model):
     tags = TaggableManager()
     description = models.CharField(max_length=1000)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = models.ImageField(null=True,blank=True)
+    image = models.ImageField(upload_to='experiment_banner',null=True,blank=True)
 
     def __str__(self):
         return "Experiment {0} by {1}".format(self.name,self.creator.username)
 
 
 class Sample(models.Model):
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.SET(get_sentinel_user))
     location = models.CharField(max_length=400)
     name = models.CharField(max_length=1000)
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True)
-    bioseries = models.ForeignKey(BioSeries, on_delete=models.CASCADE, blank=True, null=True)
+    experiment = models.ForeignKey(Experiment, on_delete=models.SET_NULL, blank=True, null=True)
+    bioseries = models.ForeignKey(BioSeries, on_delete=models.SET_NULL, blank=True, null=True)
     meta = models.ForeignKey(BioMeta, on_delete=models.CASCADE, blank=True, null=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
 
 
     def __str__(self):
         return "{0} by User: {1}".format(self.name,self.creator.username)
+
+
+    def delete(self, *args, **kwargs):
+        print("Trying to remove Sample H5File")
+        for item in self.numpys.all():
+            item.delete()
+
+        filepath = os.path.join(settings.H5FILES_ROOT,toFileName(self))
+        if os.path.isfile(filepath):
+            os.remove(filepath)
+            print("Removed Sample H5File",filepath)
+
+        super(Sample, self).delete(*args, **kwargs)
 
 
 class Numpy(models.Model):
@@ -48,7 +70,7 @@ class Numpy(models.Model):
     dtype = models.CharField(max_length=300, blank=True, null=True)
     compression = models.CharField(max_length=300, blank=True, null=True)
     shape = models.CharField(max_length=400, blank=True, null=True)
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
+    sample = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name="numpys")
     # Custom Manager to simply create an array
     objects = NumpyManager()
 
@@ -73,3 +95,14 @@ class Numpy(models.Model):
             ## This is not working great so far
             array = hf.get(self.vid)[:,:,:,zl:zu,:]
         return array
+
+    def delete(self, *args, **kwargs):
+        print("Trying to remove Dataset from Filepath", self.filepath)
+        with h5py.File(self.filepath, 'a') as file:
+            print("Trying to Access Vid from file {0} to delete array".format(self.filepath))
+            hf = file[self.type]
+            if self.vid in hf:
+                del hf[self.vid]
+                print("Delteted Vid {1} from file {0}".format(self.filepath,self.vid))
+
+        super(Numpy, self).delete(*args, **kwargs)

@@ -12,19 +12,24 @@ class Locker(models.Model):
     name = models.CharField(max_length=1000)
     location = models.CharField(max_length=1000)
 
+    def __str__(self):
+        return self.name
+
 
 class BioImage(models.Model):
     creator = models.ForeignKey(User,on_delete=models.CASCADE)
     name = models.CharField(max_length=1000)
-    file = models.FileField(verbose_name="bioimage",upload_to="bioimagefiles", max_length=1000)
+    file = models.FileField(verbose_name="bioimage",upload_to="bioimages", max_length=1000)
     locker = models.ForeignKey(Locker,  on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.name
 
     def delete(self, *args, **kwargs):
+        print("Trying to remove Bioimage of path", self.file.path)
         if os.path.isfile(self.file.path):
             os.remove(self.file.path)
+            print("Removed Bioimage of path", self.file.path)
 
         super(BioImage, self).delete(*args, **kwargs)
 

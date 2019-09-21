@@ -187,12 +187,22 @@ class ClusterDataConsumer(EvaluatingConsumer):
     async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
 
         array = transformation.numpy.get_array()
-        cluster, n_cluster = findConnectedCluster(array)
+        cluster, n_cluster = findConnectedCluster(array, settings.get("sizeThreshold",3))
+        n_pixels = sum(array.flat)
+        areaphysical = n_pixels * meta.xphysical * meta.yphysical
+
+        print("With Meta data of", str(meta.xphysical) + "and" + str(meta.yphysical))
+        print("Creating Cluster of " + str(n_pixels) + " Pixels")
+        print("Creating Cluster of " + str(areaphysical) + " Size")
+        print("Creating Cluster of " + str(n_cluster) + " Cluster")
         data = ClusterData(roi=roi,
                           transformation=transformation,
                           sample=transformation.sample,
                           experiment=transformation.experiment,
                           clusternumber= n_cluster,
+                          clusterareapixels = n_pixels,
+                          clusterarea = areaphysical,
+                          spatialunit= meta.spacial_units+"²",
                           tags=",".join(["Cluster"]),
                           meta=meta,
                           nodeid=evaluating.nodeid)

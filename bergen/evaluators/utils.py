@@ -96,6 +96,9 @@ def update_clusterdata_or_create(request: Evaluating, putdata: ClusterData, sett
             tags=putdata.tags,
             meta=putdata.meta,
             clusternumber=putdata.clusternumber,
+            clusterarea=putdata.clusterarea,
+            clusterareapixels=putdata.clusterareapixels,
+            spatialunit=putdata.spatialunit,
         )
     elif data is not None:
         # TODO: update array of output

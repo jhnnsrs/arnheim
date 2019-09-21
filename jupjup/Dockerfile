@@ -18,6 +18,8 @@ RUN conda install --quiet --yes \
 USER root
 
 RUN mkdir -p /code
+RUN mkdir -p /files
+RUN mkdir -p /media
 RUN mkdir -p /config
 RUN mkdir -p /notebooks
 RUN mkdir -p /tmp
@@ -26,5 +28,5 @@ WORKDIR /tmp
 RUN pip install -r requirements.txt
 # install neuron
 ENV PYTHONPATH="$PYTHONPATH:/code"
-ENV DJANGO_SETTINGS_MODULE="multichat.settings"
+ENV DJANGO_SETTINGS_MODULE="mandal.settings"
 WORKDIR /config

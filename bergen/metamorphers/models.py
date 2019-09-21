@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -16,6 +18,14 @@ class Display(models.Model):
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(upload_to="representation_images", blank=True, null=True)
 
+    def delete(self, *args, **kwargs):
+        print("Trying to remove Image of path", self.image.path)
+        if os.path.isfile(self.image.path):
+            os.remove(self.image.path)
+            print("Removed Image of path", self.image.path)
+
+        super(Display, self).delete(*args, **kwargs)
+
 
 class Exhibit(models.Model):
     name = models.CharField(max_length=400, blank=True, null=True)
@@ -26,6 +36,14 @@ class Exhibit(models.Model):
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE, blank=True, null=True)
     niftipath = models.FileField(upload_to="nifti",blank=True, null=True)
+
+    def delete(self, *args, **kwargs):
+        print("Trying to remove Nifti of path", self.niftipath.path)
+        if os.path.isfile(self.niftipath.path):
+            os.remove(self.niftipath.path)
+            print("Removed Nifti of path", self.niftipath.path)
+
+        super(Exhibit, self).delete(*args, **kwargs)
 
 
 class Metamorpher(models.Model):

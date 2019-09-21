@@ -14,7 +14,6 @@ def findConnectedCluster(array, size_thresh=2):
     n_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh)
 
     numbercluster = 0
-    size_thresh = 2
     for i in range(1, n_labels):
         if stats[i, cv2.CC_STAT_AREA] >= size_thresh:
             # print(stats[i, cv2.CC_STAT_AREA])

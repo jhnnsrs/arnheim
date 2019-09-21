@@ -47,4 +47,10 @@ class Representation(models.Model):
     def __str__(self):
         return self.name
 
+    def delete(self, *args, **kwargs):
+        if self.numpy:
+            self.numpy.delete()
+
+        super(Representation, self).delete(*args, **kwargs)
+
 

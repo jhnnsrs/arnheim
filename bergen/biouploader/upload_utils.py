@@ -2,7 +2,7 @@ import os
 import shutil
 
 from biouploader.models import BioImage
-from multichat.settings import MEDIA_ROOT
+from mandal.settings import BIOIMAGE_ROOT
 
 
 def move_upload_to_storage(source, name, creatorid, lockerid):
@@ -16,8 +16,8 @@ def move_upload_to_storage(source, name, creatorid, lockerid):
          dest: the destination filename
          :param creatorid:
     '''
-    directory = "bioimages/{0}/{1}/".format(creatorid, lockerid)
-    directory = os.path.join(MEDIA_ROOT,directory)
+    directory = "{0}/{1}/".format(creatorid, lockerid)
+    directory = os.path.join(BIOIMAGE_ROOT,directory)
 
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -52,6 +52,7 @@ def upload_file(name, version, path, size, experiment, creator, locker):
 
         image.save()
         return image
+
 
 
 

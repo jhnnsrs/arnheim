@@ -30,7 +30,7 @@ def update_outputtransformation_or_create(request: Revamping, numpyarray, settin
                                                                         str(request.revamper_id),
                                                                         str(request.nodeid))
     transformations = Transformation.objects.filter(vid__startswith=vidfirst)
-    vidsub = "_{0}".format(str(transformations.count) if transformations.count else 0)
+    vidsub = "_{0}".format(str(transformations.count()) if transformations.count() else 0)
     vid = vidfirst + vidsub
     transformation = transformations.last()  # TODO: CHeck if that makes sense
 

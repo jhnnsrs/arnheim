@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from bioconverter.models import Representation
 from metamorphers.models import Metamorphing, Display, Exhibit
-from multichat.settings import MEDIA_ROOT, NIFTI_ROOT
+from mandal.settings import MEDIA_ROOT, NIFTI_ROOT
 
 
 @database_sync_to_async
