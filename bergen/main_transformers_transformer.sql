@@ -1,0 +1,2 @@
+INSERT INTO transformers_transformer (id, path, inputmodel, outputmodel, name, channel, defaultsettings) VALUES (1, 'LineTransformer', '["display"]', '["display"]', 'LineTransformer', 'linerect', '{"scale":3}');
+INSERT INTO transformers_transformer (id, path, inputmodel, outputmodel, name, channel, defaultsettings) VALUES (2, 'SliceLineTransformer', '["display"]', '["display"]', 'SliceLineTransformer', 'sliceline', '{"scale":3}');

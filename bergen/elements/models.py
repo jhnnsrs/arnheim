@@ -106,3 +106,6 @@ class Numpy(models.Model):
                 print("Delteted Vid {1} from file {0}".format(self.filepath,self.vid))
 
         super(Numpy, self).delete(*args, **kwargs)
+
+    def __str__(self):
+        return "Numpy Object with VID " + str(self.vid) + "at " + str(self.filepath)

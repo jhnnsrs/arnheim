@@ -1,0 +1,1 @@
+INSERT INTO revamper_revamper (id, path, name, channel, defaultsettings) VALUES (1, 'MaskerRevamper', 'MaskerRevamper', 'masker', '{"scale":3}');

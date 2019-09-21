@@ -1,0 +1,2 @@
+INSERT INTO metamorphers_metamorpher (id, name, path, outputtype, channel, defaultsettings) VALUES (1, 'ImageMetamorpher', 'ImageMetamorpher', '[]', 'image', '{"scale":10}');
+INSERT INTO metamorphers_metamorpher (id, name, path, outputtype, channel, defaultsettings) VALUES (2, 'NiftiMetamorpher', 'NiftiMetamorpher', '[]', 'nifti', '{"scale":10}');

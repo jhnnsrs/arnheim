@@ -1,0 +1,1 @@
+INSERT INTO filterbank_filter (id, name, path, channel, inputmodel, outputmodel, defaultsettings) VALUES (1, 'MaxISP', 'MaxISP', 'maxisp', '["representation"]', '["representation"]', '{"scale":10}');
