@@ -1,1 +1,0 @@
-INSERT INTO mutaters_mutater (id, name, path, defaultsettings, inputmodel, outputmodel, channel) VALUES (1, 'ImageMutater', 'ImageMutater', '{"scale":3}', '["display"]', '["transformation"]', 'transformimage');

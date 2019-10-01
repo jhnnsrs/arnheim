@@ -82,7 +82,7 @@ def update_display_or_create(request: Metamorphing, image) -> (Display, str):
     """
     display: Display = Display.objects.filter(representation=request.representation).filter(nodeid=request.nodeid).first()
     method = "update"
-    name = "Display of" + request.representation.name
+    name = "Display of " + request.representation.name
     if display is None:
         #TODO make creation of outputvid
         display = Display.objects.create(representation=request.representation, name=name, creator=request.creator, nodeid=request.nodeid,

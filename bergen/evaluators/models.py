@@ -23,7 +23,6 @@ class Data(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True,null=True)
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE, related_name='datas')
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE, related_name='datas')
-    tags = TaggableManager()
 
     def __str__(self):
         return self.name

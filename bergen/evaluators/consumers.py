@@ -168,7 +168,6 @@ class AISDataConsumer(EvaluatingConsumer):
                           userdefinedend=userdefinedend,
                           threshold=threshold,
                           physicallength=physicallength,
-                          tags=",".join(tags),
                           intensitycurves=intensitycurves,
                           meta=meta,
                           nodeid=evaluating.nodeid)
@@ -203,7 +202,6 @@ class ClusterDataConsumer(EvaluatingConsumer):
                           clusterareapixels = n_pixels,
                           clusterarea = areaphysical,
                           spatialunit= meta.spacial_units+"²",
-                          tags=",".join(["Cluster"]),
                           meta=meta,
                           nodeid=evaluating.nodeid)
 

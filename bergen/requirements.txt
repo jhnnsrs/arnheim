@@ -50,3 +50,10 @@ easy_thumbnails
 django-polymorphic
 psycopg2
 kafka-python
+
+graphene-django
+graphene-django-extras
+python-dateutil
+tables
+pandas-profiling
+openpyxl

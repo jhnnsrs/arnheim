@@ -18,7 +18,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 BIOIMAGE_ROOT = os.path.join(MEDIA_ROOT, "bioimages")
 H5FILES_ROOT = os.path.join(MEDIA_ROOT, "h5files")
+PANDAS_ROOT = os.path.join(MEDIA_ROOT, "pandas")
 NIFTI_ROOT = os.path.join(MEDIA_ROOT, "nifti")
+PROFILES_ROOT = os.path.join(MEDIA_ROOT, "profiles")
+EXCELS_ROOT = os.path.join(MEDIA_ROOT, "excels")
 UPLOAD_ROOT = os.path.join(MEDIA_ROOT, "_upload")
 MEDIA_URL = "/images/"
 DOCKER = False
@@ -45,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'oauth2_provider',
+    'graphene_django',
     'rest_framework',
     'django_filters',
     'django_extensions',
@@ -65,6 +69,8 @@ INSTALLED_APPS = [
     'elements',
     'revamper',
     'flow',
+    'answers',
+    'visualizers',
 ]
 
 # Taggit Settings
@@ -102,6 +108,21 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     )
+}
+
+GRAPHENE = {
+    'SCHEMA': 'gql.schema.schema', # Where your Graphene schema lives
+    'MIDDLEWARE': [
+            'graphene_django_extras.ExtraGraphQLDirectiveMiddleware'
+        ]
+}
+
+GRAPHENE_DJANGO_EXTRAS = {
+    'DEFAULT_PAGINATION_CLASS': 'graphene_django_extras.paginations.LimitOffsetGraphqlPagination',
+    'DEFAULT_PAGE_SIZE': 20,
+    'MAX_PAGE_SIZE': 50,
+    'CACHE_ACTIVE': True,
+    'CACHE_TIMEOUT': 300  # seconds
 }
 
 MIDDLEWARE = [
@@ -237,5 +258,6 @@ FIXTURE_DIRS =  [ "fixtures"]
 
 TRANSFORMATION_DTYPE = None
 TRANSFORMATION_COMPRESSION = None
+PANDAS_COMPRESSION = None
 REPRESENTATION_DTYPE = None
 REPRESENTATION_COMPRESSION = None

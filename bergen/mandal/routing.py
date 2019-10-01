@@ -2,6 +2,7 @@ from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter, ChannelNameRouter
 from django.urls import path
 
+from answers.consumers import PandaAnswer
 from bioconverter.consumers import BioConverter, ConvertBioSeriesOsloJob
 from biouploader.consumers import BioAnalyzer
 from evaluators.consumers import AISDataConsumer, ClusterDataConsumer
@@ -12,6 +13,7 @@ from revamper.consumers import MaskingRevamper
 from transformers.consumers import LineRectifierTransformer, SliceLineTransformer
 from trontheim.consumers import OsloConsumer
 from trontheim.middleware import QueryAuthMiddleware
+from visualizers.consumers import Profiler, ExcelExporter
 
 OauthMiddleWareStack = lambda inner: QueryAuthMiddleware(AuthMiddlewareStack(inner))
 
@@ -46,6 +48,9 @@ application = ProtocolTypeRouter({
         "linerect": LineRectifierTransformer,
         "sliceline": SliceLineTransformer,
         "transformimage": ImageMutator,
+        "pandas": PandaAnswer,
+        "profiler": Profiler,
+        "excelexport": ExcelExporter,
         "aisdata": AISDataConsumer,
         "analyzer": BioAnalyzer,
         "clusterdata": ClusterDataConsumer,

@@ -23,7 +23,7 @@ services:
       - db
   worker:
     build: bergen
-    command: python manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata
+    command: python manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata pandas profiler excelexport
     volumes:
       - ./bergen:/code
       - media:/code/media/
@@ -48,6 +48,7 @@ services:
     volumes:
       - ./notebooks:/notebooks
       - ./bergen:/code/
+      - ./jupjup:/config/
       - media:/code/media/
       - files:/files/
     ports:

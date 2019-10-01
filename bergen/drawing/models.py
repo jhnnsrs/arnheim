@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from bioconverter.models import Representation
-from elements.models import Sample, Experiment
+from elements.models import Sample, Experiment, ExperimentalGroup
 from metamorphers.models import Display
 
 
@@ -19,6 +19,7 @@ class ROI(models.Model):
     display = models.ForeignKey(Display,on_delete=models.CASCADE,blank=True, null=True)
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE,blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True,null=True)
+    experimentalgroup = models.ForeignKey(ExperimentalGroup, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
-        return "ROI created at {0} on Sample {1}".format(self.created_at.timestamp(),self.sample.name)
+        return "ROI created by {0} on {1} of {2}".format(self.creator.username,self.display.name,self.sample.name)

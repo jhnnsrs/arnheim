@@ -5,10 +5,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
 # Create your models here.
+from pandas import HDFStore
 from taggit.managers import TaggableManager
 
 from biouploader.models import BioSeries, BioMeta
-from elements.managers import NumpyManager
+from elements.managers import NumpyManager, PandasManager
 from elements.utils import toFileName
 from mandal import settings
 
@@ -35,6 +36,14 @@ class Experiment(models.Model):
     def __str__(self):
         return "Experiment {0} by {1}".format(self.name,self.creator.username)
 
+class ExperimentalGroup(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.CharField(max_length=1000)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "Experiment {0} by {1}".format(self.name,self.creator.username)
 
 class Sample(models.Model):
     creator = models.ForeignKey(User, on_delete=models.SET(get_sentinel_user))
@@ -44,6 +53,7 @@ class Sample(models.Model):
     bioseries = models.ForeignKey(BioSeries, on_delete=models.SET_NULL, blank=True, null=True)
     meta = models.ForeignKey(BioMeta, on_delete=models.CASCADE, blank=True, null=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
+    experimentalgroup = models.ForeignKey(ExperimentalGroup, on_delete=models.SET_NULL, blank=True, null=True)
 
 
     def __str__(self):
@@ -108,4 +118,39 @@ class Numpy(models.Model):
         super(Numpy, self).delete(*args, **kwargs)
 
     def __str__(self):
-        return "Numpy Object with VID " + str(self.vid) + "at " + str(self.filepath)
+        return "Numpy Object with VID " + str(self.vid) + " at " + str(self.filepath)
+
+
+class Pandas(models.Model):
+    filepath = models.FilePathField(max_length=400) # aka pandas/$answerid.h5
+    vid = models.CharField(max_length=1000) # aca vid0, vid1, vid2, vid3
+    type = models.CharField(max_length=100)
+    compression = models.CharField(max_length=300, blank=True, null=True)
+    # Custom Manager to simply create an array
+    objects = PandasManager()
+
+    def get_dataframe(self):
+        print("Trying to access file {0} to get dataframe".format(self.filepath))
+        with HDFStore(self.filepath) as store:
+            path = self.type + "/" + self.vid
+            dataframe = store.get(path)
+        return dataframe
+
+    def set_dataframe(self,dataframe):
+        print("Trying to access file {0} to set dataframe".format(self.filepath))
+        with HDFStore(self.filepath) as store:
+            path = self.type + "/" + self.vid
+            store.put(path, dataframe)
+
+    def delete(self, *args, **kwargs):
+        print("Trying to remove Dataframe from Filepath", self.filepath)
+        with HDFStore(self.filepath) as store:
+            path = self.type + "/" + self.vid
+            if path in store:
+                store.delete(path)
+                print("Deleted Dataframe with VID {1} from file {0}".format(self.filepath, self.vid))
+
+        super(Pandas, self).delete(*args, **kwargs)
+
+    def __str__(self):
+        return "Pandas with VID " + str(self.vid) + " at " + str(self.filepath)

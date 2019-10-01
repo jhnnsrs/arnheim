@@ -1,1 +1,0 @@
-INSERT INTO bioconverter_converter (id, path, inputmodel, outputmodel, name, channel, defaultsettings) VALUES (1, 'BioConverter', '["bioseries"]', '["sample","representation"]', 'BioConverter', 'bioconverter', '{"scale":10}');
