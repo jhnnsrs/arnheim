@@ -56,3 +56,6 @@ class Answer(models.Model):
 
     def __str__(self):
         return self.name
+
+    def to_pandas(self):
+        return self.pandas.get_dataframe()

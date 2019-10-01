@@ -40,14 +40,14 @@ def update_answer_or_create(request: Answering, settings, key, dataframe):
         method = "create"
         logger.info("Creating Pandas with VID: " + vid)
         #TODO make creation of outputvid
-        answer = Answer.objects.create(name=request.oracle.name + " of " + request.question.name,
+        answer = Answer.objects.create(name=key + " of " + request.question.name,
                                        key= key,
-                                                       creator=request.creator,
-                                                       vid=vid,
-                                                       dataframe=dataframe,
-                                                       shape=json.dumps(dataframe.shape),
-                                                       question=request.question,
-                                                       nodeid=request.nodeid)
+                                       creator=request.creator,
+                                       vid=vid,
+                                       dataframe=dataframe,
+                                       shape=json.dumps(dataframe.shape),
+                                       question=request.question,
+                                       nodeid=request.nodeid)
     elif answer is not None:
         #TODO: update array of output
         method = "update"
