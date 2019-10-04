@@ -25,6 +25,15 @@ class Antibody(models.Model):
     def __str__(self):
         return "{0}".format(self.name)
 
+class Animal(models.Model):
+    name = models.CharField(max_length=100)
+    age = models.CharField(max_length=400)
+    type = models.CharField(max_length=500)
+    creator = models.ForeignKey(User, blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "{0}".format(self.name)
+
 
 class Experiment(models.Model):
     name = models.CharField(max_length=200)
@@ -41,9 +50,19 @@ class ExperimentalGroup(models.Model):
     description = models.CharField(max_length=1000)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+    iscontrol = models.BooleanField()
+
 
     def __str__(self):
-        return "Experiment {0} by {1}".format(self.name,self.creator.username)
+        return "ExperimentalGroup {0} on Experiment {1}".format(self.name,self.experiment.name)
+
+class FileMatchString(models.Model):
+    name = models.CharField(max_length=500)
+    regexp = models.CharField(max_length=4000)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "FileMatchString {0} created by {1}".format(self.name,self.creator.name)
 
 class Sample(models.Model):
     creator = models.ForeignKey(User, on_delete=models.SET(get_sentinel_user))
@@ -54,6 +73,7 @@ class Sample(models.Model):
     meta = models.ForeignKey(BioMeta, on_delete=models.CASCADE, blank=True, null=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     experimentalgroup = models.ForeignKey(ExperimentalGroup, on_delete=models.SET_NULL, blank=True, null=True)
+    animal = models.ForeignKey(Animal, on_delete=models.SET_NULL, blank=True, null=True)
 
 
     def __str__(self):

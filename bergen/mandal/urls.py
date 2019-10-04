@@ -28,6 +28,7 @@ from django.conf.urls.static import static
 import drawing.routes
 import elements.routes
 import filterbank.routes
+import importer.routes
 import metamorphers.routes
 import mutaters.routes
 import revamper.routes
@@ -51,6 +52,7 @@ router.registry.extend(bioconverter.routes.router.registry)
 router.registry.extend(biouploader.routes.router.registry)
 router.registry.extend(metamorphers.routes.router.registry)
 router.registry.extend(visualizers.routes.router.registry)
+router.registry.extend(importer.routes.router.registry)
 router.registry.extend(answers.routes.router.registry)
 router.registry.extend(transformers.routes.router.registry)
 router.registry.extend(evaluators.routes.router.registry)

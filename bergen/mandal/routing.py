@@ -7,6 +7,7 @@ from bioconverter.consumers import BioConverter, ConvertBioSeriesOsloJob
 from biouploader.consumers import BioAnalyzer
 from evaluators.consumers import AISDataConsumer, ClusterDataConsumer
 from filterbank.consumers import MaxISP, PrewittFilter, SlicedMaxISP, Mapping
+from importer.consumers import Importer
 from metamorphers.consumers import NiftiMetamorpher, ImageMetamorpher
 from mutaters.consumers import ImageMutator
 from revamper.consumers import MaskingRevamper
@@ -51,6 +52,7 @@ application = ProtocolTypeRouter({
         "pandas": PandaAnswer,
         "profiler": Profiler,
         "excelexport": ExcelExporter,
+        "importer": Importer,
         "aisdata": AISDataConsumer,
         "analyzer": BioAnalyzer,
         "clusterdata": ClusterDataConsumer,

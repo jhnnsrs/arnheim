@@ -48,7 +48,7 @@ class ExhibitViewSet(OsloViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment","creator","sample")
+    filter_fields = ("experiment","creator","sample","representation")
     queryset = Exhibit.objects.all()
     serializer_class = ExhibitSerializer
     publishers = [["creator"],["sample"]]

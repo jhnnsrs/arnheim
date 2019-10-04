@@ -16,6 +16,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+FILES_ROOT = os.path.join(BASE_DIR, "files")
 BIOIMAGE_ROOT = os.path.join(MEDIA_ROOT, "bioimages")
 H5FILES_ROOT = os.path.join(MEDIA_ROOT, "h5files")
 PANDAS_ROOT = os.path.join(MEDIA_ROOT, "pandas")
@@ -71,6 +72,7 @@ INSTALLED_APPS = [
     'flow',
     'answers',
     'visualizers',
+    'importer',
 ]
 
 # Taggit Settings

@@ -73,6 +73,7 @@ class NiftiMetamorpher(MetamorphingOsloJobConsumer):
 
     async def convert(self, array, conversionsettings: dict):
         print(array.shape)
+        rescale = True if conversionsettings["rescale"] else False
         if len(array.shape) != 5:
             print("Not Original Shape")
 
@@ -80,12 +81,25 @@ class NiftiMetamorpher(MetamorphingOsloJobConsumer):
 
         print(array.dtype)
         array = array[:, :, :, :, 0]
-        min = array.min()
-        max = array.max()
-        print(array.shape)
-        print("Interpolatiion of Array from ", min, "to", max)
-        array = array * 255
-        print("Changing Type")
+        cmin = array.min()
+        cmax = array.max()
+        high = 255
+        low = 0
+
+        cscale = cmax - cmin
+        if cscale < 0:
+            raise ValueError("`cmax` should be larger than `cmin`.")
+        elif cscale == 0:
+            cscale = 1
+
+        scale = float(high - low) / cscale
+        if rescale:
+            print ("Interpolatiion of Array from ", min, "to", max)
+            array = (array - cmin) * scale + low
+            array = (array.clip(low, high) + 0.5).astype("uint8")
+        else:
+            array = array * 255
+
         array = array.astype("u1")
         print("Swaping Axes")
         array = array.swapaxes(2, 3)

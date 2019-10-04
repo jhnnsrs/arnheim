@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from elements.models import Antibody, Experiment, Sample
+from elements.models import Antibody, Experiment, Sample, ExperimentalGroup, Animal, FileMatchString
 
 
 class AntibodySerializer(serializers.ModelSerializer):
@@ -8,10 +8,24 @@ class AntibodySerializer(serializers.ModelSerializer):
         model = Antibody
         fields = "__all__"
 
+class AnimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Animal
+        fields = "__all__"
+
+class FileMatchStringSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FileMatchString
+        fields = "__all__"
 
 class ExperimentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experiment
+        fields = "__all__"
+
+class ExperimentalGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExperimentalGroup
         fields = "__all__"
 
 
@@ -20,4 +34,4 @@ class SampleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sample
-        fields = ("id","location","representations","experiment","creator","name","nodeid","bioseries")
+        fields = "__all__"
