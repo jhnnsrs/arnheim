@@ -33,7 +33,7 @@ class AnimalViewSet(OsloViewSet):
     queryset = Animal.objects.all()
     serializer_class = AnimalSerializer
     publishers = [["creator"]]
-    filter_fields = ("creator", "name")
+    filter_fields = ("creator", "name","experiment")
 
 class ExperimentalGroupViewSet(OsloViewSet):
     """
