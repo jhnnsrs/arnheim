@@ -61,10 +61,10 @@ volumes:
   media:
     driver_opts:
       type: none
-      device: /c/Programme/Trontheim/arnheim/media
+      device: /c/Users/jhnns/PycharmProjects/arnheim/media
       o: bind
   files:
     driver_opts:
       type: none
-      device: /c/Data/Files
+      device: /c/Users/jhnns/PycharmProjects/arnheim/files
       o: bind
