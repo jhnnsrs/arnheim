@@ -33,6 +33,11 @@ class ForeignNodeRequest(models.Model):
     nodeid = models.CharField(max_length=100)
     data = models.TextField()
 
+class ForeignNodeStatus(models.Model):
+    nodeid = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+    status = models.CharField(max_length=200)
+    creator = models.ForeignKey(User,on_delete=models.CASCADE,null=True, blank=True)
 
 class Layout(models.Model):
     name = models.CharField(max_length=100)
