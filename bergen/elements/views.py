@@ -32,8 +32,8 @@ class AnimalViewSet(OsloViewSet):
     filter_backends = (DjangoFilterBackend,)
     queryset = Animal.objects.all()
     serializer_class = AnimalSerializer
-    publishers = [["creator"]]
-    filter_fields = ("creator", "name","experiment")
+    publishers = [["creator"],["experiment"]]
+    filter_fields = ("creator", "name","experiment","experimentalgroup")
 
 class ExperimentalGroupViewSet(OsloViewSet):
     """

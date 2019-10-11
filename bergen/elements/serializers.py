@@ -9,6 +9,7 @@ class AntibodySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class AnimalSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Animal
         fields = "__all__"

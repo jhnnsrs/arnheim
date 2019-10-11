@@ -20,6 +20,9 @@ class ClusterDataType(DjangoObjectType):
         description = " ClusterData is providing access to Clusternumber,  "
         filter_fields = {
             "creator": ("exact",),
+            "clusterarea": ("gt", "lt"),
+            "clusternumber": ("gt", "lt","iexact"),
+            "sample__experimentalgroup__name": ("icontains", "iexact"),
             "sample__name": ("icontains", "iexact"),
             "sample__experiment__name": ("icontains", "iexact"),
         }

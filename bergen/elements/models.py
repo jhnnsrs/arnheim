@@ -30,6 +30,8 @@ class Experiment(models.Model):
     name = models.CharField(max_length=200)
     tags = TaggableManager()
     description = models.CharField(max_length=1000)
+    description_long = models.TextField(null=True,blank=True)
+    linked_paper = models.URLField(null=True,blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='experiment_banner',null=True,blank=True)
 
@@ -62,6 +64,7 @@ class Animal(models.Model):
     type = models.CharField(max_length=500)
     creator = models.ForeignKey(User, blank=True, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, blank=True, on_delete=models.CASCADE, null=True)
+    experimentalgroup = models.ForeignKey(ExperimentalGroup, blank=True, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return "{0}".format(self.name)
