@@ -31,6 +31,7 @@ class Node(models.Model):
 
 class ForeignNodeRequest(models.Model):
     nodeid = models.CharField(max_length=100)
+    origin = models.CharField(max_length=300)
     data = models.TextField()
 
 class ForeignNodeStatus(models.Model):

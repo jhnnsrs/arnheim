@@ -45,7 +45,7 @@ class AnalyzingViewSet(OsloActionViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment",)
+    filter_fields = ("creator","nodeid")
     queryset = Analyzing.objects.all()
     serializer_class = AnalyzingSerializer
     publishers = [["nodeid"]]
