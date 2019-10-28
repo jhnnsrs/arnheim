@@ -102,8 +102,7 @@ See also the list of [contributors](https://github.com/your/project/contributors
 
 ## License
 
-This project is preliminary licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details,
-changes to License are imminent
+This project is yet to be licensed, consider private
 
 ## Acknowledgments
 
