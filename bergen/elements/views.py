@@ -43,7 +43,7 @@ class ExperimentalGroupViewSet(OsloViewSet):
     queryset = ExperimentalGroup.objects.all()
     serializer_class = ExperimentalGroupSerializer
     publishers = [["experiment"]]
-    filter_fields = ("creator", "name")
+    filter_fields = ("creator", "name","experiment")
 
 class SampleViewSet(OsloViewSet):
     """
