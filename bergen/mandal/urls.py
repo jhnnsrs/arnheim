@@ -70,7 +70,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^api/', include((router.urls, 'api'))),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] \
+              + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)\
+              + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG is True:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
