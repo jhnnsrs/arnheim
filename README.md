@@ -1,6 +1,6 @@
 # Arnheim
 
-###Idea
+### Idea
 
 This is a basic implementation of the Arnheim Framework, that seeks to implement a working pipeline for the processing
 and analysis of microscopic data. Arnheim uses Docker-Containers to ensure most of its workflow is as modular and scalable as
