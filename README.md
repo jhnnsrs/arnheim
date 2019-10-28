@@ -1,6 +1,6 @@
 # Arnheim
 
-##Idea
+###Idea
 
 This is a basic implementation of the Arnheim Framework, that seeks to implement a working pipeline for the processing
 and analysis of microscopic data. Arnheim uses Docker-Containers to ensure most of its workflow is as modular and scalable as
@@ -81,10 +81,10 @@ Contact the Developer before you plan to deploy this App, it is NOT ready for pu
 
 ## Built With
 
-* [Docker](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Django](https://maven.apache.org/) - Dependency Management
-* [Django-Channels](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-* [python-bioimage](https://bio-it.embl.de/image-analysis-with-python/) - Used to generate RSS Feeds
+* [Docker](http://www.dropwizard.io/1.0.2/docs/) - Architecture
+* [Django](https://maven.apache.org/) - Web Server in python
+* [Django-Channels](https://rometools.github.io/rome/) - Used for real-time-communictation
+* [python-bioimage](https://bio-it.embl.de/image-analysis-with-python/) - Used to read vendor microscopy format
 
 ## Contributing
 
