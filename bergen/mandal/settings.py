@@ -98,12 +98,21 @@ CHANNEL_LAYERS = {
 # ASGI_APPLICATION should be set to your outermost router
 ASGI_APPLICATION = 'mandal.routing.application'
 
+OAUTH2_PROVIDER = {
+    # this is the list of available scopes
+    'SCOPES': {
+        'read': 'Reading all of your Data ',
+        'read_starred': "Reading your shared Data",
+        'write': 'Modifying all of your Data',
+        'profile': 'Access to your Profile (including Email, Name and Address'}
+
+}
 # Rest Framework settings
 REST_FRAMEWORK = {
-    # ...
-    #'DEFAULT_PERMISSION_CLASSES': (
-    #    'rest_framework.permissions.IsAuthenticated',
-    #)
+
+    'DEFAULT_PERMISSION_CLASSES': (
+       'rest_framework.permissions.IsAuthenticated',
+    ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework.authentication.BasicAuthentication',

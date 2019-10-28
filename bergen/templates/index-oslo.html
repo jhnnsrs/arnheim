@@ -2,7 +2,7 @@
 
 {% block title %}bergen{% endblock %}
 {% block header_text %}bergen{% endblock %}
-
+{% load staticfiles %}
 {% block content %}
     <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
       <header class="masthead mb-auto">
@@ -16,11 +16,16 @@
               <a class="nav-link" href="/api">API</a>
             <a class="nav-link" href="http://localhost:90" target="_blank">Jupyter</a>
             <a class="nav-link" href="/accounts/logout">Logout</a>
+
           </nav>
         </div>
       </header>
 
       <main role="main" class="inner cover">
+
+           <img src="{%  static 'img/oslologo.png' %}"/>
+          <br/>
+          <br/>
           <h1 class="cover-heading"><p>OSLO</p> </h1>
         <p class="lead">oslo is your daily driver for the evaluation of microscope data. this is just an backend.</p>
         <p class="lead">
