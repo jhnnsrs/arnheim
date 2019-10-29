@@ -1,0 +1,52 @@
+version: "2"
+
+services:
+  redis:
+    image: redis:latest
+  web:
+    build: ..
+    command: python3.6 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+      - ./media/:/media/
+    ports:
+      - "8000:8000"
+    links:
+      - redis
+      - worker
+  worker:
+    build: ..
+    command: python3.6 manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer
+    volumes:
+      - .:/code
+      - ./media/:/media/
+    links:
+      - redis
+  notebook:
+    image: bergen_web:latest
+    command: python3.6 manage.py shell_plus --notebook
+    volumes:
+      - .:/code
+    ports:
+      - "8890:8888"
+  nginx:
+    restart: always
+    build: ../nginx
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+      - ./nginx-production.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./media/:/media/
+    links:
+      - web
+      - worker
+  certbot:
+    image: certbot/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot

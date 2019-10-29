@@ -61,10 +61,10 @@ volumes:
   media:
     driver_opts:
       type: none
-      device: /c/Programme/Trontheim/arnheim/media
+      device: /media_host
       o: bind
   files:
     driver_opts:
       type: none
-      device: /c/Data/Files
+      device: /files_host
       o: bind
