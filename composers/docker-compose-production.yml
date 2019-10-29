@@ -4,7 +4,7 @@ services:
   redis:
     image: redis:latest
   web:
-    build: .
+    build: ..
     command: python3.6 manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
@@ -15,7 +15,7 @@ services:
       - redis
       - worker
   worker:
-    build: .
+    build: ..
     command: python3.6 manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer
     volumes:
       - .:/code
@@ -31,7 +31,7 @@ services:
       - "8890:8888"
   nginx:
     restart: always
-    build: nginx
+    build: ../nginx
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     ports:
       - "80:80"
