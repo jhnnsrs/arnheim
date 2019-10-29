@@ -28,7 +28,6 @@ html,
 body {
   height: 100%;
   background: url("/static/img/test.jpg");
-  font-family: "Droid Serif", "DejaVu Serif", "STIX", serif;
   background-size: cover;
 }
 
@@ -40,12 +39,33 @@ body {
   display: -ms-flexbox;
   display: flex;
   color: #fff;
-  text-shadow: 0 .05rem .1rem rgba(0, 0, 0, .5);
-  box-shadow: inset 0 0 5rem rgba(0, 0, 0, .5);
 }
 
 .cover-container {
   max-width: 42em;
+}
+
+.login-card {
+  color: #0f0f0f;
+  padding: 2em;
+  height: fit-content;
+}
+.login-card a {
+  color: #0f0f0f;
+}
+
+.logo {
+  fill: #FFFFFF;
+  color: #FFFFFF;
+  background-image: url("/static/img/oslologo_from_black.svg");
+  display: inline-block;
+  width: 20em;
+  height: 20em;
+  background-size: cover;
+  filter: invert(100%);
+}
+.logo path {
+  fill: #FFFFFF;
 }
 
 

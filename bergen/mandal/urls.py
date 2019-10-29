@@ -62,7 +62,7 @@ router.registry.extend(revamper.routes.router.registry)
 
 
 urlpatterns = [
-    path('', index),
+    path('', index, name='index'),
     path('trontheim', test),
     re_path(r'^uploaded?/$', upload_complete, name='upload_complete'),
     url(r'^accounts/', include('registration.backends.simple.urls')),
