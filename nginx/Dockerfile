@@ -1,9 +1,12 @@
 FROM alpine:3.6
 ENV NGINX_VERSION 1.13.6
 
+# Workaround for weird windows line bug
+RUN apk add dos2unix --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/community/ --allow-untrusted
 COPY install.sh /usr/src/
-COPY nginx.key /usr/src/
+RUN dos2unix /usr/src/install.sh
 
+COPY nginx.key /usr/src/
 RUN sh -x /usr/src/install.sh
 
 COPY nginx.conf /etc/nginx/nginx.conf

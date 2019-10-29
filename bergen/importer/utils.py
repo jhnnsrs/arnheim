@@ -55,7 +55,7 @@ def update_importing_with_new_Locker(importing: Importing):
 
 
 @database_sync_to_async
-def create_bioimages_from_list(request: Importing, settings, filelist):
+def create_bioimages_from_list(filelist, request: Importing, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """

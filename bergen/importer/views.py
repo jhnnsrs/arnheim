@@ -28,7 +28,7 @@ class ImportingViewSet(OsloActionViewSet):
     publishers = [["nodeid"]]
     actionpublishers = {"importing": [("creator",)], "bioimage": [["creator"], ["locker"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
-    actiontype = "startconverting"
+    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         oracle = Importer.objects.get(pk=serializer.data["importer"])

@@ -47,6 +47,16 @@ body {
   max-width: 42em;
 }
 
+.logo {
+  fill: #FFFFFF;
+  color: #FFFFFF;
+  background-image: url("/static/img/oslologo_from_black.svg");
+  display: inline-block;
+  width: 20em;
+  height: 20em;
+  background-size: cover;
+}
+
 
 /*
  * Header
