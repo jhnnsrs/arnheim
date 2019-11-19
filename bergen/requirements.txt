@@ -16,6 +16,7 @@ django-crispy-forms
 django-filter
 django-pandas
 djangorestframework
+drf-access-policy
 django-oauth-toolkit
 matplotlib
 django-logpipe

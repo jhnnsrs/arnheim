@@ -9,8 +9,9 @@ RUN dos2unix /usr/src/install.sh
 COPY nginx.key /usr/src/
 RUN sh -x /usr/src/install.sh
 
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
+ADD nginx.conf /etc/nginx/conf.d/default.conf
+RUN dos2unix /etc/nginx/conf.d/default.conf
+ADD nginx.vh.default.conf /etc/nginx/conf.d/default.conf
 
 # Create hashed temporary upload locations
 RUN mkdir -p /media/_upload/0 && \
