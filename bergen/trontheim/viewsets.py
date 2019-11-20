@@ -1,3 +1,6 @@
+import json
+from uuid import UUID
+
 from asgiref.sync import async_to_sync
 from django.db import models
 from channels.layers import get_channel_layer
@@ -5,6 +8,13 @@ from rest_framework import viewsets, serializers
 
 channel_layer = get_channel_layer()
 
+# This is necessary so that we serialize the uuid correctly
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            # if the obj is uuid, we simply return the value of uuid
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
 
 class PublishingViewSet(viewsets.ModelViewSet):
     '''Enables publishing to the channel Layed.
@@ -63,19 +73,23 @@ class OsloViewSet(viewsets.ModelViewSet):
     stringpublish = True
 
     def publish(self, serializer, method):
+
+        serializedData = serializer.data
+        serializedData = json.loads(json.dumps(serializedData, cls=UUIDEncoder)) #Shit workaround to get UUUID to be string
+
         if self.publishers is not None:
             for el in self.publishers:
                 modelfield = "empty"
                 try:
                     path = ""
                     for modelfield in el:
-                        value = serializer.data[modelfield]
+                        value = serializedData[modelfield]
                         path += "{0}_{1}_".format(str(modelfield), str(value))
                     path = path[:-1]
                     print("Publishing to Models {0}".format(path))
                     stream = str(serializer.Meta.model.__name__)
                     async_to_sync(channel_layer.group_send)(path, {"type": "stream", "stream": stream, "room": path,
-                                                                   "method": method, "data": serializer.data})
+                                                                   "method": method, "data": serializedData})
                 except KeyError as e:
                     print("Modelfield {0} does not exist on {1}".format(str(el), str(self.serializer_class.__name__)))
                     if self.stringpublish:
@@ -85,7 +99,7 @@ class OsloViewSet(viewsets.ModelViewSet):
                             stream = str(serializer.Meta.model.__name__)
                             async_to_sync(channel_layer.group_send)(path,
                                                                     {"type": "stream", "stream": stream, "room": path,
-                                                                     "method": method, "data": serializer.data})
+                                                                     "method": method, "data": serializedData})
 
     def publishModel(self, model: models.Model, serializerclass: serializers.ModelSerializer.__class__, method: str):
         '''Make sure to call this if you created a new Model on the Database so that the actionpublishers can do their work'''

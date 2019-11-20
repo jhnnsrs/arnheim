@@ -1,9 +1,9 @@
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
 
-from flow.models import Layout, ForeignNodeRequest, Node, ForeignNodeStatus
+from flow.models import Layout, ForeignNodeRequest, Node, ForeignNodeStatus, External, ExternalRequest
 from flow.serializers import FlowSerializer, Flow, NodeSerializer, LayoutSerializer, ForeignNodeRequestSerializer, \
-    ForeignNodeStatusSerializer
+    ForeignNodeStatusSerializer, ExternalSerializer, ExternalRequestSerializer
 from trontheim.viewsets import OsloViewSet
 
 
@@ -58,3 +58,23 @@ class NodeViewSet(OsloViewSet):
     queryset = Node.objects.all()
     serializer_class = NodeSerializer
     publishers = [["variety"],["creator"]]
+
+class ExternalViewSet(OsloViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ("creator",)
+    queryset = External.objects.all()
+    serializer_class = ExternalSerializer
+    publishers = [["creator"]]
+
+class ExternalRequestViewSet(OsloViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ("creator",)
+    queryset = ExternalRequest.objects.all()
+    serializer_class = ExternalRequestSerializer
+    publishers = [["external"]]

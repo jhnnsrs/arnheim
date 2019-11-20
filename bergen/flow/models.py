@@ -1,8 +1,9 @@
+import uuid
+
 from django.contrib.auth.models import User, Group
 from django.db import models
 
 # Create your models here.
-
 
 class Flow(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -39,6 +40,28 @@ class ForeignNodeStatus(models.Model):
     name = models.CharField(max_length=100)
     status = models.CharField(max_length=200)
     creator = models.ForeignKey(User,on_delete=models.CASCADE,null=True, blank=True)
+
+class External(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    node = models.CharField(max_length=2000) #The Nodepath for instantiating
+    defaultsettings = models.CharField(max_length=2000) #The DefaultSettings
+    links = models.CharField(max_length=6000) #All of the Links of that Diagram
+    ports = models.CharField(max_length=7000 ,null=True, blank=True)
+    status = models.CharField(max_length=200) #Is Alive #is not Alive
+    creator = models.ForeignKey(User,on_delete=models.CASCADE,null=True, blank=True)
+    created_at = models.DateTimeField(auto_now=True)
+
+
+class ExternalRequest(models.Model):
+    external = models.ForeignKey(External, on_delete=models.CASCADE) # The external thing it should deliver to
+    data = models.CharField(max_length=6000) # The Model that is being send
+    port = models.CharField(max_length=2000) # The Port for its delivery
+    instance = models.CharField(max_length=2000) #the instance name of
+    model = models.CharField(max_length=200) #The Model Type eg Representation
+    origin = models.CharField(max_length=400) #The Origin of the request (UUID of the Window)
+    created_at = models.DateTimeField(auto_now=True)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
 class Layout(models.Model):
     name = models.CharField(max_length=100)
