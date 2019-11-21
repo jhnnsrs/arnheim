@@ -6,7 +6,7 @@ django-registration-redux
 django-autocomplete-light
 django-taggit
 django-extensions
-
+drf-access-policy
 jupyter
 
 nibabel
