@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from importer.models import *
 from importer.policies import ImportingAccessPolicy
 from importer.serializers import *
+from importer.policies import *
 from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 

@@ -3,6 +3,7 @@ django-logpipe
 django-polymorphic
 django-registration-redux
 django-autocomplete-light
+drf-access-policy
 channels>=2.0.2
 channels_redis~=2.0
 service_identity
