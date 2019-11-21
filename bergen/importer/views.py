@@ -7,6 +7,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 
 from importer.models import *
+from importer.policies import ImportingAccessPolicy
 from importer.serializers import *
 from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
@@ -25,6 +26,7 @@ class ImportingViewSet(OsloActionViewSet):
     Publishers musst be Provided'''
     queryset = Importing.objects.all()
     serializer_class = ImportingSerializer
+    permission_classes = (ImportingAccessPolicy,)
     publishers = [["nodeid"]]
     actionpublishers = {"importing": [("creator",)], "bioimage": [["creator"], ["locker"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
