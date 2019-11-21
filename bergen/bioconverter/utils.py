@@ -21,6 +21,16 @@ def get_conversing_or_error(request: dict) -> Conversing:
 
 
 @database_sync_to_async
+def update_status_on_conversing(parsing: Conversing, status):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    parsing.status = status
+    parsing.save()
+    return parsing
+
+
+@database_sync_to_async
 def get_sample_or_error(sample: Sample) -> Sample:
     """
     Tries to fetch a room for the user, checking permissions along the way.

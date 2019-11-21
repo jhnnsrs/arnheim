@@ -46,6 +46,7 @@ class External(models.Model):
     name = models.CharField(max_length=100)
     node = models.CharField(max_length=2000) #The Nodepath for instantiating
     defaultsettings = models.CharField(max_length=2000) #The DefaultSettings
+    origin = models.CharField(max_length=2000) #The DefaultSettings
     links = models.CharField(max_length=6000) #All of the Links of that Diagram
     ports = models.CharField(max_length=7000 ,null=True, blank=True)
     status = models.CharField(max_length=200) #Is Alive #is not Alive
@@ -60,6 +61,7 @@ class ExternalRequest(models.Model):
     instance = models.CharField(max_length=2000) #the instance name of
     model = models.CharField(max_length=200) #The Model Type eg Representation
     origin = models.CharField(max_length=400) #The Origin of the request (UUID of the Window)
+    kind = models.CharField(max_length=100) # if in or out or what
     created_at = models.DateTimeField(auto_now=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 

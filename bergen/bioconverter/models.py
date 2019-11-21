@@ -18,6 +18,7 @@ class Converter(models.Model):
 class Conversing(models.Model):
     converter = models.ForeignKey(Converter, on_delete=models.CASCADE)
     bioserie = models.ForeignKey(BioSeries, on_delete=models.CASCADE)
+    status = models.CharField(max_length=40, default="STARTED")
     settings = models.CharField(max_length=1000) # jsondecoded
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     nodeid = models.CharField(max_length=300, null=True, blank=True)

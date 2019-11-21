@@ -54,7 +54,7 @@ class SampleViewSet(OsloViewSet):
 
     filter_backends = (DjangoFilterBackend,)
     publishers = [("experiment",),("creator",),("nodeid",)]
-    filter_fields = ("creator","experiment","bioseries","experimentalgroup","bioseries__bioimage")
+    filter_fields = ("creator","experiment","bioseries","experimentalgroup","bioseries__bioimage","bioseries__bioimage__locker")
 
 
 class ExperimentViewSet(OsloViewSet):
