@@ -28,6 +28,7 @@ services:
     volumes:
       - ./bergen:/code
       - media:/code/media/
+      - ./database:/code/db
       - files:/code/files/
     links:
       - redis
