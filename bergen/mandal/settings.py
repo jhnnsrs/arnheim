@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'channels',
     'corsheaders',
     'taggit',
-    'logpipe',
     'chat',
     'social',
     'metamorphers',
