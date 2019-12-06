@@ -2,19 +2,24 @@ version: "3.7"
 
 
 services:
-   nginx:
-     volumes:
+  nginx:
+    image: nginx:latest
+    volumes:
       - ./config/nginx-production.conf:/etc/nginx/nginx.conf
       - media:/media/
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-
+    ports:
+      - 80:80
+      - 443:443
+    links:
+      - web
+      - worker
   certbot:
     image: certbot/certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-
 
 
 volumes:
