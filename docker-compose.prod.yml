@@ -1,5 +1,22 @@
 version: "3.7"
 
+
+services:
+   nginx:
+     volumes:
+      - ./config/nginx-production.conf:/etc/nginx/nginx.conf
+      - media:/media/
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
+
+
 volumes:
   vscode:
   dbdata:
