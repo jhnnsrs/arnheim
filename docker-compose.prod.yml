@@ -1,0 +1,15 @@
+version: "3.7"
+
+volumes:
+  vscode:
+  dbdata:
+  media:
+    driver_opts:
+      type: none
+      device: /media
+      o: bind
+  files:
+    driver_opts:
+      type: none
+      device: /files
+      o: bind
