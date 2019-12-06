@@ -6,10 +6,10 @@ volumes:
   media:
     driver_opts:
       type: none
-      device: /media
+      device: /home/ubuntu/media
       o: bind
   files:
     driver_opts:
       type: none
-      device: /files
+      device: /home/ubuntu/files
       o: bind

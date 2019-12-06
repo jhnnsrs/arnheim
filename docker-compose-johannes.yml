@@ -14,6 +14,7 @@ services:
       - DJANGO_LOG_LOVEL=INFO
     volumes:
       - ./bergen:/code
+      - ./database:/code/db
       - media:/code/media/
     ports:
       - "8000:8000"
@@ -27,6 +28,7 @@ services:
     volumes:
       - ./bergen:/code
       - media:/code/media/
+      - ./database:/code/db
       - files:/code/files/
     links:
       - redis
@@ -50,6 +52,7 @@ services:
       - ./notebooks:/notebooks
       - ./bergen:/code/
       - ./jupjup:/config/
+      - ./database:/code/db
       - media:/code/media/
       - files:/files/
     ports:
