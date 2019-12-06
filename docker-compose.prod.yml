@@ -15,7 +15,7 @@ services:
     links:
       - web
       - worker
-      - cerbot
+      - certbot
   certbot:
     image: certbot/certbot
     volumes:
