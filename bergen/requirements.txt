@@ -1,5 +1,5 @@
 kafka
-Django>=2.0.0
+Django>=2.0.0<3
 channels>=2.0.2
 channels_redis~=2.0
 django-registration-redux
