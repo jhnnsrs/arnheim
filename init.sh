@@ -15,7 +15,7 @@ mkdir -p "$data_path/conf/live/$domains"
 echo "### Creating dummy certificate ..."
 path="/etc/letsencrypt/live/$domains"
 mkdir -p "$path"
-docker-compose -f docker-compose.yml -f docker-compose.conf.yml run certbot "\
+docker-compose -f docker-compose.yml -f docker-compose.conf.yml run nginx "\
     openssl req -x509 -nodes -newkey rsa:1024 -days 1\
       -keyout '$path/privkey.pem' \
       -out '$path/fullchain.pem' \
