@@ -15,7 +15,7 @@ mkdir -p "$data_path/conf/live/$domains"
 echo "### Creating dummy certificate ..."
 path="/etc/letsencrypt/live/$domains"
 mkdir -p "$path"
-sudo docker-compose -f docker-compose.yml -f docker-compose.prod.yml --rm --entrypoint "\
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml -run "\
     openssl req -x509 -nodes -newkey rsa:1024 -days 1\
       -keyout '$path/privkey.pem' \
       -out '$path/fullchain.pem' \
@@ -28,8 +28,7 @@ curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/ssl-dhp
 
 
 echo "### Starting nginx ..."
-sudo docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d nginx
-
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
 
 echo "### Deleting dummy certificate ..."
 sudo rm -Rf "$data_path/conf/live"
@@ -58,7 +57,7 @@ if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
 echo "### Entrypoint ..."
 
-sudo docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint "\
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml run certbot "\
   certbot certonly --webroot -w /var/www/certbot \
     $staging_arg \
     $email_arg \
@@ -67,4 +66,4 @@ sudo docker-compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --
     --agree-tos \
     --force-renewal" certbot
 
-sudo docker-compose -f docker-compose.yml -f docker-compose.prod.yml stop nginx
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml stop nginx
