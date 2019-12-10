@@ -33,8 +33,9 @@ SECRET_KEY = 'e+uck-nbb+_%(d@%s-@l@*o!xp__p7rssglb74xr*6=m5lh=vx'
 # SECURITY WARNING: don't run with debug turned on in production!
 ALLOWED_HOSTS = ['129.206.5.200','127.0.0.1',"localhost",'johannesroos.de','129.206.173.171',"192.168.0.116","192.168.137.1","192.168.99.100","arnheim.online"]
 
-#Cors Settings
+#Cors Settings and SSL settings
 CORS_ORIGIN_ALLOW_ALL = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 INSTALLED_APPS = [
