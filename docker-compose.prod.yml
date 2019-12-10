@@ -17,6 +17,18 @@ services:
       - worker
       - certbot
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+  web:
+    volumes:
+      - ./bergen:/code
+      - ./database:/code/db
+      - ./media:/code/media
+      - ./files:/code/files
+  worker:
+    volumes:
+      - ./bergen:/code
+      - ./media:/code/media
+      - ./database:/code/db
+      - ./files:/code/files
   certbot:
     image: certbot/certbot
     restart: unless-stopped
