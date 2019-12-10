@@ -6,7 +6,7 @@ services:
     image: nginx:latest
     volumes:
       - ./config/nginx-production.conf:/etc/nginx/nginx.conf
-      - media:/media/
+      - ./media:/media/
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     ports:
@@ -28,6 +28,13 @@ services:
       - ./bergen:/code
       - ./media:/code/media
       - ./database:/code/db
+      - ./files:/code/files
+  notebook:
+    volumes:
+      - ./notebooks:/notebooks
+      - ./bergen:/code/
+      - ./jupjup:/config/
+      - ./media:/code/media
       - ./files:/code/files
   certbot:
     image: certbot/certbot
