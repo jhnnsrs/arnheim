@@ -16,6 +16,7 @@ services:
       - ./bergen:/code
       - ./database:/code/db
       - media:/code/media/
+      - files:/code/files/
     ports:
       - "8000:8000"
     links:
@@ -53,7 +54,7 @@ services:
       - ./bergen:/code/
       - ./jupjup:/config/
       - media:/code/media/
-      - files:/files/
+      - files:/code/files
     ports:
       - "90:90"
 
