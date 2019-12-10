@@ -15,8 +15,8 @@ services:
     volumes:
       - ./bergen:/code
       - ./database:/code/db
-      - media:/code/media/
-      - files:/code/files/
+      - media:/code/media
+      - files:/code/files
     ports:
       - "8000:8000"
     links:
@@ -28,16 +28,16 @@ services:
     command: python manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata pandas profiler excelexport importer
     volumes:
       - ./bergen:/code
-      - media:/code/media/
+      - media:/code/media
       - ./database:/code/db
-      - files:/code/files/
+      - files:/code/files
     links:
       - redis
   nginx:
     image: nginx:latest
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf
-      - media:/media/
+      - media:/media
     ports:
       - 80:80
       - 443:443
@@ -53,7 +53,7 @@ services:
       - ./notebooks:/notebooks
       - ./bergen:/code/
       - ./jupjup:/config/
-      - media:/code/media/
+      - media:/code/media
       - files:/code/files
     ports:
       - "90:90"
