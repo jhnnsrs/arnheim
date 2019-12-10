@@ -35,6 +35,7 @@ services:
       - ./bergen:/code/
       - ./jupjup:/config/
       - ./media:/code/media
+      - ./database:/code/db
       - ./files:/code/files
   certbot:
     image: certbot/certbot
