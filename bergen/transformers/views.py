@@ -26,7 +26,7 @@ class TransformationViewSet(viewsets.ModelViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment", "creator", "roi","representation")
+    filter_fields = ("experiment", "creator", "roi","representation","sample")
     queryset = Transformation.objects.all()
     serializer_class = TransformationSerializer
 
