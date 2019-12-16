@@ -22,8 +22,4 @@ COPY data /data
 RUN  cp /usr/local/src/hdf5-json/data/hdf5/tall.h5 /data ; \                                      
      ln -s /data 
                               
-EXPOSE 5000 
 
-COPY entrypoint.sh /
-
-ENTRYPOINT ["/entrypoint.sh"]

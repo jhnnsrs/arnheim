@@ -18,7 +18,7 @@ _cfgDefault = {
     'port':   5000,
     'debug':  True,
     'datapath': 'data',
-    'public_dir': ['public', 'h5files'],
+    'public_dir': ['h5files'],
     'domain':  'hdfserver',
     'hdf5_ext': '.h5',
     'toc_name': '.toc.h5',

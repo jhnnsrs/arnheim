@@ -1,6 +1,9 @@
 """
 Helper function - get uuid for a given path
 """
+from rest_framework.exceptions import APIException
+
+from elements.models import Numpy
 
 """
     Helper function - get endpoint we'll send http requests to 
@@ -25,15 +28,23 @@ import requests
 import unittest
 import json
 import base64
+from mandal import settings
+import requests
+from django.utils.html import escape
+# import the logging library
+import logging
+import urllib.parse
+import os
 
 
-domain = "hdfserver"
-port = 5000
+logger = logging.getLogger(__name__)
+host = settings.HDFSERVER["host"]
+port = settings.HDFSERVER["port"]
 
 
 
 def getEndpoint():
-    endpoint = 'http://' + domain + ':' + str(port)
+    endpoint = 'http://' + host + ':' + str(port)
     return endpoint
 
 
@@ -128,3 +139,43 @@ def getUUIDByPath(domain, path, user=None, password=None):
         else:
             raise KeyError("non-hard link")
     return tgt_uuid
+
+class HDFException(APIException):
+    status_code = 503
+    default_detail = 'HDF Service malfunctioning temporarily, try again later.'
+    default_code = 'service_unavailable'
+
+
+
+def getDataSetUUIDforNumpy(numpy: Numpy):
+
+    ## This is a dirty hack to get the correct filepath for the old samplefiles
+    ## New Ones should be safed as sample-{id} and not face weird number errors
+    filename = os.path.basename(numpy.filepath)
+    fnwithoutextenstion = os.path.splitext(filename)[0].replace(".", "%2E")
+
+    domain = "{0}.h5files.{1}".format(fnwithoutextenstion, host)
+    headers = {"host": domain}
+    type = numpy.type
+    vid = numpy.vid
+    logger.info("Trying to get Dataset {0} of Type {1} from Domain: {2}".format(vid,type,domain))
+    try:
+        datasetid = getUUIDByPath(domain, "/{0}/{1}".format(type, vid))
+    except KeyError as e:
+        logger.info("The File seems not to be updated Try updating")
+        reg = 'http://' + host + ':' + str(port) + "/update/"
+        updated = requests.get(reg, headers=headers)
+        if updated.status_code == 200:
+            datasetid = getUUIDByPath(domain, "/{0}/{1}".format(type, vid))
+        else:
+            logger.error("Something is wrong, we are not able to get the dataset")
+            raise HDFException()
+
+    return (domain, datasetid)
+
+
+def queryDataSetUUID(domain, datasetid, query):
+    reg = 'http://' + host + ':' + str(port) + "/datasets/" + datasetid + "/"+ query
+    headers = {"host": domain}
+    answer = requests.get(reg, headers=headers)
+    return answer

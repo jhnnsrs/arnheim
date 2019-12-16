@@ -36,6 +36,7 @@ import social.routes
 import bioconverter.routes
 import answers.routes
 import evaluators.routes
+import strainers.routes
 import biouploader.routes
 import transformers.routes
 import flow.routes
@@ -52,6 +53,7 @@ router.registry.extend(bioconverter.routes.router.registry)
 router.registry.extend(biouploader.routes.router.registry)
 router.registry.extend(metamorphers.routes.router.registry)
 router.registry.extend(visualizers.routes.router.registry)
+router.registry.extend(strainers.routes.router.registry)
 router.registry.extend(importer.routes.router.registry)
 router.registry.extend(answers.routes.router.registry)
 router.registry.extend(transformers.routes.router.registry)

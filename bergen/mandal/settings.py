@@ -31,7 +31,7 @@ DEBUG = True
 SECRET_KEY = 'e+uck-nbb+_%(d@%s-@l@*o!xp__p7rssglb74xr*6=m5lh=vx'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-ALLOWED_HOSTS = ['129.206.5.200','127.0.0.1',"localhost",'johannesroos.de','129.206.173.171',"192.168.0.116","192.168.137.1","192.168.99.100","arnheim.online"]
+ALLOWED_HOSTS = ['129.206.5.200','127.0.0.1',"localhost",'johannesroos.de','129.206.173.171',"192.168.0.116","192.168.137.1","192.168.99.100","arnheim.online","web"]
 
 #Cors Settings and SSL settings
 CORS_ORIGIN_ALLOW_ALL = True
@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'answers',
     'visualizers',
     'importer',
+    'strainers',
 ]
 
 # Taggit Settings
@@ -187,6 +188,12 @@ else:
         }
     }
 
+# HDF Server Settings
+HDFSERVER = {
+    "host" : "hdfserver",
+    "port" : 5000
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -228,6 +235,7 @@ LOGPIPE = {
     # 'MIN_MESSAGE_LAG_MS': 0,
     # 'DEFAULT_FORMAT': 'json',
 }
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -243,6 +251,7 @@ LOGGING = {
         },
     },
 }
+
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
 LANGUAGE_CODE = 'en-us'
@@ -264,7 +273,7 @@ STATICFILES_DIRS = [
 
 FIXTURE_DIRS =  [ "fixtures"]
 
-
+# Settings for Standard Compression
 TRANSFORMATION_DTYPE = None
 TRANSFORMATION_COMPRESSION = None
 PANDAS_COMPRESSION = None

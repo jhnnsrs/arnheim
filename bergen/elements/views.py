@@ -3,6 +3,7 @@ import tempfile
 
 import h5py
 from django.http import HttpResponse
+from django.utils.http import urlencode
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
@@ -11,11 +12,15 @@ from elements.models import Antibody, Sample, Experiment, ExperimentalGroup, Ani
 from elements.serializers import AntibodySerializer, SampleSerializer, ExperimentSerializer, \
     ExperimentalGroupSerializer, AnimalSerializer, FileMatchStringSerializer, NumpySerializer
 from hdfserver import idgetter
+from hdfserver.idgetter import getDataSetUUIDforNumpy, queryDataSetUUID
 from trontheim.viewsets import OsloViewSet
 import requests
 from django.utils.html import escape
 # import the logging library
 import logging
+import urllib.parse
+import os
+
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -58,11 +63,6 @@ class ExperimentalGroupViewSet(OsloViewSet):
     publishers = [["experiment"]]
     filter_fields = ("creator", "name", "experiment")
 
-class HDFException(APIException):
-    status_code = 503
-    default_detail = 'HDF Service malfunctioning temporarily, try again later.'
-    default_code = 'service_unavailable'
-
 
 class NumpyViewSet(OsloViewSet):
     """
@@ -74,36 +74,44 @@ class NumpyViewSet(OsloViewSet):
     publishers = [["sample"]]
     filter_fields = ("sample",)
 
+
     @action(methods=['get'], detail=True,
             url_path='value', url_name='value')
     def value(self, request, pk):
         numpy: Numpy = self.get_object()
+        query_params = request.query_params
 
-        print(request.query_params)
-        host = "hdfserver"
-        port = 5000
-        domain = "sample-{0}.h5files.{1}".format(numpy.sample.id,host)
-        headers = { "host": domain}
-        type = numpy.type
-        vid = numpy.vid
-        print( type, vid)
-        print( domain)
-        try:
-            datasetid = idgetter.getUUIDByPath(domain, "/{0}/{1}".format(type, vid))
-        except KeyError as e:
-            logger.info("The File seems not to be updated Try updating")
-            reg = 'http://' + host + ':' + str(port) + "/update/"
-            updated = requests.get(reg, headers=headers)
-            if updated.status_code == 200:
-                datasetid = idgetter.getUUIDByPath(domain, "/{0}/{1}".format(type, vid))
-            else:
-                raise HDFException()
+        domain, datasetid = getDataSetUUIDforNumpy(numpy)
 
-        print(datasetid)
+        # We are trying to pass on selection params
+        query = "?select={0}".format(query_params["select"]) if "select" in query_params else ""
+        logger.info("Passing on SelectQuery: {0}".format(query))
 
-        reg = 'http://' + host + ':' + str(port) + "/datasets/" + datasetid + "/value"
-        headers = { "host": domain}
-        answer = requests.get(reg, headers= headers)
+        answer = queryDataSetUUID(domain, datasetid,"/value" + query)
+        response = HttpResponse(answer, content_type="application/json")
+        return response
+
+    @action(methods=['get'], detail=True,
+            url_path='shape', url_name='shape')
+    def shape(self, request, pk):
+        numpy: Numpy = self.get_object()
+        query_params = request.query_params
+
+        domain, datasetid = getDataSetUUIDforNumpy(numpy)
+
+        answer = queryDataSetUUID(domain, datasetid, "/shape")
+        response = HttpResponse(answer, content_type="application/json")
+        return response
+
+    @action(methods=['get'], detail=True,
+            url_path='type', url_name='type')
+    def type(self, request, pk):
+        numpy: Numpy = self.get_object()
+        query_params = request.query_params
+
+        domain, datasetid = getDataSetUUIDforNumpy(numpy)
+
+        answer = queryDataSetUUID(domain, datasetid, "/type")
         response = HttpResponse(answer, content_type="application/json")
         return response
 

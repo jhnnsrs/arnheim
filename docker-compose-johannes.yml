@@ -25,7 +25,7 @@ services:
       - hdfserver
   worker:
     build: bergen
-    command: python manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata pandas profiler excelexport importer
+    command: python manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata pandas profiler excelexport importer intensityprofiler
     volumes:
       - ./bergen:/code
       - media:/code/media/

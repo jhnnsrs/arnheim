@@ -9,26 +9,6 @@ from bioconverter.models import Representation
 
 
 
-class HDFStore(models.Model):
-    name = models.CharField(max_length=400, blank=True, null=True)
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True, blank=True)
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    shape = models.CharField(max_length=100, blank=True, null=True)
-    nodeid = models.CharField(max_length=400, null=True, blank=True)
-    representation = models.ForeignKey(Representation, on_delete=models.CASCADE, blank=True, null=True)
-    image = models.ImageField(upload_to="representation_images", blank=True, null=True)
-
-    def delete(self, *args, **kwargs):
-        print("Trying to remove Image of path", self.image.path)
-        if os.path.isfile(self.image.path):
-            os.remove(self.image.path)
-            print("Removed Image of path", self.image.path)
-
-        super(Display, self).delete(*args, **kwargs)
-
-
-
 class Display(models.Model):
     name = models.CharField(max_length=400, blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True, blank=True)
