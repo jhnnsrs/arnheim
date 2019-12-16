@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from elements.models import Antibody, Experiment, Sample, ExperimentalGroup, Animal, FileMatchString
+from elements.models import Antibody, Experiment, Sample, ExperimentalGroup, Animal, FileMatchString, Numpy
 
 
 class AntibodySerializer(serializers.ModelSerializer):
@@ -28,6 +28,11 @@ class ExperimentalGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExperimentalGroup
         fields = "__all__"
+
+class NumpySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Numpy
+        exclude = ("filepath",)
 
 
 class SampleSerializer(serializers.ModelSerializer):

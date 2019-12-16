@@ -1,2 +1,2 @@
 def toFileName(sample):
-    return sample.name + ".h5"
+    return "sample-{0}.h5".format(str(sample.id))

@@ -38,24 +38,58 @@ application = ProtocolTypeRouter({
         ]),
     ),
     "channel": ChannelNameRouter({
+        # PROCESSING PORTION
+
+        # Importers (Files out)
+        "importer": Importer,
+
+        # Analyzers (File in Meta out)
+        "analyzer": BioAnalyzer,
+
+        # Converters (File in Rep and Sample Out)
+        "bioconverter": BioConverter,
+        "test": ConvertBioSeriesOsloJob,
+
+        #Filters (Rep in Rep out)
         "maxisp": MaxISP,
         "slicedmaxisp": SlicedMaxISP,
         "mapping": Mapping,
         "prewitt": PrewittFilter,
-        "bioconverter": BioConverter,
-        "nifti": NiftiMetamorpher,
-        "image": ImageMetamorpher,
-        "test": ConvertBioSeriesOsloJob,
+
+        #Transformers (Rep, Roi, in Trans out)
         "linerect": LineRectifierTransformer,
         "sliceline": SliceLineTransformer,
+
+        # Revampers (Transin, Transout -> like Filter)
+        "masker": MaskingRevamper,
+
+        # Evaluators
+        "aisdata": AISDataConsumer,
+        "clusterdata": ClusterDataConsumer,
+
+
+        # VISUALIZATION PART
+
+        #Metamorphers ( Rep in Visual out)
+        "nifti": NiftiMetamorpher,
+        "image": ImageMetamorpher,
+
+
+        #Mutaters (Trans in Visual out)
         "transformimage": ImageMutator,
+
+
+
+
+
+
+        #DATA PORTION
+        #Oracles
         "pandas": PandaAnswer,
+
+        #Visualizers
         "profiler": Profiler,
         "excelexport": ExcelExporter,
-        "importer": Importer,
-        "aisdata": AISDataConsumer,
-        "analyzer": BioAnalyzer,
-        "clusterdata": ClusterDataConsumer,
-        "masker": MaskingRevamper
+
     }),
 })

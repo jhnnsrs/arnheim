@@ -46,7 +46,7 @@ class TransformationViewSet(viewsets.ModelViewSet):
 class TransformingViewSet(OsloActionViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
-    queryset = Transforming.objects.all()
+    queryset = Transforming.objects.all()[:100]
     serializer_class = TransformingSerializer
     publishers = [["sample"]]
     actionpublishers = {"sample": [("creator", "experiment")], "transformation": [["representation"],["creator"],["roi"],["nodeid"]]}

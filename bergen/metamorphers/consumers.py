@@ -165,3 +165,55 @@ class ImageMetamorpher(MetamorphingOsloJobConsumer):
         print(array.shape)
         img = toimage(array)
         return img
+
+
+class ImageMetamorpher(MetamorphingOsloJobConsumer):
+
+    def getDatabaseFunction(self):
+        return update_display_or_create
+
+    def getSerializer(self) -> serializers.ModelSerializer:
+        return DisplaySerializer
+
+    async def convert(self, array: np.array, conversionsettings: dict):
+        # TODO: Maybe faktor this one out
+        if len(array.shape) == 5:
+            array = np.nanmax(array[:, :, :3, :, 0], axis=3)
+        if len(array.shape) == 4:
+            array = np.nanmax(array[:, :, :3, :], axis=3)
+        if len(array.shape) == 3:
+            array = array[:, :, :3]
+            if array.shape[2] == 1:
+                x = array[:, :, 0]
+
+                # expand to what shape
+                target = np.zeros((array.shape[0], array.shape[1], 3))
+
+                # do expand
+                target[:x.shape[0], :x.shape[1], 0] = x
+
+                array = target
+            if array.shape[2] == 2:
+                x = array[:, :, :1]
+
+                # expand to what shape
+                target = np.zeros((array.shape[0], array.shape[1], 3))
+
+                # do expand
+                target[:x.shape[0], :x.shape[1], :1] = x
+
+                array = target
+
+        if len(array.shape) == 2:
+            x = array[:, :]
+
+            # expand to what shape
+            target = np.zeros((array.shape[0], array.shape[1], 3))
+
+            # do expand
+            target[:x.shape[0], :x.shape[1], 0] = x
+
+            array = target
+        print(array.shape)
+        img = toimage(array)
+        return img
