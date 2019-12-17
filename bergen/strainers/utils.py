@@ -60,7 +60,7 @@ def update_outputtransformation_or_create(request: Straining, settings, numpyarr
         transformation.shape = json.dumps(numpyarray.shape)
         transformation.nodeid = request.nodeid
         transformation.save()
-    return transformation, method
+    return (transformation, method)
 
 
 

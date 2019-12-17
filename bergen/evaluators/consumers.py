@@ -5,9 +5,11 @@ import numpy as np
 from biouploader.models import BioMeta
 from drawing.models import ROI
 from evaluators.logic.clusterAnalysis import findConnectedCluster
-from evaluators.models import Evaluating, VolumeData, ClusterData
-from evaluators.serializers import DataSerializer, EvaluatingSerializer, VolumeDataSerializer, ClusterDataSerializer
-from evaluators.utils import get_evaluating_or_error, update_volumedata_or_create, update_clusterdata_or_create
+from evaluators.models import Evaluating, VolumeData, ClusterData, LengthData
+from evaluators.serializers import DataSerializer, EvaluatingSerializer, VolumeDataSerializer, ClusterDataSerializer, \
+    LengthDataSerializer
+from evaluators.utils import get_evaluating_or_error, update_clusterdata_or_create, \
+    update_lengthdata_or_create
 from transformers.models import Transformation
 from trontheim.consumers import OsloJobConsumer
 
@@ -25,11 +27,11 @@ class EvaluatingConsumer(OsloJobConsumer):
         meta: BioMeta = request.sample.meta
 
         datamodel = await self.parse(settings, transformation, roi, meta, request)
-        volumedata, method = await self.getDataFunction()(request, datamodel, settings)
+        datainstance, method = await self.getDataFunction()(request, datamodel, settings)
 
 
-        await self.modelCreated(volumedata, DataSerializer, method)
-        await self.modelCreated(volumedata, self.getSerializer(), method)
+        await self.modelCreated(datainstance, DataSerializer, method)
+        await self.modelCreated(datainstance, self.getSerializer(), method)
 
     async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
         raise NotImplementedError
@@ -62,83 +64,42 @@ class EvaluatingConsumer(OsloJobConsumer):
         return defaultsettings
 
 
-class VolumetricDataConsumer(EvaluatingConsumer):
 
-    async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
-        data = {"length": 4, "name": "Peter"}
-        return data
-
-
-class AISDataConsumer(EvaluatingConsumer):
+class LengthDataFromIntensityProfile(EvaluatingConsumer):
 
     def getSerializer(self):
-        return VolumeDataSerializer
+        return LengthDataSerializer
 
     def getDataFunction(self):
-        return update_volumedata_or_create
+        return update_lengthdata_or_create
 
     async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
 
-        vectorlength: float = None
-        b4channel: int = int(settings["b4channel"])
-        threshold: float = float(settings["threshold"])
-        tags: list = ["AIS"]
+        threshold: float = float(settings["threshold"]) if "threshold" in settings else 0
 
-        transformation_image = transformation.numpy.get_array()
-        vectorlength = 4 #TODO: Make this accurate
-        height = 0
-        width = 0
-        channels = 0
-        ndim = 2
 
-        if len(transformation_image.shape) > 3 or len(transformation_image.shape) < 2:
-            await self.raiseError("This is not a valid transformation. Shape exceeds the available dimensions")
-            return
-        if len(transformation_image.shape) == 3:
-            height, width, channels = transformation_image.shape
-            ndim = 3
-        if len(transformation_image.shape) == 2:
-            height, width = transformation_image.shape
-            channels = 0
-            ndim = 2
+        print("Hallloooo",threshold)
+
+
+
+        intensity = transformation.numpy.get_array()
+        print(intensity.shape)
+        width = intensity.shape[1]
+
+        # ATTENTION IF NOT SAME RATIO VOXEL IS FUCKED UP
+        physizex = meta.xphysical
+        print(physizex)
 
         # Maybe user has defined different starts and ends
         userdefinedstart = int(settings["userdefinedstart"]) if "userdefinedstart" in settings else 0
         userdefinedend = int(settings["userdefinedend"]) if "userdefinedend" in settings else width
-
-
-        # this takes the middle part of the picture
-        middleup = int((height / 2) - (height / 4))
-        middledown = int((height / 2) + (height / 4))
-
-
-        # trimm image according to needs
-        if ndim == 3:
-            trimmedimage = transformation_image[middleup:middledown, :, :]
-        else:
-            trimmedimage = transformation_image[middleup:middledown, :]
-
-        np.seterr(divide='ignore', invalid='ignore')  # error level if a pixelvalue is 0
-        averages = np.max(trimmedimage, axis=0)
-        intensity = averages / averages.max(axis=0)
-
-        # A JSON Serializiable version of our intensitycurves
-        intensities = intensity.tolist()
-        intensitycurves: str = json.dumps(intensities)
-
-        # ATTENTION IF NOT SAME RATIO VOXEL IS FUCKED UP
-        physizex = meta.xphysical
-
         # THIS PART CALCULATES THE ONCE OVER A CERTAIN THRESHOLD
-        if channels != 0:
-            c = b4channel if b4channel < intensity.shape[1] else intensity.shape[1] - 1
 
-            overindices = (intensity[:, c] > threshold).nonzero()[0]
-        else:
-            overindices = (intensity > threshold).nonzero()[0]
-
+        overindices = (intensity[:,0] > threshold).nonzero()[0]
+        print(overindices)
         overindices = np.array([index for index in overindices if index >= userdefinedstart and index <= userdefinedend])
 
+        print(overindices)
         try:
             xstart = overindices.min()
             ystart = overindices.max()
@@ -147,30 +108,25 @@ class AISDataConsumer(EvaluatingConsumer):
             xstart = -1
             ystart = -1
 
-            tags.append("Error")
 
         aisstart = xstart
         aisend = ystart
-        pixellength = ystart - xstart
 
-        physicallength = pixellength * float(physizex)
+        length = aisend - aisstart
+        distancetostart = aisstart
+        distancetoend = aisend
 
-        data = VolumeData(roi=roi,
-                          transformation=transformation,
-                          sample=transformation.sample,
-                          experiment=transformation.experiment,
-                          b4channel=b4channel,
-                          vectorlength=vectorlength,
-                          pixellength=pixellength,
-                          aisstart=aisstart,
-                          aisend=aisend,
-                          userdefinedstart=userdefinedstart,
-                          userdefinedend=userdefinedend,
-                          threshold=threshold,
-                          physicallength=physicallength,
-                          intensitycurves=intensitycurves,
-                          meta=meta,
-                          nodeid=evaluating.nodeid)
+        physicallength = length * float(physizex)
+        physicaldistancetostart= distancetostart * float(physizex)
+        physicaldistancetoend= distancetoend * float(physizex)
+
+        data = {}
+        data["length"] = length
+        data["distancetostart"] = distancetostart
+        data["distancetoend"] = distancetoend
+        data["physicallength"] = physicallength
+        data["physicaldistancetostart"] = physicaldistancetostart
+        data["physicaldistancetoend"] = physicaldistancetoend
 
         return data
 
@@ -194,15 +150,10 @@ class ClusterDataConsumer(EvaluatingConsumer):
         print("Creating Cluster of " + str(n_pixels) + " Pixels")
         print("Creating Cluster of " + str(areaphysical) + " Size")
         print("Creating Cluster of " + str(n_cluster) + " Cluster")
-        data = ClusterData(roi=roi,
-                          transformation=transformation,
-                          sample=transformation.sample,
-                          experiment=transformation.experiment,
-                          clusternumber= n_cluster,
-                          clusterareapixels = n_pixels,
-                          clusterarea = areaphysical,
-                          spatialunit= meta.spacial_units+"²",
-                          meta=meta,
-                          nodeid=evaluating.nodeid)
+
+        data = {}
+        data["clusternumber"] = n_cluster
+        data["clusterareapixels"] = areaphysical
+        data["clusterarea"] = areaphysical
 
         return data

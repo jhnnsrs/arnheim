@@ -88,6 +88,12 @@ class IntensityProfiler(StrainerConsumer):
         np.seterr(divide='ignore', invalid='ignore')  # error level if a pixelvalue is 0
         averages = np.max(trimmedimage, axis=0)
         intensity = averages / averages.max(axis=0)
+        if "channels" in settings:
+            print("Original Intensitycurve had shape of ",intensity.shape)
+            selectedchannels = list(map(lambda item: item["value"], settings["channels"]))
+            print("Selecting Channels ",selectedchannels)
+            intensity = np.take(intensity, selectedchannels, axis=1)
+            print("Intensitycurves now has shape of ",intensity.shape)
 
         return intensity
 

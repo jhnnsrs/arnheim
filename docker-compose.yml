@@ -22,9 +22,20 @@ services:
       - worker
       - db
       - hdfserver
+  oslo:
+    build: bergen
+    command: python manage.py runworker channels
+    volumes:
+      - ./bergen:/code
+      - media:/code/media
+      - ./database:/code/db
+      - files:/code/files
+    links:
+      - redis
+      - hdfserver
   worker:
     build: bergen
-    command: python manage.py runworker channels maxisp bioconverter nifti image test prewitt linerect transformimage aisdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata pandas profiler excelexport importer intensityprofiler
+    command: python manage.py runworker maxisp bioconverter nifti image test prewitt linerect transformimage lengthdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata pandas profiler excelexport importer intensityprofiler
     volumes:
       - ./bergen:/code
       - media:/code/media

@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -15,6 +17,11 @@ class Reflection(models.Model):
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(upload_to="transformation_images", blank=True, null=True)
+
+    def delete(self,*args,**kwargs):
+        self.image.delete()
+
+        super(Reflection, self).delete(*args,**kwargs)
 
 
 class Mutater(models.Model):

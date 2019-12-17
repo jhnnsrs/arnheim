@@ -2,9 +2,9 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 
-from evaluators.models import Evaluator, Data, Evaluating, VolumeData, ClusterData
+from evaluators.models import Evaluator, Data, Evaluating, VolumeData, ClusterData, LengthData
 from evaluators.serializers import EvaluatorSerializer, DataSerializer, EvaluatingSerializer, VolumeDataSerializer, \
-    ClusterDataSerializer
+    ClusterDataSerializer, LengthDataSerializer
 from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
@@ -40,6 +40,13 @@ class ClusterDataViewSet(OsloViewSet):
     serializer_class = ClusterDataSerializer
     publishers = [["sample"],["transformation"]]
 
+class LengthDataViewSet(OsloViewSet):
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ["transformation","roi"]
+    queryset = LengthData.objects.all()
+    serializer_class = LengthDataSerializer
+    publishers = [["sample"],["transformation"]]
+
 
 class EvaluatingViewSet(OsloActionViewSet):
     '''Enables publishing to the channel Layed.
@@ -47,7 +54,11 @@ class EvaluatingViewSet(OsloActionViewSet):
     queryset = Evaluating.objects.all()
     serializer_class = EvaluatingSerializer
     publishers = [["sample"]]
-    actionpublishers = {"sample": [("creator", "experiment")], "data": [["transformation"],["creator"]], "clusterdata": [["transformation"],["creator"],["nodeid"]]}
+    actionpublishers = {"sample": [("creator", "experiment")],
+                        "data": [["transformation"],["creator"]],
+                        "clusterdata": [["transformation"],["creator"],["nodeid"]],
+                        "lengthdata": [["transformation"], ["creator"], ["nodeid"]],
+                        }
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "maxisp"
     actiontype = "startparsing"

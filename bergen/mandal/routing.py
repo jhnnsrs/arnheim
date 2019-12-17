@@ -5,7 +5,7 @@ from django.urls import path
 from answers.consumers import PandaAnswer
 from bioconverter.consumers import BioConverter, ConvertBioSeriesOsloJob
 from biouploader.consumers import BioAnalyzer
-from evaluators.consumers import AISDataConsumer, ClusterDataConsumer
+from evaluators.consumers import LengthDataFromIntensityProfile, ClusterDataConsumer
 from filterbank.consumers import MaxISP, PrewittFilter, SlicedMaxISP, Mapping
 from importer.consumers import Importer
 from metamorphers.consumers import NiftiMetamorpher, ImageMetamorpher
@@ -68,7 +68,7 @@ application = ProtocolTypeRouter({
         "masker": MaskingRevamper,
 
         # Evaluators
-        "aisdata": AISDataConsumer,
+        "lengthdata": LengthDataFromIntensityProfile,
         "clusterdata": ClusterDataConsumer,
 
 

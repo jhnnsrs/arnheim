@@ -1,5 +1,5 @@
 from channels.db import database_sync_to_async
-from evaluators.models import Evaluating, Data, VolumeData, ClusterData
+from evaluators.models import Evaluating, Data, VolumeData, ClusterData, LengthData
 # import the logging library
 import logging
 
@@ -19,54 +19,54 @@ def get_evaluating_or_error(request: dict):
 
 
 @database_sync_to_async
-def update_volumedata_or_create(request: Evaluating, putdata: VolumeData, settings):
+def update_lengthdata_or_create(request: Evaluating, putdata: dict, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
     method = "error"
     vidfirst = "data_roi-{0}_transformation-{1}_evaluator-{2}_node-{3}".format(str(request.roi_id),str(request.transformation_id),str(request.evaluator_id),str(request.nodeid))
-    datas = VolumeData.objects.filter(vid__startswith=vidfirst)
+    datas = LengthData.objects.filter(vid__startswith=vidfirst)
     vidsub = "_{0}".format(str(datas.count()) if datas.count() else 0)
     vid = vidfirst + vidsub
-    data: VolumeData = datas.last()
+    data: LengthData = datas.last()
 
-    if data is None or not settings["override"]:
+    if data is None or not settings.get("overwrite", False):
         method = "create"
         # TODO make creation of outputvid
         logger.info("Creating New VolumeData with VID "+vid)
-        data = VolumeData.objects.create(
+        data = LengthData.objects.create(
             name=request.evaluator.name + " of " + request.transformation.name + " of " + str(request.roi),
             creator=request.creator,
             vid=vid,
-            nodeid=putdata.nodeid,
-            sample=putdata.sample,
-            experiment=putdata.experiment,
-            transformation=putdata.transformation,
-            roi=putdata.roi,
-            b4channel=putdata.b4channel,
-            vectorlength=putdata.vectorlength,
-            pixellength=putdata.pixellength,
-            aisstart=putdata.aisstart,
-            aisend=putdata.aisend,
-            userdefinedstart=putdata.userdefinedstart,
-            userdefinedend=putdata.userdefinedend,
-            threshold=putdata.threshold,
-            physicallength=putdata.physicallength,
-            diameter=3,
-            meta=putdata.meta,
-            intensitycurves=putdata.intensitycurves,
-
+            evaluating=request,
+            nodeid=request.nodeid,
+            sample=request.sample,
+            experiment=request.experiment,
+            transformation=request.transformation,
+            roi=request.roi,
+            biometa=request.sample.meta,
+            pixellength=putdata["length"],
+            distancetostart=putdata["distancetostart"],
+            distancetoend=putdata["distancetoend"],
+            physicallength=putdata["physicallength"],
+            physicaldistancetostart=putdata["physicaldistancetostart"],
+            physicaldistancetoend=putdata["physicaldistancetoend"],
         )
     elif data is not None:
         # TODO: update array of output
         method = "update"
         # TODO: set name of newly generated and timestamp
-        data.vectorlength = putdata.vectorlength,
+        data.pixellength = putdata["length"]
+        data.distancetostart = putdata["distancetostart"]
+        data.distancetoend = putdata["distancetoend"]
+        data.physicallength = putdata["physicallength"]
+        data.physicaldistancetostart = putdata["physicaldistancetostart"]
+        data.physicaldistancetoend = putdata["physicaldistancetoend"]
 
-    return data, method
+    return (data, method)
 
 @database_sync_to_async
-def update_clusterdata_or_create(request: Evaluating, putdata: ClusterData, settings):
+def update_clusterdata_or_create(request: Evaluating, putdata: dict, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
@@ -87,24 +87,25 @@ def update_clusterdata_or_create(request: Evaluating, putdata: ClusterData, sett
             name=request.evaluator.name + " of " + request.transformation.name + " of " + str(request.roi),
             creator=request.creator,
             vid=vid,
-            nodeid=putdata.nodeid,
-            sample=putdata.sample,
-            experiment=putdata.experiment,
-            transformation=putdata.transformation,
-            roi=putdata.roi,
-            meta=putdata.meta,
-            clusternumber=putdata.clusternumber,
-            clusterarea=putdata.clusterarea,
-            clusterareapixels=putdata.clusterareapixels,
-            spatialunit=putdata.spatialunit,
+            nodeid=request.nodeid,
+            sample=request.sample,
+            experiment=request.experiment,
+            transformation=request.transformation,
+            roi=request.roi,
+            biometa=request.sample.meta,
+            clusternumber=putdata["clusternumber"],
+            clusterarea=putdata["clusterarea"],
+            clusterareapixels=putdata["clusterareapixels"],
         )
     elif data is not None:
         # TODO: update array of output
         method = "update"
         # TODO: set name of newly generated and timestamp
-        data.clusternumber = putdata.clusternumber,
+        data.clusternumber = putdata["clusternumber"],
+        data.clusterarea = putdata["clusterarea"],
+        data.clusterareapixels = putdata["clusterareapixels"],
 
-    return data, method
+    return (data, method)
 
 
 class ClientError(Exception):

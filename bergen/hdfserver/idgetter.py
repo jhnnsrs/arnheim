@@ -162,8 +162,8 @@ def getDataSetUUIDforNumpy(numpy: Numpy):
     try:
         datasetid = getUUIDByPath(domain, "/{0}/{1}".format(type, vid))
     except KeyError as e:
-        logger.info("The File seems not to be updated Try updating")
-        reg = 'http://' + host + ':' + str(port) + "/update/"
+        logger.error("The File seems not to be updated Try updating")
+        reg = 'http://' + host + ':' + str(port) + "/update"
         updated = requests.get(reg, headers=headers)
         if updated.status_code == 200:
             datasetid = getUUIDByPath(domain, "/{0}/{1}".format(type, vid))

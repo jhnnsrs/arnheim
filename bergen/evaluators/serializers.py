@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from evaluators.models import Data, Evaluating, Evaluator, VolumeData, ClusterData
+from evaluators.models import Data, Evaluating, Evaluator, VolumeData, ClusterData, LengthData
 
 
 class EvaluatorSerializer(serializers.ModelSerializer):
@@ -29,4 +29,10 @@ class ClusterDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClusterData
+        fields = "__all__"
+
+class LengthDataSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = LengthData
         fields = "__all__"
