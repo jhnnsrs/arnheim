@@ -18,7 +18,7 @@ class Transformation(models.Model):
     numpy = models.ForeignKey(Numpy, on_delete=models.CASCADE, blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True,null=True)
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE, related_name='transformations')
-    representation = models.ForeignKey(Representation, on_delete=models.CASCADE)
+    representation = models.ForeignKey(Representation, on_delete=models.SET_NULL, blank=True, null=True)
     inputtransformation = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null= True)
 
     signature = models.CharField(max_length=300,null=True, blank=True)
