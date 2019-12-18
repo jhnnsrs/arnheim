@@ -14,12 +14,16 @@ import sys
 
 __all__ = ['get', 'update']
 
+
+hdfserver_host = os.environ.get('HDFSERVER_HOST', 'hdfserver')
+hdfserver_port = int(os.environ.get('HDFSERVER_PORT', 5000))
+
 _cfgDefault = {
-    'port':   5000,
+    'port':   hdfserver_port,
     'debug':  True,
     'datapath': 'data',
     'public_dir': ['h5files'],
-    'domain':  'hdfserver',
+    'domain':  hdfserver_host,
     'hdf5_ext': '.h5',
     'toc_name': '.toc.h5',
     'home_dir': 'home',

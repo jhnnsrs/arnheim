@@ -10,8 +10,9 @@ services:
   web:
     build: bergen
     command: python manage.py runserver 0.0.0.0:8000
-    environment:
-      - DJANGO_LOG_LOVEL=INFO
+    env_file:
+      - arnheim.env
+      - development.env
     volumes:
       - ./bergen:/code
       - ./database:/code/db
@@ -25,6 +26,9 @@ services:
   oslo:
     build: bergen
     command: python manage.py runworker channels
+    env_file:
+      - arnheim.env
+      - development.env
     volumes:
       - ./bergen:/code
       - media:/code/media
@@ -36,6 +40,9 @@ services:
   worker:
     build: bergen
     command: python manage.py runworker maxisp bioconverter nifti image test prewitt linerect transformimage lengthdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata pandas profiler excelexport importer intensityprofiler
+    env_file:
+      - arnheim.env
+      - development.env
     volumes:
       - ./bergen:/code
       - media:/code/media
@@ -76,6 +83,9 @@ services:
   hdfserver:
     build: hdfserver
     command: python h5serv --datapath=/data
+    env_file:
+      - arnheim.env
+      - development.env
     volumes:
       - media:/data
       - ./hdfserver:/usr/local/src/h5serv

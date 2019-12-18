@@ -67,13 +67,11 @@ So far Arnheim does not provide unit-tests and is in desperate need of documenta
 please beware that you are using an Alpha-Version
 
 
-### And coding style tests
+### Roadmap
 
-Explain what these tests test and why
-
-```
-Give an example
-```
+- Import and Export of Samples
+- Implementation of standard image processing
+- Machine Learning Pipeline (Kafka)
 
 ## Deployment
 

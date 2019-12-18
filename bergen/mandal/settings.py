@@ -12,9 +12,37 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 
+# General Debug or Production Settings
+arnheim_debug = os.getenv("ARNHEIM_DEBUG",False)
+if arnheim_debug: print("Debugging build")
+
+# Arnheim Settings
+arnheim_host = os.getenv("ARNHEIM_HOST","localhost")
+
+# Compression Settings
+TRANSFORMATION_DTYPE =  os.getenv("TRANSFORMATION_DTYPE",None)
+TRANSFORMATION_COMPRESSION =  os.getenv("TRANSFORMATION_COMPRESSION",None)
+PANDAS_COMPRESSION =  os.getenv("PANDAS_COMPRESSION",None)
+REPRESENTATION_DTYPE =  os.getenv("REPRESENTATION_DTYPE",None)
+REPRESENTATION_COMPRESSION =  os.getenv("REPRESENTATION_COMPRESSION",None)
+
+# Redis Settings
+redis_host = os.environ.get('REDIS_HOST', 'redis')
+
+# HDFServer settings
+hdfserver_host = os.environ.get('HDFSERVER_HOST', 'hdfserver')
+hdfserver_port = int(os.environ.get('HDFSERVER_PORT', 5000))
+
+# Postgres
+postgres_host = os.environ.get('POSTGRES_HOST', 'postgres')
+postgres_port = int(os.environ.get('POSTGRES_PORT', 5432))
+
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+
+# Roots for Files
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 FILES_ROOT = os.path.join(BASE_DIR, "files")
 BIOIMAGE_ROOT = os.path.join(MEDIA_ROOT, "bioimages")
@@ -24,14 +52,21 @@ NIFTI_ROOT = os.path.join(MEDIA_ROOT, "nifti")
 PROFILES_ROOT = os.path.join(MEDIA_ROOT, "profiles")
 EXCELS_ROOT = os.path.join(MEDIA_ROOT, "excels")
 UPLOAD_ROOT = os.path.join(MEDIA_ROOT, "_upload")
+
+
 MEDIA_URL = "/images/"
 DOCKER = False
-DEBUG = True
+DEBUG = arnheim_debug
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'e+uck-nbb+_%(d@%s-@l@*o!xp__p7rssglb74xr*6=m5lh=vx'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-ALLOWED_HOSTS = ['129.206.5.200','127.0.0.1',"localhost",'johannesroos.de','129.206.173.171',"192.168.0.116","192.168.137.1","192.168.99.100","arnheim.online","web"]
+if arnheim_debug:
+    ALLOWED_HOSTS = ['129.206.5.200','127.0.0.1',"localhost",'johannesroos.de','129.206.173.171',"192.168.0.116","192.168.137.1","192.168.99.100","web", arnheim_host]
+else:
+    ALLOWED_HOSTS = [arnheim_host, "web"]
+
+
 
 #Cors Settings and SSL settings
 CORS_ORIGIN_ALLOW_ALL = True
@@ -82,7 +117,6 @@ TAGGIT_CASE_INSENSITIVE = True # for the tags system
 ACCOUNT_ACTIVATION_DAYS = 7 # One-week activation window; you may, of course, use a different value.
 REGISTRATION_AUTO_LOGIN = True # Automatically log the user in.
 
-redis_host = os.environ.get('REDIS_HOST', 'localhost')
 
 # Channel layer definitions
 # http://channels.readthedocs.io/en/latest/topics/channel_layers.html
@@ -170,28 +204,28 @@ WSGI_APPLICATION = 'mandal.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-if DOCKER:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'postgres',
-            'USER': 'postgres',
-            'HOST': 'db',
-            'PORT': 5432,
-        }
-    }
-else:
+if arnheim_debug:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': os.path.join(BASE_DIR, 'db/db.sqlite3'),
         }
     }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',
+            'USER': 'postgres',
+            'HOST': postgres_host,
+            'PORT': postgres_port,
+        }
+    }
 
 # HDF Server Settings
 HDFSERVER = {
-    "host" : "hdfserver",
-    "port" : 5000
+    "host" : hdfserver_host,
+    "port" : hdfserver_port
 }
 
 
@@ -272,10 +306,3 @@ STATICFILES_DIRS = [
 
 
 FIXTURE_DIRS =  [ "fixtures"]
-
-# Settings for Standard Compression
-TRANSFORMATION_DTYPE = None
-TRANSFORMATION_COMPRESSION = None
-PANDAS_COMPRESSION = None
-REPRESENTATION_DTYPE = None
-REPRESENTATION_COMPRESSION = None
