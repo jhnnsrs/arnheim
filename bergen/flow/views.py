@@ -1,21 +1,24 @@
 # Create your views here.
+import copy
+
+from django.contrib.auth.hashers import get_hasher
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from flow.models import Layout, ForeignNodeRequest, Node, ForeignNodeStatus, External, ExternalRequest
 from flow.policies import ExternalAccessPolicy
 from flow.serializers import FlowSerializer, Flow, NodeSerializer, LayoutSerializer, ForeignNodeRequestSerializer, \
-    ForeignNodeStatusSerializer, ExternalSerializer, ExternalRequestSerializer
+    ForeignNodeStatusSerializer, ExternalSerializer, ExternalRequestSerializer, ExternalNewSerializer
 from trontheim.viewsets import OsloViewSet
 
 
 class FlowViewSet(OsloViewSet):
-
     # MAKE THIS AN ACTION PUBLISHER THAT WILL PIPE IT THROUGH A META OBJECT CREATOR
 
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("creator","group","type")
+    filter_fields = ("creator", "group", "type")
     queryset = Flow.objects.all()
     serializer_class = FlowSerializer
     publishers = [["creator"]]
@@ -41,6 +44,7 @@ class ForeignNodeRequestViewSet(OsloViewSet):
     serializer_class = ForeignNodeRequestSerializer
     publishers = [["nodeid"]]
 
+
 class ForeignNodeStatusViewSet(OsloViewSet):
     """
     API endpoint that allows users to be viewed or edited.
@@ -48,8 +52,7 @@ class ForeignNodeStatusViewSet(OsloViewSet):
     filter_backends = (DjangoFilterBackend,)
     queryset = ForeignNodeStatus.objects.all()
     serializer_class = ForeignNodeStatusSerializer
-    publishers = [["creator"],["nodes_for_foreign"]]
-
+    publishers = [["creator"], ["nodes_for_foreign"]]
 
 
 class NodeViewSet(OsloViewSet):
@@ -60,7 +63,8 @@ class NodeViewSet(OsloViewSet):
     filter_fields = ("creator",)
     queryset = Node.objects.all()
     serializer_class = NodeSerializer
-    publishers = [["variety"],["creator"]]
+    publishers = [["variety"], ["creator"]]
+
 
 class ExternalViewSet(OsloViewSet):
     """
@@ -84,6 +88,39 @@ class ExternalViewSet(OsloViewSet):
 
         serializer = self.get_serializer(recent_externals, many=True)
         return Response(serializer.data)
+
+    @action(methods=['post'], detail=False,
+            url_path='new', url_name='new')
+    def new(self, request):
+        user = request.user
+        print(dir(user))
+        hasher = get_hasher("default")
+        nana = ExternalNewSerializer(data=request.data)
+        if nana.is_valid():
+            accesstoken = user.id  # TODO: THIS should be a unique string for every user, their own private secret
+            uniqueexternalid = hasher.encode(accesstoken, nana.validated_data["name"])
+        else:
+            raise ValidationError("Something is wrong here")
+
+
+        # Checking if this external already exists in Data
+        external = External.objects.filter(uniqueid=uniqueexternalid)
+        if not external.exists():
+            newexternaldict = copy.copy(request.data)
+            newexternaldict["uniqueid"] = uniqueexternalid
+            newexternal = ExternalSerializer(data=newexternaldict)
+            if newexternal.is_valid():
+                instance = newexternal.save()
+                print(instance)
+                self.publish(newexternal,"create")
+                return Response(newexternal.data)
+            else:
+                raise ValidationError("YOu didnt provide the correct data")
+
+        else:
+            newexternal= ExternalSerializer(external.first())
+            self.publish(newexternal,"update")
+            return Response(newexternal.data)
 
 
 

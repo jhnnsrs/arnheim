@@ -36,6 +36,12 @@ class ExternalSerializer(serializers.ModelSerializer):
         model = External
         fields = "__all__"
 
+class ExternalNewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = External
+        exclude = ("uniqueid",)
+
+
 class ExternalRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExternalRequest

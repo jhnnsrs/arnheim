@@ -44,6 +44,7 @@ class ForeignNodeStatus(models.Model):
 class External(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
+    uniqueid = models.CharField(max_length=400, unique=True, blank=True, null=True)
     node = models.CharField(max_length=2000) #The Nodepath for instantiating
     defaultsettings = models.CharField(max_length=2000) #The DefaultSettings
     origin = models.CharField(max_length=2000) #The DefaultSettings
