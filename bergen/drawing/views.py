@@ -13,7 +13,7 @@ class RoiViewSet(OsloViewSet):
     serializer_class = RoiSerializer
     publishers = [["representation"],["creator"],["nodeid"],["sample"]]
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("representation","sample","creator")
+    filter_fields = ("representation","sample","creator","display")
 
 
 class RepresentationViewSet(OsloViewSet):
