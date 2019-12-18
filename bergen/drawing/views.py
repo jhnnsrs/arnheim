@@ -11,7 +11,7 @@ from trontheim.viewsets import OsloViewSet
 class RoiViewSet(OsloViewSet):
     queryset = ROI.objects.all()
     serializer_class = RoiSerializer
-    publishers = [["representation"],["creator"],["nodeid"],["sample"]]
+    publishers = [["representation"],["creator"],["sample"],["sample","display"]]
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ("representation","sample","creator","display")
 
