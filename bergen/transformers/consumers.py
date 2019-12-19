@@ -1,80 +1,79 @@
 import json
+from typing import Dict, Any, Callable, Awaitable
 
 import numpy as np
+from django.db import models
+from rest_framework import serializers
 
-from bioconverter.models import Representation
-from drawing.models import ROI
+from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
 from transformers.logic.linerectifier_logic import translateImageFromLine
 from transformers.models import Transforming
-from transformers.serializers import TransformationSerializer
-from transformers.utils import get_transforming_or_error, update_outputtransformation_or_create
-from trontheim.consumers import OsloJobConsumer
+from transformers.serializers import TransformationSerializer, TransformingSerializer
+from transformers.utils import get_transforming_or_error, outputtransformation_update_or_create
+
+
 # import the logging library
 
-class TransformerConsumer(OsloJobConsumer):
 
-    async def startparsing(self, data):
-        await self.register(data)
-        print(data)
-        request: Transforming = await get_transforming_or_error(data["data"])
-        settings: dict = await self.getsettings(request.settings, request.transformer.defaultsettings)
+class LineRectifierTransformer(LarvikConsumer):
 
-        rep: Representation = request.representation
-        roi: ROI = request.roi
+    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
+        return get_transforming_or_error
 
-        parsedarray = await self.parse(settings,rep,roi)
+    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
+        return update_status_on_larvikjob
 
+    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
 
-        transformation, method = await update_outputtransformation_or_create(request, settings, parsedarray)
+        return { "array" : outputtransformation_update_or_create}
 
-        await self.modelCreated(transformation, TransformationSerializer, method)
+    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
 
-    async def parse(self, settings: dict,rep: Representation, roi: ROI) -> np.array:
-        raise NotImplementedError
+        return {
+            "Transforming": TransformingSerializer,
+            "Transformation": TransformationSerializer,
+        }
 
-
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
-        try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
-
-        except:
-            defaultsettings = {}
-            settings = {}
-
-        defaultsettings.update(settings)
-        return defaultsettings
-
-
-class LineRectifierTransformer(TransformerConsumer):
-
-
-    async def parse(self, settings: dict, rep: Representation, roi: ROI) -> np.array:
-
-        array = rep.numpy.get_array()
+    async def parse(self, request: Transforming, settings: dict) -> Dict[str, Any]:
+        array = request.representation.numpy.get_array()
+        roi = request.roi
         vectors = json.loads(roi.vectors)
 
-        vertices = [[key["x"],key["y"]] for key in vectors]
+        vertices = [[key["x"], key["y"]] for key in vectors]
 
-        print(array.max())
+        self.logger.info("Array has max of {0}".format(array.max()))
         array = np.float64(array)
-        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(settings["scale"]))
+
+        await self.progress(10, message="Converting array")
+        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, settings.get("scale",10))
+
+        return {"array": image}
 
 
-        return image
+class SliceLineTransformer(LarvikConsumer):
+
+    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
+        return get_transforming_or_error
+
+    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
+        return update_status_on_larvikjob
+
+    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
+
+        return {"array": outputtransformation_update_or_create}
+
+    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
+
+        return {
+            "Transforming": TransformingSerializer,
+            "Transformation": TransformationSerializer,
+        }
 
 
+    async def parse(self, request: Transforming, settings: dict) -> Dict[str, Any]:
 
-class SliceLineTransformer(TransformerConsumer):
-
-
-    async def parse(self, settings: dict, rep: Representation, roi: ROI) -> np.array:
-
+        rep = request.representation
+        roi = request.roi
         shape = json.loads(rep.shape)
         z_size = shape[3]
 
@@ -83,10 +82,10 @@ class SliceLineTransformer(TransformerConsumer):
 
         vertices = [[key["x"],key["y"]] for key in vectors]
 
-        scale = settings["scale"]  if settings["scale"] else 10
+        scale = settings.get("scale",10)
         # We Have to Slice the Array first in order to make the transformation work
-        lowerBound1: int = settings["lower"]  if settings["lower"] else 0
-        upperBound1: int = settings["upper"]  if settings["upper"] and settings["upper"] is not -1 else z_size -1
+        lowerBound1: int = settings.get("lower", 0)
+        upperBound1: int = settings.get("upper", z_size -1)
 
         if lowerBound1 > upperBound1:
             lowerBound = upperBound1
@@ -95,12 +94,12 @@ class SliceLineTransformer(TransformerConsumer):
             lowerBound = lowerBound1
             upperBound = upperBound1
 
-
+        await self.progress(20,message="Getting array from file system")
         array = rep.numpy.get_z_bounded_array(lowerBound,upperBound)
 
-        print("Collection Array of Shape ", array.shape)
-        print("With Vertices like",vertices)
-        print("Scale: ",scale)
+        self.logger.info("Collection Array of Shape {0} ".format(array.shape))
+        self.logger.info("With Vertices like {0}".format(vertices))
+        self.logger.info("Scale: {0}".format(scale))
 
         if len(array.shape) == 5:
             array = np.nanmax(array[:, :, :3, :, 0], axis=3)
@@ -111,9 +110,10 @@ class SliceLineTransformer(TransformerConsumer):
         if len(array.shape) == 2:
             array = array[:, :]
 
-        print("Final array",array.shape)
+        await self.progress(60, message="Transforming")
+        self.logger.info("Maxxed array of shape {0}".format(array.shape))
         array = np.float64(array)
         image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(scale))
 
 
-        return image
+        return { "array" : image }

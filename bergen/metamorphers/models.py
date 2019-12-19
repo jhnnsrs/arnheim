@@ -69,6 +69,10 @@ class Metamorphing(models.Model):
     # otherwise just updated# the requested model which ought to be converted
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE, blank=True, null=True)
 
+    # STATUS SETTINGS
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

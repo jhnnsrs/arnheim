@@ -1,5 +1,3 @@
-import json
-import logging
 import os
 import shutil
 from datetime import datetime
@@ -10,6 +8,7 @@ from biouploader.models import Locker, BioImage
 from importer.models import Importing
 
 # Get an instance of a logger
+from larvik.consumers import LarvikStatus
 from larvik.logging import get_module_logger
 from mandal.settings import BIOIMAGE_ROOT
 
@@ -28,16 +27,13 @@ def get_importing_or_error(request: dict):
     return parsing
 
 @database_sync_to_async
-def update_status_on_request(parsing: Importing, statusmessage=None, statuscode=None):
+def update_status_on_request(parsing: Importing, status: LarvikStatus):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
-    status = ""
-    if statusmessage is None and statuscode is not None: status = "{0} %".format(statusmessage)
-    if statuscode is None and statusmessage is not None: status = "{0}".format(message)
-    if statuscode is not None and statusmessage is not None: status = "{0} at {1} %".format(message, progressvalue)
 
-    parsing.status = status
+    parsing.statuscode = status.statuscode
+    parsing.statusmessage = status.message
     parsing.save()
     return parsing
 

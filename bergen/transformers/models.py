@@ -47,6 +47,10 @@ class Transforming(models.Model):
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE)
 
+    # STATUS SETTINGS
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
+
     def __str__(self):
         return "Parsing Request for Filter: {0}".format(self.transformer)
 

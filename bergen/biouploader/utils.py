@@ -13,6 +13,52 @@ def get_analyzing_or_error(request: dict) -> Analyzing:
         raise ClientError("Analyzing {0} does not exist".format(str(request["id"])))
     return parsing
 
+@database_sync_to_async
+def get_analyzing_or_error(request: dict) -> Analyzing:
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    parsing = Analyzing.objects.get(pk=request["id"])
+    if parsing is None:
+        raise ClientError("Analyzing {0} does not exist".format(str(request["id"])))
+    return parsing
+
+@database_sync_to_async
+def bioseries_create_or_update(series: [], request: Analyzing, settings):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    print(request.bioimage.locker_id)
+    createBioseries = []
+    for bio in series:
+        method = "error"
+        outputseries: BioSeries = BioSeries.objects.filter(bioimage=request.bioimage).filter(index=bio["index"]).first()
+        if outputseries is None:
+            method = "create"
+            # TODO make creation of outputvid
+            outputseries = BioSeries.objects.create(name=bio["name"],
+                                                    creator=request.creator,
+                                                    index=bio["index"],
+                                                    isconverted=False,
+                                                    bioimage=request.bioimage,
+                                                    nodeid=bio.nodeid,
+                                                    locker=request.bioimage.locker)
+
+        elif outputseries is not None:
+            # TODO: update array of output
+            method = "update"
+            outputseries.name = bio["name"]
+            outputseries.creator = request.creator
+            outputseries.index = bio["index"]
+            outputseries.nodeid = request.nodeid
+            outputseries.locker = request.bioimage.locker
+            outputseries.save()
+
+        createBioseries.append((outputseries, method))
+
+    return createBioseries
+
+
 
 @database_sync_to_async
 def update_bioseries_or_create(request: Analyzing, bio: BioSeries):

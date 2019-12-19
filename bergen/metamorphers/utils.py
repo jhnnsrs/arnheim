@@ -22,7 +22,6 @@ def get_metamorphing_or_error(request: dict) -> Metamorphing:
     return parsing
 
 
-
 @database_sync_to_async
 def get_inputrepresentation_or_error(request: Metamorphing) -> (Representation, np.array):
     """
@@ -39,6 +38,38 @@ def get_inputrepresentation_or_error(request: Metamorphing) -> (Representation, 
         raise ClientError("Inputvid {0} does not exist on Sample {1}".format(str(request.nodeid), request.sample))
     return inputrep, array
 
+@database_sync_to_async
+def exhibit_update_or_create(nifti, request: Metamorphing, settings) -> (Exhibit, str):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    exhibit: Exhibit = Exhibit.objects.filter(representation=request.representation).filter(nodeid=request.nodeid).first()
+    method = "update"
+    name = "Exhibit of" + request.representation.name
+    if exhibit is None:
+        #TODO make creation of outputvid
+        niftipaths = "sample-{0}_representation-{1}_nodeid-{2}.nii.gz".format(request.sample_id, request.representation_id,request.nodeid)
+        niftipath = os.path.join(NIFTI_ROOT, niftipaths)
+        nib.save(nifti, niftipath)
+        niftiwebpath = os.path.join(os.path.join(MEDIA_ROOT,"/nifti"),niftipaths)
+
+        exhibit = Exhibit.objects.create(representation=request.representation, name=name, creator=request.creator, nodeid=request.nodeid, shape=request.representation.shape,
+                                                  sample=request.sample, experiment=request.representation.experiment, niftipath=niftiwebpath)
+
+
+        print(niftipath)
+        exhibit.save()
+        method = "create"
+    else:
+        #TODO: update array of output
+        niftipath = "sample-{0}_representation-{1}_node-{2}.nii.gz".format(request.sample_id, request.representation_id,request.nodeid)
+        niftiwebpath = os.path.join(os.path.join(MEDIA_ROOT, "/nifti"), niftipath)
+        niftilocalpath = os.path.join(NIFTI_ROOT, niftipath)
+        nib.save(nifti, niftilocalpath)
+        exhibit.niftipath = niftiwebpath
+        exhibit.save()
+        print("YES")
+    return [(exhibit, method)]
 
 
 

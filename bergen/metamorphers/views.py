@@ -77,9 +77,9 @@ class MetamorphingViewSet(OsloActionViewSet):
     queryset = Metamorphing.objects.all()
     serializer_class = MetamorphingSerializer
     publishers = [["creator"]]
-    actionpublishers = {"sample": [("creator", "experiment")], "display": [("sample",),("creator",),("nodeid",)], "exhibit": [("sample",),("creator",),("nodeid",)]}
+    actionpublishers = {"sample": [("creator", "experiment")], "display": [("sample",),("creator",),("nodeid",)], "exhibit": [("sample",),("creator",),("nodeid",)], "metamorphing": [("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
-    actiontype = "startconverting"
+    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         metamorpher = Metamorpher.objects.get(pk=serializer.data["metamorpher"])

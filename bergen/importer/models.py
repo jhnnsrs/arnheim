@@ -13,10 +13,6 @@ class Importer(models.Model):
     def __str__(self):
         return "{0} at Channel {1}".format(self.name, self.channel)
 
-class Job(models.Model):
-    statuscode = models.IntegerField()
-    statusmessage = models.CharField(max_length=500)
-
 
 class Importing(models.Model):
     importer = models.ForeignKey(Importer, on_delete=models.CASCADE)
@@ -27,6 +23,9 @@ class Importing(models.Model):
     created_at = models.DateTimeField(auto_now=True)
     locker = models.ForeignKey(Locker, on_delete=models.SET_NULL, null=True, blank=True)
     error = models.CharField(max_length=300, blank=True, null=True)
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
 
     def __str__(self):
-        return "Importing for Importer {1} created at {0}".format(self.created_at.strftime("%m/%d/%Y, %H:%M:%S"),self.importer.name)
+        return "Importing for Importer {1} created at {0}".format(self.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                                                                  self.importer.name)

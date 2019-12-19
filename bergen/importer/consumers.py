@@ -5,15 +5,10 @@ from django.db import models
 from rest_framework import serializers
 
 from biouploader.serializers import BioImageSerializer
-from importer.models import Importing
 from importer.serializers import ImportingSerializer
-from larvik.consumers import LarvikConsumer
+from larvik.consumers import LarvikConsumer, LarvikError
 from mandal.settings import FILES_ROOT
-from trontheim.consumers import OsloJobConsumer
-from visualizers.models import Visualizing
-from visualizers.serializers import ProfileSerializer, VisualizingSerializer, ExcelExportSerializer
 from importer.utils import *
-import pandas_profiling
 
 
 class ImportingConsumer(LarvikConsumer):
@@ -55,6 +50,8 @@ class Importer(ImportingConsumer):
         await self.progress("0")
 
         filelist = [(filename, os.path.join(base_dir, filename)) for filename in os.listdir(base_dir)]
+
+        if len(filelist) == 0: raise LarvikError("No Files in directory.")
 
         self.logger.info("Files To Import {0}".format(filelist))
         # %%

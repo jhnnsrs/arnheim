@@ -1,7 +1,5 @@
 from typing import Dict, Any, Callable, Awaitable
 
-import bioformats
-import javabridge as javabridge
 from django.db import models
 from rest_framework import serializers
 

@@ -52,7 +52,7 @@ class AnalyzingViewSet(OsloActionViewSet):
     actionpublishers = {"bioseries": [("experiment",),("creator",),("locker",),("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "analyzer"
-    actiontype = "startparsing"
+    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         return [self.create_job(data=serializer.data, job=serializer.data, channel=self.channel)]

@@ -23,6 +23,9 @@ class Conversing(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     nodeid = models.CharField(max_length=300, null=True, blank=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null= True)
+    # This is for NodeUpdates
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

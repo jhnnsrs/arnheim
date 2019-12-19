@@ -1,11 +1,26 @@
-from enum import Enum
-from typing import Callable, Coroutine, Awaitable, Any, Dict
+from typing import Callable, Awaitable, Any, Dict
 
 from channels.consumer import AsyncConsumer
+from channels.db import database_sync_to_async
 from django.db import models
 from rest_framework import serializers
 
 from larvik.logging import get_module_logger
+
+
+class LarvikError(Exception):
+
+    def __init__(self, message):
+        self.message = message
+
+
+
+class StatusCode(object):
+    STARTED = 2000
+    DONE = 1000
+    PROGRESS = 3000
+    ERROR = 4000
+
 
 class Messages(object):
     STARTED = "Starting"
@@ -21,8 +36,31 @@ class Messages(object):
     def progress(percent) -> str:
         return Messages.PROGRESS + " - " + str(percent)
 
+class LarvikStatus(object):
 
+    def __init__(self,code: int, message: str = None):
+        self.statuscode = code
+        self.message = message if message is not None else ""
 
+def larvikError(message = None):
+    return LarvikStatus(StatusCode.ERROR,message)
+
+def larvikProgress(message = None):
+    return LarvikStatus(StatusCode.PROGRESS,message)
+
+def larvikDone(message = None):
+    return LarvikStatus(StatusCode.DONE,message)
+
+@database_sync_to_async
+def update_status_on_larvikjob(parsing, status: LarvikStatus):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+
+    parsing.statuscode = status.statuscode
+    parsing.statusmessage = status.message
+    parsing.save()
+    return parsing
 
 class LarvikConsumer(AsyncConsumer):
 
@@ -44,7 +82,7 @@ class LarvikConsumer(AsyncConsumer):
     async def modelCreated(self, model: models.Model, serializerclass: serializers.ModelSerializer.__class__, method: str):
         '''Make sure to call this if you created a new Model on the Database so that the actionpublishers can do their work'''
         serialized = serializerclass(model)
-        stream = str(serialized.Meta.model.__name__).lower()
+        stream = str(type(model).__name__).lower()
         if stream in self.publishers.keys():
             self.logger.info("Found stream {0} in Publishers. Tyring to publish".format(str(stream)))
             await self.publish(serialized, method,self.publishers[stream],stream)
@@ -95,16 +133,17 @@ class LarvikConsumer(AsyncConsumer):
         ''' Should return the Defaultsettings as a JSON parsable String'''
 
 
-    async def progress(self,value=None, message=None):
+    async def progress(self,value, message=None):
         if self.requestSerializer is None: self.requestSerializer = self.getSerializerDict()[type(self.request).__name__]
-        self.request = await self.updateRequestFunction()(self.request, statusmessage=message, statuscode=value)
+        progressMessage = value if message is None else "{0} % - {1}".format(value, message)
+        self.request = await self.updateRequestFunction()(self.request,larvikProgress(progressMessage))
         self.logger.info("Updating Progress to {0} with message {1}".format(str(value),str(message)))
         await self.modelCreated(self.request, self.requestSerializer, "update")
 
-    async def updateRequest(self, message):
+    async def updateRequest(self, status: LarvikStatus):
         # Classic Update Circle
         if self.requestSerializer is None: self.requestSerializer = self.getSerializerDict()[type(self.request).__name__]
-        self.request = await self.updateRequestFunction()(self.request, message)
+        self.request = await self.updateRequestFunction()(self.request, status)
         await self.modelCreated(self.request, self.requestSerializer, "update")
 
     async def startJob(self, data):
@@ -114,7 +153,7 @@ class LarvikConsumer(AsyncConsumer):
 
         # Working on models is easier, so the cost of a database call is bearable
         self.request: models.Model = await self.getRequestFunction()(data["data"])
-        await self.updateRequest(Messages.STARTED)
+        await self.updateRequest(LarvikStatus(StatusCode.STARTED,"Started"))
 
         # TODO: Impelement with a request Parentclass
         self.settings: dict = self.getsettings(self.request.settings, self.getDefaultSettings(self.request))
@@ -127,14 +166,17 @@ class LarvikConsumer(AsyncConsumer):
             for modelname, modelparams in returndict.items():
                 models = await self.getModelFuncDict()[modelname](modelparams,self.request,self.settings)
                 for (model, method ) in models:
-                    await self.modelCreated(model, self.getSerializerDict()[modelname], method)
+                    await self.modelCreated(model, self.getSerializerDict()[type(model).__name__], method)
                     self.logger.info(method + " Model " + modelname)
 
-            await self.updateRequest(Messages.DONE)
+            await self.updateRequest(LarvikStatus(StatusCode.DONE,"Done"))
 
+        except LarvikError as e:
+            self.logger.error(e)
+            await self.updateRequest(LarvikStatus(StatusCode.ERROR,e.message))
         except Exception as e:
             self.logger.error(e)
-            await self.updateRequest(Messages.error(e))
+            await self.updateRequest(LarvikStatus(StatusCode.ERROR, "Uncaught Error on Server, check log there"))
 
     async def parse(self, request: models.Model, settings: dict) -> Dict[str, Any]:
         """ If you create objects make sure you are handling them in here
