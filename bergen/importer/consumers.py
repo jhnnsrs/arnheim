@@ -52,9 +52,13 @@ class Importer(ImportingConsumer):
         import os
         base_dir = os.path.join(FILES_ROOT,creator.username)
 
+        await self.progress("0")
+
         filelist = [(filename, os.path.join(base_dir, filename)) for filename in os.listdir(base_dir)]
-        print("Files To Import" ,filelist)
+
+        self.logger.info("Files To Import {0}".format(filelist))
         # %%
+        await self.progress("10")
 
         return {"BioImage" : filelist }
 

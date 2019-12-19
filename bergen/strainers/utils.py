@@ -36,7 +36,7 @@ def update_outputtransformation_or_create(request: Straining, settings, numpyarr
     vidsub = "_{0}".format(str(transformations.count()) if transformations.count() else 0)
     vid = vidfirst + vidsub
     transformation = transformations.last() #TODO: CHeck if that makes sense
-    if transformation is None or not settings["overwrite"]:
+    if transformation is None or not settings.get("overwrite",False):
         method = "create"
         logger.info("Creating Transformation with VID: " + vid)
         #TODO make creation of outputvid

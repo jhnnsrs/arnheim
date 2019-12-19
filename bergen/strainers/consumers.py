@@ -97,3 +97,27 @@ class IntensityProfiler(StrainerConsumer):
 
         return intensity
 
+class Masker(StrainerConsumer):
+
+
+    async def parse(self, settings: dict, transformation: Transformation) -> np.array:
+
+
+        array = transformation.numpy.get_array()
+
+
+        vec = []
+        if "mask" in settings:
+            vec = settings["mask"]
+
+        x, y = np.meshgrid(np.arange(array.shape[1]), np.arange(array.shape[0]))
+        pix = np.vstack((x.flatten(), y.flatten())).T
+        clustermask = np.zeros_like(array[:, :, 0])
+
+
+        restored = clustermask
+        for el in vec:
+            restored.flat[el] = 1
+        print(restored.shape)
+
+        return restored

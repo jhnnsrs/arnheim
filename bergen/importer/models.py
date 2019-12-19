@@ -13,6 +13,10 @@ class Importer(models.Model):
     def __str__(self):
         return "{0} at Channel {1}".format(self.name, self.channel)
 
+class Job(models.Model):
+    statuscode = models.IntegerField()
+    statusmessage = models.CharField(max_length=500)
+
 
 class Importing(models.Model):
     importer = models.ForeignKey(Importer, on_delete=models.CASCADE)

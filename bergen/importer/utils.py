@@ -10,9 +10,10 @@ from biouploader.models import Locker, BioImage
 from importer.models import Importing
 
 # Get an instance of a logger
+from larvik.logging import get_module_logger
 from mandal.settings import BIOIMAGE_ROOT
 
-logger = logging.getLogger(__name__)
+logger = get_module_logger(__name__)
 
 
 @database_sync_to_async
@@ -20,17 +21,22 @@ def get_importing_or_error(request: dict):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
-    print(request["id"])
+    logger.info("Getting request of Id {0}".format(request["id"]))
     parsing = Importing.objects.get(pk=request["id"])
     if parsing is None:
         raise ClientError("Importing {0} does not exist".format(str(request["id"])))
     return parsing
 
 @database_sync_to_async
-def update_status_on_request(parsing, status):
+def update_status_on_request(parsing: Importing, statusmessage=None, statuscode=None):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
+    status = ""
+    if statusmessage is None and statuscode is not None: status = "{0} %".format(statusmessage)
+    if statuscode is None and statusmessage is not None: status = "{0}".format(message)
+    if statuscode is not None and statusmessage is not None: status = "{0} at {1} %".format(message, progressvalue)
+
     parsing.status = status
     parsing.save()
     return parsing
@@ -63,7 +69,7 @@ def create_bioimages_from_list(filelist, request: Importing, settings):
     def moveFileToLocker(path,name):
 
         if os.path.exists(path):
-            print("Moving file from " + path)
+            logger.info("Moving file from " + path)
 
             directory = "{0}/{1}/".format(request.creator.id, request.locker.id)
             directory = os.path.join(BIOIMAGE_ROOT, directory)
@@ -74,7 +80,7 @@ def create_bioimages_from_list(filelist, request: Importing, settings):
             new_path = os.path.join(directory, os.path.basename(name))
             shutil.move(path, new_path)
 
-            print("To New Path of " + new_path)
+            logger.info("To New Path of " + new_path)
             name = name if name else os.path.basename(path)
             image = BioImage.objects.create(file=new_path,
                                             creator=request.creator,

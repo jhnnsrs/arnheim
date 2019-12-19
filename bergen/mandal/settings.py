@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_extensions',
     'channels',
+    'larvik',
     'corsheaders',
     'taggit',
     'chat',

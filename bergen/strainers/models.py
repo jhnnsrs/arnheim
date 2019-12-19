@@ -18,7 +18,7 @@ class Strainer(models.Model):
 class Straining(models.Model):
     strainer = models.ForeignKey(Strainer, on_delete=models.CASCADE)
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
-    settings = models.CharField(max_length=1000) # jsondecoded
+    settings = models.CharField(max_length=10000) # jsondecoded
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE,blank=True, null=True)
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE)

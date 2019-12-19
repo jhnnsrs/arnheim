@@ -51,6 +51,7 @@ class External(models.Model):
     links = models.CharField(max_length=6000) #All of the Links of that Diagram
     ports = models.CharField(max_length=7000 ,null=True, blank=True)
     status = models.CharField(max_length=200) #Is Alive #is not Alive
+    graphname = models.CharField(max_length=200) #Is Alive #is not Alive
     creator = models.ForeignKey(User,on_delete=models.CASCADE,null=True, blank=True)
     created_at = models.DateTimeField(auto_now=True)
 

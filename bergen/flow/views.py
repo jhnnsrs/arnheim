@@ -93,7 +93,6 @@ class ExternalViewSet(OsloViewSet):
             url_path='new', url_name='new')
     def new(self, request):
         user = request.user
-        print(dir(user))
         hasher = get_hasher("default")
         nana = ExternalNewSerializer(data=request.data)
         if nana.is_valid():
@@ -111,11 +110,10 @@ class ExternalViewSet(OsloViewSet):
             newexternal = ExternalSerializer(data=newexternaldict)
             if newexternal.is_valid():
                 instance = newexternal.save()
-                print(instance)
                 self.publish(newexternal,"create")
                 return Response(newexternal.data)
             else:
-                raise ValidationError("YOu didnt provide the correct data")
+                raise ValidationError("You didnt provide the correct data")
 
         else:
             newexternal= ExternalSerializer(external.first())

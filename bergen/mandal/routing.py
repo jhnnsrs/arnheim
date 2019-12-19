@@ -11,7 +11,7 @@ from importer.consumers import Importer
 from metamorphers.consumers import NiftiMetamorpher, ImageMetamorpher
 from mutaters.consumers import ImageMutator
 from revamper.consumers import MaskingRevamper
-from strainers.consumers import IntensityProfiler
+from strainers.consumers import IntensityProfiler, Masker
 from transformers.consumers import LineRectifierTransformer, SliceLineTransformer
 from trontheim.consumers import OsloConsumer
 from trontheim.middleware import QueryAuthMiddleware
@@ -63,6 +63,7 @@ application = ProtocolTypeRouter({
 
         # Strainers (Trans in, Transout)
         "intensityprofiler": IntensityProfiler,
+        "masking": Masker,
 
         # Revampers (Transin, Transout -> like Filter)
         "masker": MaskingRevamper,

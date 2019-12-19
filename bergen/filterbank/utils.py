@@ -54,7 +54,7 @@ def update_outputrepresentationbynode_or_create(request: Filtering, numpyarray, 
     vid = vidfirst + vidsub
     outputrep = representations.last()
     print(settings)
-    if outputrep is None or settings["overwrite"] is False:
+    if outputrep is None or settings.get("overwrite",False) is False:
         method = "create"
         logger.info("Creating Representation with VID "+str(vid))
         #TODO make creation of outputvid
@@ -77,7 +77,7 @@ def update_outputrepresentationbynode_or_create(request: Filtering, numpyarray, 
         outputrep.shape = json.dumps(numpyarray.shape)
         outputrep.meta = json.dumps(meta)
         outputrep.save()
-    return outputrep, method
+    return (outputrep, method)
 
 
 class ClientError(Exception):
