@@ -1,113 +1,68 @@
-import json
+from typing import Dict, Any, Callable, Awaitable
 
 import numpy as np
+from django.db import models
+from rest_framework import serializers
 
-from biouploader.models import BioMeta
-from drawing.models import ROI
 from evaluators.logic.clusterAnalysis import findConnectedCluster
-from evaluators.models import Evaluating, VolumeData, ClusterData, LengthData
-from evaluators.serializers import DataSerializer, EvaluatingSerializer, VolumeDataSerializer, ClusterDataSerializer, \
+from evaluators.models import Evaluating
+from evaluators.serializers import EvaluatingSerializer, ClusterDataSerializer, \
     LengthDataSerializer
-from evaluators.utils import get_evaluating_or_error, update_clusterdata_or_create, \
-    update_lengthdata_or_create
-from transformers.models import Transformation
-from trontheim.consumers import OsloJobConsumer
+from evaluators.utils import get_evaluating_or_error, lengthdata_update_or_create, clusterdata_update_or_create
+from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
 
 
-class EvaluatingConsumer(OsloJobConsumer):
+class LengthDataFromIntensityProfile(LarvikConsumer):
 
-    async def startparsing(self, data):
-        await self.register(data)
-        print(data)
-        request: Evaluating = await get_evaluating_or_error(data["data"])
-        settings: dict = await self.getsettings(request.settings, request.evaluator.defaultsettings)
+    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
+        return get_evaluating_or_error
 
-        roi: ROI = request.roi
-        transformation: Transformation = request.transformation
-        meta: BioMeta = request.sample.meta
+    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
+        return update_status_on_larvikjob
 
-        datamodel = await self.parse(settings, transformation, roi, meta, request)
-        datainstance, method = await self.getDataFunction()(request, datamodel, settings)
+    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
+        return {"data": lengthdata_update_or_create
+                }
 
+    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
+        return {"LengthData": LengthDataSerializer,
+                "Evaluating": EvaluatingSerializer}
 
-        await self.modelCreated(datainstance, DataSerializer, method)
-        await self.modelCreated(datainstance, self.getSerializer(), method)
+    async def parse(self, request: Evaluating, settings: dict) -> Dict[str, Any]:
 
-    async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
-        raise NotImplementedError
+        transformation = request.transformation
+        meta = request.sample.meta
+        threshold: float = float(settings.get("threshold", 0))
 
-    def getDataFunction(self):
-        raise NotImplementedError
-
-    def getSerializer(self):
-        raise NotImplementedError
-
-    async def raiseError(self, error):
-        self.data["error"] = error
-        await self.modelCreated(self.data, EvaluatingSerializer, "update")
-
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
-        try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
-
-        except:
-            defaultsettings = {}
-            settings = {}
-
-        defaultsettings.update(settings)
-        return defaultsettings
-
-
-
-class LengthDataFromIntensityProfile(EvaluatingConsumer):
-
-    def getSerializer(self):
-        return LengthDataSerializer
-
-    def getDataFunction(self):
-        return update_lengthdata_or_create
-
-    async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
-
-        threshold: float = float(settings["threshold"]) if "threshold" in settings else 0
-
-
-        print("Hallloooo",threshold)
-
-
+        self.logger.info("Using Threshold {0}".format(threshold))
 
         intensity = transformation.numpy.get_array()
-        print(intensity.shape)
+        #print(intensity.shape)
         width = intensity.shape[1]
 
         # ATTENTION IF NOT SAME RATIO VOXEL IS FUCKED UP
         physizex = meta.xphysical
-        print(physizex)
+        self.logger.info("Using Physicalsize {0}".format(physizex))
 
         # Maybe user has defined different starts and ends
-        userdefinedstart = int(settings["userdefinedstart"]) if "userdefinedstart" in settings else 0
-        userdefinedend = int(settings["userdefinedend"]) if "userdefinedend" in settings else width
+        userdefinedstart = int(settings.get("userdefinedstart", 0))
+        userdefinedend = int(settings.get("userdefinedend", width))
         # THIS PART CALCULATES THE ONCE OVER A CERTAIN THRESHOLD
+        self.logger.info("Using Userdefinedarea between {0} and {1}".format(userdefinedstart, userdefinedend))
+        overindices = (intensity[:, 0] > threshold).nonzero()[0]
+        #print(overindices)
+        overindices = np.array(
+            [index for index in overindices if index >= userdefinedstart and index <= userdefinedend])
 
-        overindices = (intensity[:,0] > threshold).nonzero()[0]
-        print(overindices)
-        overindices = np.array([index for index in overindices if index >= userdefinedstart and index <= userdefinedend])
-
-        print(overindices)
+        #print(overindices)
         try:
             xstart = overindices.min()
             ystart = overindices.max()
 
         except:
+            self.logger.error("No Items over Threshold found, length not evaluated")
             xstart = -1
             ystart = -1
-
 
         aisstart = xstart
         aisend = ystart
@@ -117,8 +72,8 @@ class LengthDataFromIntensityProfile(EvaluatingConsumer):
         distancetoend = aisend
 
         physicallength = length * float(physizex)
-        physicaldistancetostart= distancetostart * float(physizex)
-        physicaldistancetoend= distancetoend * float(physizex)
+        physicaldistancetostart = distancetostart * float(physizex)
+        physicaldistancetoend = distancetoend * float(physizex)
 
         data = {}
         data["length"] = length
@@ -128,32 +83,42 @@ class LengthDataFromIntensityProfile(EvaluatingConsumer):
         data["physicaldistancetostart"] = physicaldistancetostart
         data["physicaldistancetoend"] = physicaldistancetoend
 
-        return data
+        return {"data":data}
 
 
-class ClusterDataConsumer(EvaluatingConsumer):
+class ClusterDataConsumer(LarvikConsumer):
 
-    def getSerializer(self):
-        return ClusterDataSerializer
+    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
+        return get_evaluating_or_error
 
-    def getDataFunction(self):
-        return update_clusterdata_or_create
+    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
+        return update_status_on_larvikjob
 
-    async def parse(self, settings: dict, transformation: Transformation, roi: ROI, meta: BioMeta, evaluating: Evaluating) -> np.array:
+    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
+        return {"data": clusterdata_update_or_create
+                }
+
+    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
+        return {"ClusterData": ClusterDataSerializer,
+                "Evaluating": EvaluatingSerializer}
+
+    async def parse(self, request: Evaluating, settings: dict) -> Dict[str, Any]:
+        transformation = request.transformation
+        meta = request.sample.meta
 
         array = transformation.numpy.get_array()
-        cluster, n_cluster = findConnectedCluster(array, settings.get("sizeThreshold",3))
+        cluster, n_cluster = findConnectedCluster(array, settings.get("sizeThreshold", 3))
         n_pixels = sum(array.flat)
         areaphysical = n_pixels * meta.xphysical * meta.yphysical
 
-        print("With Meta data of", str(meta.xphysical) + "and" + str(meta.yphysical))
-        print("Creating Cluster of " + str(n_pixels) + " Pixels")
-        print("Creating Cluster of " + str(areaphysical) + " Size")
-        print("Creating Cluster of " + str(n_cluster) + " Cluster")
+        self.logger.info("With Meta data of " + str(meta.xphysical) + " and " + str(meta.yphysical))
+        self.logger.info("Creating Cluster of " + str(n_pixels) + " Pixels")
+        self.logger.info("Creating Cluster of " + str(areaphysical) + " Size")
+        self.logger.info("Creating Cluster of " + str(n_cluster) + " Cluster")
 
         data = {}
         data["clusternumber"] = n_cluster
         data["clusterareapixels"] = areaphysical
         data["clusterarea"] = areaphysical
 
-        return data
+        return {"data": data}

@@ -51,7 +51,7 @@ class MutatingViewSet(OsloActionViewSet):
     actionpublishers = {"sample": [("creator", "experiment")], "reflection": [["creator"],["roi"],["nodeid"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "image"
-    actiontype = "startconverting"
+    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         metamorpher = Mutater.objects.get(pk=serializer.data["mutater"])

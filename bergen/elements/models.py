@@ -11,7 +11,11 @@ from taggit.managers import TaggableManager
 from biouploader.models import BioSeries, BioMeta
 from elements.managers import NumpyManager, PandasManager
 from elements.utils import toFileName
+from larvik.logging import get_module_logger
 from mandal import settings
+
+
+logger = get_module_logger(__name__)
 
 
 def get_sentinel_user():
@@ -87,14 +91,14 @@ class Sample(models.Model):
 
 
     def delete(self, *args, **kwargs):
-        print("Trying to remove Sample H5File")
+        logger.info("Trying to remove Sample H5File")
         for item in self.numpys.all():
             item.delete()
 
         filepath = os.path.join(settings.H5FILES_ROOT,toFileName(self))
         if os.path.isfile(filepath):
             os.remove(filepath)
-            print("Removed Sample H5File",filepath)
+            logger.info("Removed Sample H5File {0}".format(filepath))
 
         super(Sample, self).delete(*args, **kwargs)
 
@@ -112,34 +116,34 @@ class Numpy(models.Model):
 
     def get_array(self):
         with h5py.File(self.filepath, 'a') as file:
-            print("Trying to access file {0} to get array".format(self.filepath))
+            logger.info("Trying to access file {0} to get array".format(self.filepath))
             hf = file[self.type]
             array = hf.get(self.vid)[()]
         return array
 
     def set_array(self,array):
         with h5py.File(self.filepath, 'a') as file:
-            print("Trying to access file {0} to set array".format(self.filepath))
+            logger.info("Trying to access file {0} to set array".format(self.filepath))
             hf = file[self.type]
             if self.vid in hf: del hf[self.vid]
             hf.create_dataset(self.vid, data=array, dtype=self.dtype, compression=self.compression)
 
     def get_z_bounded_array(self,zl,zu):
         with h5py.File(self.filepath, "a") as file:
-            print("Trying to access file {0} to set array".format(self.filepath))
+            logger.info("Trying to access file {0} to set array".format(self.filepath))
             hf = file[self.type]
             ## This is not working great so far
             array = hf.get(self.vid)[:,:,:,zl:zu,:]
         return array
 
     def delete(self, *args, **kwargs):
-        print("Trying to remove Dataset from Filepath", self.filepath)
+        logger.info("Trying to remove Dataset from Filepath {0}".format(self.filepath))
         with h5py.File(self.filepath, 'a') as file:
-            print("Trying to Access Vid from file {0} to delete array".format(self.filepath))
+            logger.info("Trying to Access Vid from file {0} to delete array".format(self.filepath))
             hf = file[self.type]
             if self.vid in hf:
                 del hf[self.vid]
-                print("Delteted Vid {1} from file {0}".format(self.filepath,self.vid))
+                logger.info("Delteted Vid {1} from file {0}".format(self.filepath,self.vid))
 
         super(Numpy, self).delete(*args, **kwargs)
 
@@ -156,25 +160,25 @@ class Pandas(models.Model):
     objects = PandasManager()
 
     def get_dataframe(self):
-        print("Trying to access file {0} to get dataframe".format(self.filepath))
+        logger.info("Trying to access file {0} to get dataframe".format(self.filepath))
         with HDFStore(self.filepath) as store:
             path = self.type + "/" + self.vid
             dataframe = store.get(path)
         return dataframe
 
     def set_dataframe(self,dataframe):
-        print("Trying to access file {0} to set dataframe".format(self.filepath))
+        logger.info("Trying to access file {0} to set dataframe".format(self.filepath))
         with HDFStore(self.filepath) as store:
             path = self.type + "/" + self.vid
             store.put(path, dataframe)
 
     def delete(self, *args, **kwargs):
-        print("Trying to remove Dataframe from Filepath", self.filepath)
+        logger.info("Trying to remove Dataframe from Filepath {0}".format(self.filepath))
         with HDFStore(self.filepath) as store:
             path = self.type + "/" + self.vid
             if path in store:
                 store.delete(path)
-                print("Deleted Dataframe with VID {1} from file {0}".format(self.filepath, self.vid))
+                logger.info("Deleted Dataframe with VID {1} from file {0}".format(self.filepath, self.vid))
 
         super(Pandas, self).delete(*args, **kwargs)
 

@@ -58,12 +58,12 @@ class EvaluatingViewSet(OsloActionViewSet):
                         "data": [["transformation"],["creator"]],
                         "clusterdata": [["transformation"],["creator"],["nodeid"]],
                         "lengthdata": [["transformation"], ["creator"], ["nodeid"]],
+                        "evaluating": [("nodeid",)]
                         }
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "maxisp"
-    actiontype = "startparsing"
+    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         evaluator = Evaluator.objects.get(pk=serializer.data["evaluator"])
-        print(evaluator.channel)
         return [self.create_job(data=serializer.data, job=serializer.data, channel=evaluator.channel)]

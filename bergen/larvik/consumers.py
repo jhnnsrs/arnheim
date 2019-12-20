@@ -99,6 +99,7 @@ class LarvikConsumer(AsyncConsumer):
                         self.logger.info("Modelfield {0} does not exist on {1}".format(str(modelfield), str(stream)))
                         path += "{0}_".format((str(modelfield)))
                 path = path[:-1] # Trim the last underscore
+
                 self.logger.info("Publishing to Channel {0}".format(path))
 
                 await self.channel_layer.group_send(
@@ -167,7 +168,7 @@ class LarvikConsumer(AsyncConsumer):
                 models = await self.getModelFuncDict()[modelname](modelparams,self.request,self.settings)
                 for (model, method ) in models:
                     await self.modelCreated(model, self.getSerializerDict()[type(model).__name__], method)
-                    self.logger.info(method + " Model " + modelname)
+                    self.logger.info(str(method).capitalize() + " Model " + type(model).__name__)
 
             await self.updateRequest(LarvikStatus(StatusCode.DONE,"Done"))
 

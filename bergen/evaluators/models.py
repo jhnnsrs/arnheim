@@ -31,6 +31,9 @@ class Evaluating(models.Model):
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE)
     error = models.CharField(max_length=300,blank=True,null=True)
 
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
+
     def __str__(self):
         return "Evaluating for Evaluator: {0}".format(self.evaluator)
 

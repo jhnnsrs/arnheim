@@ -1,15 +1,17 @@
 from django.db import models
 
 from elements.models import Sample, Numpy, Pandas
+from larvik.logging import get_module_logger
 from mandal import settings
 
+logger = get_module_logger(__name__)
 
 class AnswerManager(models.Manager):
     def create(self, **obj_data):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
         if "dataframe" in obj_data:
-            print("Creating Pandas with help of HDFStore")
+            logger.info("Creating Pandas with help of HDFStore")
             vid = str(obj_data["vid"])
 
             # TODO: if sample is not provided this should raise an exception

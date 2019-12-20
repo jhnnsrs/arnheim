@@ -90,56 +90,21 @@ class OsloViewSet(viewsets.ModelViewSet):
                 try:
                     path = ""
                     for modelfield in el:
-                        value = serializedData[modelfield]
-                        path += "{0}_{1}_".format(str(modelfield), str(value))
+                        try:
+                            value = serializedData[modelfield]
+                            path += "{0}_{1}_".format(str(modelfield), str(value))
+                        except KeyError as e:
+                            self.logger.info("Modelfield {0} does not exist on {1}".format(str(el), str(self.serializer_class.__name__)))
+                            self.logger.info("Publishing to String {0}".format(modelfield))
+                            path += "{0}_".format(str(modelfield))
                     path = path[:-1]
                     self.logger.info("Publishing to Models {0}".format(path))
                     stream = str(serializer.Meta.model.__name__)
                     async_to_sync(channel_layer.group_send)(path, {"type": "stream", "stream": stream, "room": path,
                                                                    "method": method, "data": serializedData})
                 except KeyError as e:
-                    self.logger.info("Modelfield {0} does not exist on {1}".format(str(el), str(self.serializer_class.__name__)))
-                    if self.stringpublish:
-                        for modelfield in el:
-                            path = modelfield
-                            self.logger.info("Publishing to String {0}".format(path))
-                            stream = str(serializer.Meta.model.__name__)
-                            async_to_sync(channel_layer.group_send)(path,
-                                                                    {"type": "stream", "stream": stream, "room": path,
-                                                                     "method": method, "data": serializedData})
+                    self.logger.info("Error Babe !!!".format(str(el), str(self.serializer_class.__name__)))
 
-    def publishModel(self, model: models.Model, serializerclass: serializers.ModelSerializer.__class__, method: str):
-        '''Make sure to call this if you created a new Model on the Database so that the actionpublishers can do their work'''
-        serialized = serializerclass(model)
-        stream = str(serialized.Meta.model.__name__).lower()
-        if stream in self.viewset_delegates.keys():
-            self.logger.info("WHEN IS THIS EVER CALLED????")
-            self.publishing(serialized, method, self.viewset_delegates[stream], stream)
-
-    def publishing(self, serializer, method, publishers, stream):
-        if publishers is not None:
-            for el in publishers:
-                path = ""
-                for modelfield in el:
-                    try:
-                        value = serializer.data[modelfield]
-                        path += "{0}_{1}_".format(str(modelfield), str(value))
-                    except KeyError as e:
-                        self.logger.info("Modelfield {0} does not exist on {1}".format(str(modelfield), str(stream)))
-                        path += "{0}_".format((str(modelfield)))
-                path = path[:-1]
-                self.logger.info("Publishing to Channel {0}".format(path))
-
-                async_to_sync(channel_layer.group_send)(
-                    path,
-                    {
-                        "type": "stream",
-                        "stream": stream,
-                        "room": path,
-                        "method": method,
-                        "data": serializer.data
-                    }
-                )
 
     def perform_create(self, serializer):
         super().perform_create(serializer)

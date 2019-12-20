@@ -52,7 +52,7 @@ class ForeignNodeStatusViewSet(OsloViewSet):
     filter_backends = (DjangoFilterBackend,)
     queryset = ForeignNodeStatus.objects.all()
     serializer_class = ForeignNodeStatusSerializer
-    publishers = [["creator"], ["nodes_for_foreign"]]
+    publishers = [["creator",], ["nodes_for_foreign"]]
 
 
 class NodeViewSet(OsloViewSet):
@@ -75,7 +75,7 @@ class ExternalViewSet(OsloViewSet):
     queryset = External.objects.all()
     permission_classes = (ExternalAccessPolicy,)
     serializer_class = ExternalSerializer
-    publishers = [["creator"]]
+    publishers = [["creator","subset"]]
 
     @action(detail=False, )
     def recent(self, request):

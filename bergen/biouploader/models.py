@@ -5,7 +5,9 @@ from django.db import models
 
 
 # Create your models here.
+from larvik.logging import get_module_logger
 
+logger = get_module_logger(__name__)
 
 class Locker(models.Model):
     creator = models.ForeignKey(User,on_delete=models.CASCADE)
@@ -26,10 +28,10 @@ class BioImage(models.Model):
         return self.name
 
     def delete(self, *args, **kwargs):
-        print("Trying to remove Bioimage of path", self.file.path)
+        logger.info("Trying to remove Bioimage of path {0}".format(self.file.path))
         if os.path.isfile(self.file.path):
             os.remove(self.file.path)
-            print("Removed Bioimage of path", self.file.path)
+            logger.info("Removed Bioimage of path {0}".format(self.file.path))
 
         super(BioImage, self).delete(*args, **kwargs)
 
@@ -65,6 +67,9 @@ class Analyzing(models.Model):
     nodeid = models.CharField(max_length=300, null=True, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     settings = models.CharField(max_length=800)
+
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
 
 
 class BioMeta(models.Model):

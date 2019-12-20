@@ -1,67 +1,51 @@
-from pandas import DataFrame
+from typing import Dict, Any, Callable, Awaitable
+
+from django.db import models
 from pandas.io.json import json_normalize
+from rest_framework import serializers
 
-from answers.models import Answering, Question
-from answers.serializers import AnswerSerializer
-from answers.utils import get_answering_or_error, update_answer_or_create
+from answers.models import Answering
+from answers.serializers import AnswerSerializer, AnsweringSerializer
+from answers.utils import get_answering_or_error, answer_update_or_create
 from gql.schema import schema
-from transformers.serializers import TransformationSerializer
-from trontheim.consumers import OsloJobConsumer
+from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
 
 
-class AnsweringConsumer(OsloJobConsumer):
+class PandaAnswer(LarvikConsumer):
 
-    async def startparsing(self, data):
-        await self.register(data)
-        print(data)
-        request: Answering = await get_answering_or_error(data["data"])
-        settings: dict = await self.getsettings(request.settings, request.oracle.defaultsettings)
+    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
+        return get_answering_or_error
 
-        question: Question = request.question
-        datapackages = await self.parse(settings,question)
+    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
+        return update_status_on_larvikjob
 
-        for datapackage in datapackages:
-            key, dataframe = datapackage
-            answer, method = await update_answer_or_create(request, settings, key, dataframe)
-            await self.modelCreated(answer, AnswerSerializer, method)
+    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
+        return {
+            "datapackage": answer_update_or_create
+        }
 
-    async def parse(self, settings: dict,question: Question) -> DataFrame:
-        raise NotImplementedError
+    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
+        return {
+            "Answer": AnswerSerializer,
+            "Answering": AnsweringSerializer
+        }
 
-
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
-        try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
-
-        except:
-            defaultsettings = {}
-            settings = {}
-
-        defaultsettings.update(settings)
-        return defaultsettings
-
-
-class PandaAnswer(AnsweringConsumer):
-
-
-    async def parse(self, settings: dict, question: Question) -> [DataFrame]:
-
-        query = question.querystring
-        print("Executing Schema")
+    async def parse(self, request: Answering, settings: dict) -> Dict[str, Any]:
+        query = request.question.querystring
+        self.logger.info("Executing Schema")
+        await self.progress(20, "Querying Schema")
         result = schema.execute(query)
 
         resultdict = result.to_dict()
         datapackages = []
         data = resultdict["data"]
+        await self.progress(80, "Creating Answers")
         for key in data.keys():
             dataframe = json_normalize(data[key])
-            datapackages.append((key,dataframe))
+            datapackages.append((key, dataframe))
 
-        return datapackages
+        return {"datapackage": datapackages}
+
+
+
 

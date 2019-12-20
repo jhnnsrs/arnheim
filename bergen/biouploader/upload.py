@@ -4,7 +4,7 @@ import shutil
 from biouploader.models import BioImage
 from mandal.settings import BIOIMAGE_ROOT
 
-
+logger = get_module_logger(__name__)
 def move_upload_to_storage(source, name, creatorid, lockerid):
     '''moving an uploaded file (from nginx module) to storage means.
          1. create a folder for the collection, if doesn't exist

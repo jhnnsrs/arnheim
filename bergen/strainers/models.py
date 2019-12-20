@@ -24,6 +24,10 @@ class Straining(models.Model):
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
 
+
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
+
     def __str__(self):
         return "Parsing Request for Filter: {0}".format(self.strainer)
 

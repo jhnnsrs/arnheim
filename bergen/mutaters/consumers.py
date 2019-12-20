@@ -1,10 +1,14 @@
+from typing import Dict, Any, Callable, Awaitable
+
 import numpy as np
+from django.db import models
 from rest_framework import serializers
 
 from filterbank.logic.addins import toimage
+from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
 from mutaters.models import Mutating
-from mutaters.serializers import ReflectionSerializer
-from mutaters.utils import get_mutating_or_error, update_image_on_reflection
+from mutaters.serializers import ReflectionSerializer, MutatingSerializer
+from mutaters.utils import get_mutating_or_error, update_image_on_reflection, reflection_update_or_create
 from trontheim.consumers import OsloJobConsumer
 
 
@@ -61,15 +65,24 @@ class MutatingOsloJob(OsloJobConsumer):
 
 
 
-class ImageMutator(MutatingOsloJob):
+class ImageMutator(LarvikConsumer):
 
-    def getDatabaseFunction(self):
-        return update_image_on_reflection
+    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
+        return get_mutating_or_error
 
-    def getSerializer(self):
-        return ReflectionSerializer
+    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
+        return update_status_on_larvikjob
 
-    async def convert(self, array: np.array, conversionsettings: dict):
+    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
+        return { "image": reflection_update_or_create}
+
+    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
+        return { "Mutating": MutatingSerializer,
+                 "Reflection": ReflectionSerializer}
+
+    async def parse(self, request: Mutating, settings: dict) -> Dict[str, Any]:
+        array = request.transformation.numpy.get_array()
+
         # TODO: Maybe faktor this one out
         if len(array.shape) == 5:
             array = np.nanmax(array[:, :, :3, :, 0], axis=3)
@@ -108,7 +121,7 @@ class ImageMutator(MutatingOsloJob):
 
             array = target
 
-        print(array.shape)
-        print("MUTATEED")
+        self.logger.info("Output image has shape {0}".format(array.shape))
         img = toimage(array)
-        return img
+        return {"image": img }
+

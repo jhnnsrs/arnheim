@@ -36,6 +36,9 @@ class Answering(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     error = models.CharField(max_length=300, blank=True, null=True)
 
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
+
     def __str__(self):
         return "Answering for Oracle {1} created at {0}".format(self.created_at.strftime("%m/%d/%Y, %H:%M:%S"),self.oracle.name)
 

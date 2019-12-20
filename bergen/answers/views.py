@@ -63,11 +63,10 @@ class AnsweringViewSet(OsloActionViewSet):
     queryset = Answering.objects.all()
     serializer_class = AnsweringSerializer
     publishers = [["nodeid"]]
-    actionpublishers = {"answering": [("creator",)], "answer": [["creator"], ["nodeid"]]}
+    actionpublishers = {"answering": [("nodeid",)], "answer": [["creator"], ["nodeid"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
-    actiontype = "startparsing"
+    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         oracle = Oracle.objects.get(pk=serializer.data["oracle"])
-        print(oracle.channel)
         return [self.create_job(data=serializer.data, job=serializer.data, channel=oracle.channel)]

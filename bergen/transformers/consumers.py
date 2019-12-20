@@ -5,7 +5,7 @@ import numpy as np
 from django.db import models
 from rest_framework import serializers
 
-from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
+from larvik.consumers import LarvikConsumer, update_status_on_larvikjob, LarvikError
 from transformers.logic.linerectifier_logic import translateImageFromLine
 from transformers.models import Transforming
 from transformers.serializers import TransformationSerializer, TransformingSerializer
@@ -85,7 +85,10 @@ class SliceLineTransformer(LarvikConsumer):
         scale = settings.get("scale",10)
         # We Have to Slice the Array first in order to make the transformation work
         lowerBound1: int = settings.get("lower", 0)
-        upperBound1: int = settings.get("upper", z_size -1)
+        upperBound1: int = settings.get("upper", z_size - 1)
+
+        if upperBound1 is None: raise LarvikError("Upper Bound Not correctly set")
+        if lowerBound1 is None: raise LarvikError("Lower Bound Not correctly set")
 
         if lowerBound1 > upperBound1:
             lowerBound = upperBound1
@@ -111,7 +114,7 @@ class SliceLineTransformer(LarvikConsumer):
             array = array[:, :]
 
         await self.progress(60, message="Transforming")
-        self.logger.info("Maxxed array of shape {0}".format(array.shape))
+        self.logger.info("Maxed array of shape {0}".format(array.shape))
         array = np.float64(array)
         image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(scale))
 

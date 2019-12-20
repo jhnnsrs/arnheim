@@ -40,6 +40,8 @@ class Mutating(models.Model):
     settings = models.CharField(max_length=1000) # jsondecoded
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE, blank=True, null=True)
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
