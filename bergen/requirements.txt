@@ -58,3 +58,9 @@ python-dateutil
 tables
 pandas-profiling
 openpyxl
+zarr
+dask[complete]
+lz4
+numcodecs
+xarray
+seaborn

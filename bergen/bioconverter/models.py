@@ -4,7 +4,8 @@ from django.db import models
 # Create your models here.
 from bioconverter.managers import RepresentationManager
 from biouploader.models import BioSeries
-from elements.models import Experiment, Sample, Numpy
+from elements.models import Experiment, Sample, Numpy, Zarr
+
 
 class Converter(models.Model):
     name = models.CharField(max_length=100)
@@ -37,16 +38,24 @@ class Conversing(models.Model):
 class Representation(models.Model):
     name = models.CharField(max_length=1000)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    vid = models.CharField(max_length=1000,blank=True, null=True)
+    vid = models.CharField(max_length=1000,blank=True, null=True) #deprecated
     inputrep = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null= True)
-    shape = models.CharField(max_length=100, blank=True, null= True)
+    shape = models.CharField(max_length=100, blank=True, null= True) #deprecated
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE,related_name='representations')
-    numpy = models.ForeignKey(Numpy, on_delete=models.CASCADE, blank=True, null=True)
+    numpy: Numpy = models.ForeignKey(Numpy, on_delete=models.CASCADE, blank=True, null=True) #deprecated
+    zarr: Zarr = models.ForeignKey(Zarr, on_delete=models.CASCADE, blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
-    meta = models.CharField(max_length=6000, null=True, blank=True)
+    meta = models.CharField(max_length=6000, null=True, blank=True) #deprecated
 
     objects = RepresentationManager()
+
+    def loadArray(self, chunks="auto", name="data"):
+        if self.zarr:
+            return self.zarr.openArray(chunks= chunks, name=name)
+        if self.numpy:
+            return self.numpy.get_array()
+
 
     def __str__(self):
         return self.name

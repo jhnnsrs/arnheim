@@ -1,6 +1,9 @@
 import os
 
+import dask
 import h5py
+import zarr
+import xarray
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
@@ -9,7 +12,7 @@ from pandas import HDFStore
 from taggit.managers import TaggableManager
 
 from biouploader.models import BioSeries, BioMeta
-from elements.managers import NumpyManager, PandasManager
+from elements.managers import NumpyManager, PandasManager, ZarrManager
 from elements.utils import toFileName
 from larvik.logging import get_module_logger
 from mandal import settings
@@ -103,10 +106,12 @@ class Sample(models.Model):
         super(Sample, self).delete(*args, **kwargs)
 
 
+
 class Numpy(models.Model):
     filepath = models.FilePathField(max_length=400) # aka h5files/$sampleid.h5
     vid = models.CharField(max_length=1000) # aca vid0, vid1, vid2, vid3
     type = models.CharField(max_length=100)
+    iszarr = models.BooleanField()
     dtype = models.CharField(max_length=300, blank=True, null=True)
     compression = models.CharField(max_length=300, blank=True, null=True)
     shape = models.CharField(max_length=400, blank=True, null=True)
@@ -149,6 +154,41 @@ class Numpy(models.Model):
 
     def __str__(self):
         return "Numpy Object with VID " + str(self.vid) + " at " + str(self.filepath)
+
+def getStore(store):
+    from numcodecs import Blosc
+    compressor = Blosc(cname='zstd', clevel=3, shuffle=Blosc.BITSHUFFLE)
+
+    zarr.storage.default_compressor = compressor
+    return zarr.DirectoryStore(store)
+
+
+def openDataSet(store, group, chunks="auto") -> xarray.Dataset:
+    store = getStore(store)
+    return xarray.open_zarr(store=store, group=group, chunks=chunks)
+
+class Zarr(models.Model):
+    store = models.FilePathField(max_length=600)
+    group = models.CharField(max_length=800)
+
+    objects = ZarrManager()
+
+    def info(self):
+        dataset = openDataSet(self.store, self.group)
+        return dataset.info()
+
+    def saveArray(self, array, compute=True, name="data")-> dask.delayed:
+        return array.to_dataset(name=name).to_zarr(store=getStore(self.store), mode="w", group=self.group, compute=compute)
+
+    def loadDataset(self, chunks="auto") -> xarray.Dataset:
+        return openDataSet(self.store, self.group, chunks=chunks)
+
+    def openArray(self, chunks="auto", name="data") -> xarray.Dataset:
+        dataset = openDataSet(self.store, self.group, chunks=chunks)
+        return dataset[name]
+
+    def saveDataset(self, dataset, compute=True) -> dask.delayed:
+        return dataset.to_zarr(store=getStore(self.store), mode="w", group=self.group,compute=compute)
 
 
 class Pandas(models.Model):

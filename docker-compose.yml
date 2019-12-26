@@ -25,7 +25,7 @@ services:
       - hdfserver
   oslo:
     build: bergen
-    command: python manage.py runworker channels
+    command: python manage.py runworker websocket
     env_file:
       - arnheim.env
       - development.env
@@ -64,11 +64,16 @@ services:
       - worker
       - hdfserver
       - notebook
+      - daskscheduler
   notebook:
     build: jupjup
     command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/notebooks/
     environment:
       - HOME=home
+      - DASK_SCHEDULER_ADDRESS="tcp://daskscheduler:8786"
+    env_file:
+      - arnheim.env
+      - development.env
     volumes:
       - ./notebooks:/notebooks
       - ./bergen:/code/
@@ -76,10 +81,13 @@ services:
       - ./database:/code/db
       - media:/code/media
       - files:/code/files
+    ports:
+      - 90:90
     links:
       - web
       - worker
       - hdfserver
+      - daskscheduler
   hdfserver:
     build: hdfserver
     command: python h5serv --datapath=/data
@@ -90,6 +98,22 @@ services:
       - media:/data
       - ./hdfserver:/usr/local/src/h5serv
       - ./config/h5serv-conf.py:/usr/local/src/h5serv/h5serv/config.py
+  daskscheduler:
+    build: dask
+    ports:
+      - "8786:8786"
+      - "8787:8787"
+    command: dask-scheduler --dashboard-prefix=daskboard
+  daskworker:
+    build: dask
+    command: ["dask-worker", "tcp://daskscheduler:8786"]
+    volumes:
+      - ./notebooks:/notebooks
+      - ./bergen:/code/
+      - ./jupjup:/config/
+      - ./database:/code/db
+      - media:/code/media
+      - files:/code/files
 
 volumes:
   vscode:

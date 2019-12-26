@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from bioconverter.models import Representation
 from drawing.models import ROI
-from larvik.consumers import LarvikConsumer, update_status_on_larvikjob, LarvikError
+from larvik.consumers import LarvikConsumer, update_status_on_larvikjob, LarvikError, DistributedLarvikConsumer
 from strainers.models import Straining
 from strainers.serializers import StrainingSerializer
 from strainers.utils import get_straining_or_error, update_outputtransformation_or_create, \
@@ -17,49 +17,8 @@ from transformers.serializers import TransformationSerializer
 from trontheim.consumers import OsloJobConsumer
 # import the logging library
 
-class StrainerConsumer(OsloJobConsumer):
 
-    async def startparsing(self, data):
-        await self.register(data)
-        print(data)
-        request: Straining = await get_straining_or_error(data["data"])
-        settings: dict = await self.getsettings(request.settings, request.strainer.defaultsettings)
-
-        transformation: Transformation = request.transformation
-
-        parsedarray = await self.parse(settings,transformation)
-
-        transformation, method = await update_outputtransformation_or_create(request, settings, parsedarray)
-
-        await self.modelCreated(transformation, TransformationSerializer, method)
-
-    async def parse(self, settings: dict,rep: Representation, roi: ROI) -> np.array:
-        raise NotImplementedError
-
-    async def raiseError(self, error):
-        self.data["error"] = error
-        await self.modelCreated(self.data, StrainingSerializer, "update")
-
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
-        try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
-
-        except:
-            defaultsettings = {}
-            settings = {}
-
-        defaultsettings.update(settings)
-        return defaultsettings
-
-
-
-class IntensityProfiler(LarvikConsumer):
+class IntensityProfiler(DistributedLarvikConsumer):
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_straining_or_error
@@ -77,6 +36,8 @@ class IntensityProfiler(LarvikConsumer):
         }
 
     async def parse(self, request: Straining, settings: dict) -> Dict[str, Any]:
+
+        print(str(self.c))
 
         transformation_image = request.transformation.numpy.get_array()
         height = 0

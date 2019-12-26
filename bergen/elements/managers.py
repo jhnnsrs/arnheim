@@ -1,8 +1,11 @@
 # import the logging library
 import logging
 import os
-
+import string
+import random
+import zarr
 import h5py
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from pandas import HDFStore
 
@@ -35,6 +38,7 @@ class NumpyManager(models.Manager):
 
             del obj_data["numpy"]
 
+
         return super(NumpyManager,self).create(**obj_data)
 
 class PandasManager(models.Manager):
@@ -59,3 +63,24 @@ class PandasManager(models.Manager):
             del obj_data["dataframe"]
 
         return super(PandasManager,self).create(**obj_data)
+
+
+class ZarrManager(models.Manager):
+
+    def id_generator(self, size=6, chars=string.ascii_uppercase + string.digits):
+        return ''.join(random.choice(chars) for _ in range(size))
+
+    def fromRequest(self, name="", store="", type="transformation", overwrite=True):
+        #Test if instance Already Exists
+        from django.template.defaultfilters import slugify
+
+        group = type + "/" + slugify(name) if overwrite else type + "/" + slugify(name+self.id_generator())
+        logger.info("Looking for Group {0}".format(group))
+        try:
+            item = super(ZarrManager,self).get(group=group,store=store)
+            return item
+        except ObjectDoesNotExist:
+            return super(ZarrManager, self).create(store=store, group=group)
+
+
+

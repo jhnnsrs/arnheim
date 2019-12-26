@@ -47,6 +47,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 FILES_ROOT = os.path.join(BASE_DIR, "files")
 BIOIMAGE_ROOT = os.path.join(MEDIA_ROOT, "bioimages")
 H5FILES_ROOT = os.path.join(MEDIA_ROOT, "h5files")
+ZARR_ROOT = os.path.join(MEDIA_ROOT, "zarr")
 PANDAS_ROOT = os.path.join(MEDIA_ROOT, "pandas")
 NIFTI_ROOT = os.path.join(MEDIA_ROOT, "nifti")
 PROFILES_ROOT = os.path.join(MEDIA_ROOT, "profiles")
@@ -205,7 +206,7 @@ WSGI_APPLICATION = 'mandal.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-if arnheim_debug:
+if arnheim_debug or True:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
