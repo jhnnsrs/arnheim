@@ -1,0 +1,36 @@
+version: "3.4"
+
+services:
+  web:
+    volumes:
+      - ./bergen:/code
+      - ./database:/code/db
+      - media:/code/media
+      - files:/code/files
+  worker:
+    volumes:
+      - ./bergen:/code
+      - media:/code/media
+      - ./database:/code/db
+      - files:/code/files
+  notebook:
+    volumes:
+      - ./notebooks:/notebooks
+      - ./bergen:/code/
+      - ./jupjup:/config/
+      - media:/code/media
+      - ./database:/code/db
+      - files:/code/files
+
+volumes:
+  dbdata:
+  media:
+    driver_opts:
+      type: none
+      device: /c/Users/jhnns/PycharmProjects/arnheim/media
+      o: bind
+  files:
+    driver_opts:
+      type: none
+      device: /c/Users/jhnns/PycharmProjects/arnheim/files
+      o: bind

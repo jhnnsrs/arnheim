@@ -10,7 +10,6 @@ from answers.utils import get_answering_or_error, answer_update_or_create
 from gql.schema import schema
 from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
 
-
 class PandaAnswer(LarvikConsumer):
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:

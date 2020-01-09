@@ -2,9 +2,9 @@ from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
-from bioconverter.managers import RepresentationManager
+from bioconverter.managers import DistributedRepresentationManager, RepresentationManager
 from biouploader.models import BioSeries
-from elements.models import Experiment, Sample, Numpy, Zarr
+from elements.models import Experiment, Numpy, Sample, Zarr
 
 
 class Converter(models.Model):
@@ -49,6 +49,7 @@ class Representation(models.Model):
     meta = models.CharField(max_length=6000, null=True, blank=True) #deprecated
 
     objects = RepresentationManager()
+    distributed = DistributedRepresentationManager()
 
     def loadArray(self, chunks="auto", name="data"):
         if self.zarr:
@@ -65,5 +66,3 @@ class Representation(models.Model):
             self.numpy.delete()
 
         super(Representation, self).delete(*args, **kwargs)
-
-

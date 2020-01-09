@@ -1,5 +1,8 @@
+import json
 from typing import Dict, Any, Callable, Awaitable
 
+import bioformats
+import javabridge
 from django.db import models
 from rest_framework import serializers
 
@@ -11,7 +14,8 @@ from biouploader.models import BioSeries
 from bioconverter.logic.bioparser import loadSeriesFromFile
 from elements.serializers import SampleSerializer
 from bioconverter.serializers import RepresentationSerializer, ConversingSerializer
-from larvik.consumers import LarvikConsumer
+from larvik.consumers import LarvikConsumer, DaskLarvikConsumer, LarvikError
+from larvik.models import LarvikJob
 from trontheim.consumers import OsloJobConsumer
 
 
@@ -66,23 +70,6 @@ class ConvertBioSeriesOsloJob(OsloJobConsumer):
         defaultsettings.update(settings)
         return defaultsettings
 
-
-class ConversionConsumer(LarvikConsumer):
-
-    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
-        return get_conversing_or_error
-
-    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
-        return update_status_on_conversing
-
-    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
-        pass
-
-    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
-        pass
-
-    async def parse(self, request: models.Model, settings: dict) -> Dict[str, Any]:
-        raise NotImplementedError
 
 
 class BioConverter(ConvertBioSeriesOsloJob):

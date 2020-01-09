@@ -1,5 +1,6 @@
 import json
 
+import xarray
 from channels.db import database_sync_to_async
 from django.db import models
 
@@ -42,41 +43,35 @@ def get_sample_or_error(sample: Sample) -> Sample:
 
 
 @database_sync_to_async
-def update_outputrepresentation_or_create(request: Conversing, sample: Sample, numpyarray, meta, settings):
+def update_outputrepresentation_or_create(request: Conversing, sample: Sample, numpyarray, meta: BioMetaStructure, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
     method = "error"
+    overwrite = settings.get("overwrite", True)
+    physicalX = 0.65
+    physicalY = 0.65
+    physicalZ = 0.65
 
     # Representation Counts
-    vidfirst = "representation_bioserie-{0}_converter-{1}_node-{2}".format(str(request.bioserie_id), str(request.converter_id), str(request.nodeid))
-    representations = Representation.objects.filter(vid__startswith=vidfirst)
-    vidsub = "_{0}".format(str(representations.count()) if representations.count() else 0)
-    vid = vidfirst + vidsub
-    outputrep = representations.last()
+    lala = xarray.DataArray(numpyarray, dims=('x', 'y', 'channels', "z", "time"), coords={'channels': meta.channellist})
+    lala = xarray.DataArray(numpyarray, dims=('x', 'y', 'channels', "z", "time"),
+                            coords={"x": (lala.x * physicalX), 'y': (lala.y * physicalY), "z": (lala.z * physicalZ),
+                                    'channels': meta.channellist})
+    lala.attrs["Seriesname"] = meta.seriesname
+    lala.attrs['X-PhysicalSize'] = meta.physicalsizex
+    lala.attrs['X-PhysicalSize-Unit'] = meta.physicalsizexunit
+    lala.attrs['Y-PhysicalSize'] = meta.physicalsizey
+    lala.attrs['Y-PhysicalSize-Unit'] = meta.physicalsizeyunit
+    lala.attrs['AcquisitionDate'] = meta.date
+
+    rep = Representation.objects.from_xarray(lala, name="Initial Stack", creator=request.creator, overwrite=overwrite,
+                                       sample=sample, nodeid=request.nodeid)
 
 
     #TODO: CHeck if that makes sense
     ## TODO: This really needs to be set by the meta correctly
-    repmeta = {"channels": {"x": "px", "y": "px", "c": meta.channellist, "z": "NOTSET", "t": "sec"}}
-    repmetajson = json.dumps(repmeta)
-
-
-    if outputrep is None or not settings.get("overwrite", False):
-        method = "create"
-        outputrep = Representation.objects.create(name="Initial Stack", creator=request.creator, nodeid=request.nodeid,
-                                                  sample=sample, experiment=request.experiment,
-                                                  vid=vid,
-                                                  nparray=numpyarray, shape=json.dumps(numpyarray.shape),
-                                                  meta=repmetajson)
-    elif outputrep is not None:
-        method = "update"
-        outputrep.numpy.set_array(numpyarray)
-        outputrep.shape = json.dumps(numpyarray.shape)
-        outputrep.meta = repmetajson
-        outputrep.vid = vid
-        outputrep.save()
-    return outputrep, method
+    return rep, "create"
 
 
 @database_sync_to_async

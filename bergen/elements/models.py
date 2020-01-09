@@ -2,8 +2,8 @@ import os
 
 import dask
 import h5py
-import zarr
 import xarray
+import zarr
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
@@ -11,12 +11,12 @@ from django.db import models
 from pandas import HDFStore
 from taggit.managers import TaggableManager
 
-from biouploader.models import BioSeries, BioMeta
+from biouploader.models import BioMeta, BioSeries
 from elements.managers import NumpyManager, PandasManager, ZarrManager
 from elements.utils import toFileName
 from larvik.logging import get_module_logger
 from mandal import settings
-
+from .storage.store import getStore, openDataset
 
 logger = get_module_logger(__name__)
 
@@ -155,17 +155,7 @@ class Numpy(models.Model):
     def __str__(self):
         return "Numpy Object with VID " + str(self.vid) + " at " + str(self.filepath)
 
-def getStore(store):
-    from numcodecs import Blosc
-    compressor = Blosc(cname='zstd', clevel=3, shuffle=Blosc.BITSHUFFLE)
 
-    zarr.storage.default_compressor = compressor
-    return zarr.DirectoryStore(store)
-
-
-def openDataSet(store, group, chunks="auto") -> xarray.Dataset:
-    store = getStore(store)
-    return xarray.open_zarr(store=store, group=group, chunks=chunks)
 
 class Zarr(models.Model):
     store = models.FilePathField(max_length=600)
@@ -174,17 +164,17 @@ class Zarr(models.Model):
     objects = ZarrManager()
 
     def info(self):
-        dataset = openDataSet(self.store, self.group)
+        dataset = openDataset(self.store, self.group)
         return dataset.info()
 
     def saveArray(self, array, compute=True, name="data")-> dask.delayed:
         return array.to_dataset(name=name).to_zarr(store=getStore(self.store), mode="w", group=self.group, compute=compute)
 
     def loadDataset(self, chunks="auto") -> xarray.Dataset:
-        return openDataSet(self.store, self.group, chunks=chunks)
+        return openDataset(self.store, self.group, chunks=chunks)
 
     def openArray(self, chunks="auto", name="data") -> xarray.Dataset:
-        dataset = openDataSet(self.store, self.group, chunks=chunks)
+        dataset = openDataset(self.store, self.group, chunks=chunks)
         return dataset[name]
 
     def saveDataset(self, dataset, compute=True) -> dask.delayed:

@@ -64,3 +64,4 @@ lz4
 numcodecs
 xarray
 seaborn
+ptvsd

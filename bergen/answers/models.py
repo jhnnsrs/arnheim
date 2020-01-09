@@ -5,7 +5,7 @@ from django.db import models
 from answers.managers import AnswerManager
 from elements.models import Sample, Experiment, Pandas
 
-
+print("Hallo")
 class Question(models.Model):
     name = models.CharField(max_length=500)
     querystring = models.TextField(blank=True, null=True)

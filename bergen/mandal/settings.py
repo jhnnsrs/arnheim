@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/2.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
-
+import json
 import os
 
 # General Debug or Production Settings
@@ -25,6 +25,7 @@ TRANSFORMATION_COMPRESSION =  os.getenv("TRANSFORMATION_COMPRESSION",None)
 PANDAS_COMPRESSION =  os.getenv("PANDAS_COMPRESSION",None)
 REPRESENTATION_DTYPE =  os.getenv("REPRESENTATION_DTYPE",None)
 REPRESENTATION_COMPRESSION =  os.getenv("REPRESENTATION_COMPRESSION",None)
+ZARR_COMPRESSION = os.getenv("ZARR_COMPRESSION",None)
 
 # Redis Settings
 redis_host = os.environ.get('REDIS_HOST', 'redis')
@@ -286,6 +287,10 @@ LOGGING = {
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
     },
+}
+
+KAFKA_CONSUMER_CONFIG = {
+    'bootstrap_servers': "kafka:9092"
 }
 
 # Internationalization

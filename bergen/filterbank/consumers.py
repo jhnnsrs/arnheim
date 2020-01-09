@@ -1,12 +1,16 @@
 import json
+from typing import Callable, Dict, Any
 
 import numpy as np
+from django.db import models
 
+from bioconverter.models import Conversing, Representation
 from filterbank.models import Filtering
 from filterbank.serializers import FilteringSerializer
 from bioconverter.serializers import RepresentationSerializer
 from filterbank.utils import get_inputrepresentationbynode_or_error, get_filtering_or_error, \
     update_outputrepresentationbynode_or_create
+from larvik.consumers import DaskLarvikConsumer, LarvikError
 from trontheim.consumers import OsloJobConsumer
 
 
@@ -54,8 +58,33 @@ class FilterConsumer(OsloJobConsumer):
 
 
 
+class MaxISP(DaskLarvikConsumer):
 
-class MaxISP(FilterConsumer):
+    def getDefaultSettings(self, request: models.Model) -> str:
+        return json.dumps({"hallo": True})
+
+    def getRequestFunction(self) -> Callable[[Dict], models.Model]:
+        def a(data):
+            parsing = Filtering.objects.get(pk=data["id"])
+            if parsing is None:
+                raise LarvikError("ConversionRequest {0} does not exist".format(str(data["id"])))
+            return parsing
+
+        return a
+        pass
+
+    def parse(self, request: Filtering, settings: dict) -> Dict[str, Any]:
+        rep: Representation = request.representation
+        array = rep.loadArray()
+
+
+        print(str(self.c))
+        print(array)
+
+        print("TRYING THE BEST")
+
+
+class MaxISP2(FilterConsumer):
     async def parse(self, filtersettings: dict, numpyarray: np.array, meta: dict) -> np.array:
         array = numpyarray
         if len(array.shape) == 5:

@@ -74,7 +74,7 @@ def loadBioMetaSeriesFromFile(filepath, series):
         meta.series = series
 
     # Try to Load ChannelNames FallBack to R,G,B notation
-    channelexplain = ["R","G","B","C4","C5","C6","C7","C8","C9"]
+    channelexplain = ["C1","C2","C3","C4","C5","C6","C7","C8","C9"]
     try:
         meta.channellist = [i.attrs["Name"] for index, i in enumerate(allmeta[series].findAll("Channel"))]
     except KeyError:
