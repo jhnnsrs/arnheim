@@ -16,4 +16,5 @@ graphene-django-extras
 python-dateutil
 tables
 pandas-profiling
-ipyvolume
+cloud-volume
+dask-image

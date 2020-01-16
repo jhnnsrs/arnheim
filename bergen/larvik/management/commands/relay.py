@@ -3,10 +3,8 @@ from json import loads
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.management.base import BaseCommand
-from kafka import KafkaConsumer, KafkaProducer
+from kafka import KafkaConsumer
 from kafka.errors import KafkaError
-
-from mandal import settings
 
 channel_layer = get_channel_layer()
 

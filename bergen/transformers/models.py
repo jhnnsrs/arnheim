@@ -1,11 +1,11 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-# Create your models here.
-from elements.models import Experiment, Sample, Numpy
-from drawing.models import ROI
 from bioconverter.models import Representation
-from transformers.managers import TransformationManager
+from drawing.models import ROI
+# Create your models here.
+from elements.models import Experiment, Sample, Numpy, Zarr
+from transformers.managers import TransformationManager, DistributedTransformationManager
 
 
 class Transformation(models.Model):
@@ -16,6 +16,7 @@ class Transformation(models.Model):
     shape = models.CharField(max_length=100, blank=True, null= True)
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='transformations')
     numpy = models.ForeignKey(Numpy, on_delete=models.CASCADE, blank=True, null=True)
+    zarr = models.ForeignKey(Zarr, on_delete=models.CASCADE, blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True,null=True)
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE, related_name='transformations')
     representation = models.ForeignKey(Representation, on_delete=models.SET_NULL, blank=True, null=True)
@@ -23,9 +24,25 @@ class Transformation(models.Model):
 
     signature = models.CharField(max_length=300,null=True, blank=True)
     objects = TransformationManager()
+    distributed = DistributedTransformationManager()
+
+    def loadArray(self, chunks="auto", name="data"):
+        if self.zarr:
+            return self.zarr.openArray(chunks= chunks, name=name)
+        if self.numpy:
+            return self.numpy.get_array()
+
 
     def __str__(self):
         return self.name
+
+    def delete(self, *args, **kwargs):
+        if self.numpy:
+            self.numpy.delete()
+        if self.zarr:
+            self.zarr.delete()
+
+        super(Transformation, self).delete(*args, **kwargs)
 
 
 class Transformer(models.Model):

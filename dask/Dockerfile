@@ -5,12 +5,12 @@ RUN conda install --yes \
     python-blosc \
     cytoolz \
     zarr \
-    dask==2.9.0 \
+    dask[complete] \
     lz4 \
     nomkl \
-    numpy==1.17.3 \
-    pandas==0.25.2 \
-    tini==0.18.0 \
+    numpy \
+    pandas \
+    tini\
     xarray \
     seaborn \
     && conda clean -tipsy \

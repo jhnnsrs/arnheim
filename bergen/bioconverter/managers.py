@@ -5,13 +5,28 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
+
 from elements.models import Numpy, Sample, Zarr
-from mandal import settings
+from django.conf import settings
 
 
+def buildZarrName(name, nodeid):
+    if nodeid is not None:
+        return f"{name} {nodeid}"
+    else:
+        return f"{name}"
 
+class RepQueryMixin(object):
+    """ Methods that appear both in the manager and queryset. """
+    def delete(self):
+        # Use individual queries to the attachment is removed.
+        for rep in self.all():
+            rep.delete()
 
-class RepresentationManager(models.Manager):
+class RepresentationQuerySet(RepQueryMixin, QuerySet):
+    pass
+
+class RepresentationManager(BaseManager.from_queryset(RepresentationQuerySet)):
 
     def create(self, **obj_data):
         # Do some extra stuff here on the submitted data before saving...
@@ -49,13 +64,14 @@ class RepresentationManager(models.Manager):
                     compute=True):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
+
+        zarrname = buildZarrName(name, nodeid)
         store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
         zarr = Zarr.objects.fromRequest(name=name, store=store, type="representation", overwrite=overwrite)
-        delayed = zarr.saveArray(array,compute=compute)
+        delayed = zarr.saveArray(array,compute=True)
 
             # Now call the super method which does the actual creation
-        if compute:
-            return super().create(name=name,#
+        return super().create(name=name,#
                                   creator=creator,
                                   sample= sample,
                                   inputrep=inputrep,
@@ -63,15 +79,6 @@ class RepresentationManager(models.Manager):
                                   zarr= zarr,
                                   experiment=experiment,
                                   nodeid=nodeid)  # Python 3 syntax!!
-        else:
-            return super().create(name=name,  #
-                                  creator=creator,
-                                  sample=sample,
-                                  inputrep=inputrep,
-                                  numpy=None,
-                                  zarr=zarr,
-                                  experiment=experiment,
-                                  nodeid=nodeid), delayed
 
 
 
@@ -127,26 +134,16 @@ class DistributedRepresentationManager(BaseManager.from_queryset(DistributedRepr
                     creator: User = None,
                     inputrep = None,
                     experiment = None,
-                    nodeid= None,
-                    compute=True):
+                    nodeid= None):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
+        zarrname = buildZarrName(name, nodeid)
         store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
-        zarr = Zarr.objects.fromRequest(name=name, store=store, type="representation", overwrite=overwrite)
-        delayed = zarr.saveArray(array,compute=compute)
+        zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="representation", overwrite=overwrite)
+        delayed = zarr.saveArray(array,compute=False)
 
-            # Now call the super method which does the actual creation
-        if compute:
-            return super().create(name=name,#
-                                  creator=creator,
-                                  sample= sample,
-                                  inputrep=inputrep,
-                                  numpy= None,
-                                  zarr= zarr,
-                                  experiment=experiment,
-                                  nodeid=nodeid)  # Python 3 syntax!!
-        else:
-            return super().create(name=name,  #
+        # Now call the super method which does the actual creation
+        return super().create(name=name,  #
                                   creator=creator,
                                   sample=sample,
                                   inputrep=inputrep,
@@ -154,3 +151,13 @@ class DistributedRepresentationManager(BaseManager.from_queryset(DistributedRepr
                                   zarr=zarr,
                                   experiment=experiment,
                                   nodeid=nodeid), delayed
+
+
+    def from_xarray_and_request(self, array: xarray.DataArray, request, name: str= None):
+        return self.from_xarray(array,
+                                sample=request.sample,
+                                name=name,
+                                creator=request.creator,
+                                inputrep=request.representation,
+                                nodeid=request.nodeid)
+

@@ -41,7 +41,7 @@ def bioseries_create_or_update(series: [], request: Analyzing, settings):
                                                     index=bio["index"],
                                                     isconverted=False,
                                                     bioimage=request.bioimage,
-                                                    nodeid=bio.nodeid,
+                                                    nodeid=request.nodeid,
                                                     locker=request.bioimage.locker)
 
         elif outputseries is not None:

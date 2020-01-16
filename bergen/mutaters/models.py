@@ -1,12 +1,11 @@
-import os
-
 from django.contrib.auth.models import User
 from django.db import models
 
+from drawing.models import ROI
 # Create your models here.
 from elements.models import Experiment, Sample
-from drawing.models import ROI
 from transformers.models import Transformation
+
 
 class Reflection(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True, blank=True)

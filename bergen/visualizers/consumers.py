@@ -1,11 +1,12 @@
 from rest_framework import serializers
 
+from larvik.discover import register_consumer
 from trontheim.consumers import OsloJobConsumer
 from visualizers.models import Visualizing
 from visualizers.serializers import ProfileSerializer, VisualizingSerializer, ExcelExportSerializer
 from visualizers.utils import get_visualizing_or_error, update_profile_or_create, update_status_on_visualizing, \
     update_excelexport_or_create
-import pandas_profiling
+
 
 class VisualizingOsloJob(OsloJobConsumer):
 
@@ -73,6 +74,7 @@ class VisualizingOsloJob(OsloJobConsumer):
         return defaultsettings
 
 
+@register_consumer("profiler")
 class Profiler(VisualizingOsloJob):
 
     def getDatabaseFunction(self):
@@ -89,6 +91,8 @@ class Profiler(VisualizingOsloJob):
 
         return report
 
+
+@register_consumer("excel")
 class ExcelExporter(VisualizingOsloJob):
 
     def getDatabaseFunction(self):

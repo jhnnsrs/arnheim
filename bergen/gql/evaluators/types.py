@@ -1,5 +1,4 @@
-from graphene_django_extras import DjangoListObjectType, DjangoSerializerType, DjangoObjectType
-from graphene_django_extras.paginations import LimitOffsetGraphqlPagination
+from graphene_django_extras import DjangoObjectType
 
 from evaluators.models import ClusterData, Data
 

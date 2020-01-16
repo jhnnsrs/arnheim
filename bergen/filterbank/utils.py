@@ -1,12 +1,12 @@
 import json
+# import the logging library
+import logging
 
 import numpy as np
 from channels.db import database_sync_to_async
 
 from bioconverter.models import Representation
 from filterbank.models import Filtering
-# import the logging library
-import logging
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)

@@ -2,9 +2,8 @@ import json
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
-from django.db import models
 from channels.layers import get_channel_layer
-from rest_framework import viewsets, serializers
+from rest_framework import viewsets
 
 from larvik.logging import get_module_logger
 

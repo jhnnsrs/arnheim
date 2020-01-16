@@ -1,83 +1,78 @@
-import json
-from typing import Dict, Any, Callable, Awaitable
+from typing import Dict, Callable, Awaitable
 
-import bioformats
-import javabridge
 from django.db import models
 from rest_framework import serializers
 
+from bioconverter.logic import bioconverter
+from bioconverter.logic.bioparser import loadSeriesFromFile
 from bioconverter.models import Conversing
+from bioconverter.serializers import RepresentationSerializer, ConversingSerializer
 from bioconverter.utils import update_outputrepresentation_or_create, update_sample_with_meta, \
     create_sample_or_override, get_conversing_or_error, \
-    get_sample_or_error, update_status_on_conversing
-from biouploader.models import BioSeries
-from bioconverter.logic.bioparser import loadSeriesFromFile
+    update_status_on_conversing, update_sample_with_meta2, update_outputrepresentation_or_create2
+from biouploader.serializers import BioImageSerializer
 from elements.serializers import SampleSerializer
-from bioconverter.serializers import RepresentationSerializer, ConversingSerializer
-from larvik.consumers import LarvikConsumer, DaskLarvikConsumer, LarvikError
+from larvik.consumers import AsyncLarvikConsumer
+from larvik.discover import register_consumer
 from larvik.models import LarvikJob
-from trontheim.consumers import OsloJobConsumer
 
 
-class ConvertBioSeriesOsloJob(OsloJobConsumer):
+class ConverterConsumer(AsyncLarvikConsumer):
 
-    def __init__(self, scope):
-        super().__init__(scope)
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"overwrite":True}
 
-    async def updateStatusOnRequest(self,request,status):
-        request = await update_status_on_conversing(request, status)
-        print("Updated with message", status)
-        await self.modelCreated(request, ConversingSerializer, "update")
-        return request
+    def getRequestFunction(self) -> Callable[[Dict], Awaitable[LarvikJob]]:
+        return get_conversing_or_error
 
-    async def convertseries(self, data):
-        await self.register(data)
-        print(data)
-        request: Conversing = await get_conversing_or_error(data["data"])
-        settings: dict = await self.getsettings(request.settings, request.converter.defaultsettings)
-        sample, method = await create_sample_or_override(request, settings)
-        request = await update_status_on_conversing(request, "Sample instantiation")
-        bioseries: BioSeries = request.bioserie
-        sample_id: int = sample.id
 
-        request = await update_status_on_conversing(request, "Starting Conversion")
-        convertedarray, meta = await self.convert(settings, bioseries)
+    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
+        return update_status_on_conversing
 
-        sample, method2 = await update_sample_with_meta(sample_id, meta, settings)
-        outputrep, method = await update_outputrepresentation_or_create(request, sample, convertedarray, meta, settings)
-        await self.modelCreated(outputrep, RepresentationSerializer, method)
 
-        sample = await get_sample_or_error(sample)
-        await self.modelCreated(sample, SampleSerializer, "create")
+    def getSerializers(self) -> Dict[str, type(serializers.Serializer)]:
+        return { "Conversing": ConversingSerializer,
+                 "Sample": SampleSerializer,
+                 "BioImage": BioImageSerializer,
+                 "Representation": RepresentationSerializer}
 
-    async def convert(self, settings: dict, bioimage: BioSeries):
+    async def convert(self,request, settings: Dict):
         raise NotImplementedError
 
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
+    async def start(self, request: Conversing, settings: Dict):
+        sample, method = await create_sample_or_override(request, settings)
+        await self.progress("Sample Instatiation")
+
         try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
+            array, meta = await self.convert(request, settings)
 
-        except:
-            defaultsettings = {}
-            settings = {}
+            await self.progress("Parsed")
+            sample, samplemethod = await update_sample_with_meta2(sample, meta, settings)
+            await self.progress(f"{str(samplemethod).capitalize()} Sample {sample.name}")
+            await self.updateModel(sample,samplemethod)
 
-        defaultsettings.update(settings)
-        return defaultsettings
+            await self.progress("Saving File as Representation")
+            rep, repmethod = await update_outputrepresentation_or_create2(request, sample, array, meta, settings)
+            await self.updateModel(rep,repmethod)
+
+        except FileNotFoundError as e:
+            self.logger.error("File Not Found")
 
 
+@register_consumer("bioconverter")
+class BioConverter(ConverterConsumer):
 
-class BioConverter(ConvertBioSeriesOsloJob):
-    async def convert(self, settings: dict, bioseries: BioSeries):
-        filepath = bioseries.bioimage.file.path
-        print("TRYING THE BEST")
-        meta, array = loadSeriesFromFile(filepath, bioseries.index)
+    async def parseProgress(self,message):
+        await self.progress(message)
 
-        return array, meta
+    async def convert(self, request, settings: Dict):
+        filepath = request.bioserie.bioimage.file.path
+        index = request.bioserie.index
+
+        item = await bioconverter.constructParsing(filepath, index, self.progress)
+
+        array = await bioconverter.getStack(item, self.progress)
+        return array, item
+
 
 

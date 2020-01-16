@@ -26,18 +26,20 @@ RUN conda install --yes \
     -c conda-forge \
     python-blosc \
     cytoolz \
-    dask==2.9.0 \
+    dask \
     lz4 \
     zarr \
     nomkl \
-    numpy==1.17.3 \
-    pandas==0.25.2 \
+    numpy \
+    pandas \
     ipywidgets \
-    dask-labextension==1.0.3 \
+    nodejs \
+    ipyvolume \
+    dask-labextension \
     python-graphviz \
     xarray \
     seaborn \
-    && jupyter labextension install @jupyter-widgets/jupyterlab-manager dask-labextension@1.0.1 \
+    && jupyter labextension install @jupyter-widgets/jupyterlab-manager dask-labextension@1.0.1 ipyvolume jupyter-threejs\
     && conda clean -tipsy \
     && jupyter lab clean \
     && jlpm cache clean \

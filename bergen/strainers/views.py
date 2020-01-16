@@ -1,14 +1,13 @@
-from django.shortcuts import render
-
 # Create your views here.
 from rest_framework import viewsets
 
+from larvik.views import LarvikViewSet, LarvikJobViewSet
 from strainers.models import Straining, Strainer
 from strainers.serializers import StrainerSerializer, StrainingSerializer
 from trontheim.viewsets import OsloActionViewSet
 
 
-class StrainerViewSet(viewsets.ModelViewSet):
+class StrainerViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -17,7 +16,7 @@ class StrainerViewSet(viewsets.ModelViewSet):
 
 
 
-class StrainingViewSet(OsloActionViewSet):
+class StrainingViewSet(LarvikJobViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     queryset = Straining.objects.all()
@@ -26,7 +25,6 @@ class StrainingViewSet(OsloActionViewSet):
     actionpublishers = {"sample": [("creator", "experiment")], "transformation": [["representation"],["creator"],["roi"],["nodeid"]], "straining": [("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "maxisp"
-    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         strainer = Strainer.objects.get(pk=serializer.data["strainer"])

@@ -6,12 +6,16 @@ from rest_framework import serializers
 
 from biouploader.serializers import BioImageSerializer
 from importer.serializers import ImportingSerializer
-from larvik.consumers import LarvikConsumer, LarvikError
-from mandal.settings import FILES_ROOT
 from importer.utils import *
+from larvik.consumers import LarvikConsumer, LarvikError, ModelFuncAsyncLarvikConsumer
+from larvik.discover import register_consumer
+from mandal.settings import FILES_ROOT
 
 
-class ImportingConsumer(LarvikConsumer):
+class ImportingConsumer(ModelFuncAsyncLarvikConsumer):
+
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"hallo":True}
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_importing_or_error
@@ -24,7 +28,7 @@ class ImportingConsumer(LarvikConsumer):
             "BioImage": create_bioimages_from_list
         }
 
-    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
+    def getSerializers(self) -> Dict[str, type(serializers.Serializer)]:
         return {
             "Importing": ImportingSerializer,
             "BioImage": BioImageSerializer,
@@ -35,9 +39,10 @@ class ImportingConsumer(LarvikConsumer):
 
 
 
+@register_consumer("importer")
 class Importer(ImportingConsumer):
 
-    async def parse(self, request: Importing, conversionsettings: dict):
+    async def parse(self, request: Importing, settings: dict):
         # TODO: Maybe faktor this one out
         creator: User = request.creator
         locker = request.locker

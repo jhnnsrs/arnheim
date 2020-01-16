@@ -1,19 +1,14 @@
 # Create your views here.
-from django.http import HttpResponse
 # Create your views here.
-from django_filters.rest_framework import DjangoFilterBackend
-from pandas import DataFrame
 from rest_framework import viewsets
-from rest_framework.decorators import action
 
-from importer.models import *
-from importer.policies import ImportingAccessPolicy
-from importer.serializers import *
 from importer.policies import *
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
+from importer.serializers import *
+from larvik.views import LarvikViewSet, LarvikJobViewSet
+from trontheim.viewsets import OsloActionViewSet
 
 
-class ImporterViewSet(viewsets.ModelViewSet):
+class ImporterViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -22,7 +17,7 @@ class ImporterViewSet(viewsets.ModelViewSet):
 
 
 
-class ImportingViewSet(OsloActionViewSet):
+class ImportingViewSet(LarvikJobViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     queryset = Importing.objects.all()
@@ -31,7 +26,6 @@ class ImportingViewSet(OsloActionViewSet):
     publishers = [["nodeid"]]
     actionpublishers = {"importing": [("creator",)], "bioimage": [["creator"], ["locker"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
-    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         oracle = Importer.objects.get(pk=serializer.data["importer"])

@@ -6,10 +6,9 @@ from channels.db import database_sync_to_async
 
 from biouploader.models import Locker, BioImage
 from importer.models import Importing
-
-# Get an instance of a logger
-from larvik.consumers import LarvikStatus
 from larvik.logging import get_module_logger
+# Get an instance of a logger
+from larvik.structures import LarvikStatus
 from mandal.settings import BIOIMAGE_ROOT
 
 logger = get_module_logger(__name__)

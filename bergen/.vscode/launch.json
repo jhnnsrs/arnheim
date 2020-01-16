@@ -10,22 +10,10 @@
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "args": [
-                "runserver",
-                "0.0.0.0:8000",
+                "runworker",
+                "maxisp",
             ],
             "console": "integratedTerminal"
         },
-        {
-            "name": "Debug Django",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
-            "args": [
-                "runserver",
-                "0.0.0.0:8000",
-                "--noreload",
-            ],
-            "django": true
-        }
     ]
 }

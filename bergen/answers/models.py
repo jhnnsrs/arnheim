@@ -3,7 +3,7 @@ from django.db import models
 
 # Create your models here.
 from answers.managers import AnswerManager
-from elements.models import Sample, Experiment, Pandas
+from elements.models import Pandas
 
 print("Hallo")
 class Question(models.Model):

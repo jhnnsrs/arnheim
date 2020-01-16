@@ -1,9 +1,11 @@
 import os
 
-from elements.models import Sample
-from strainers.models import Straining
-from mandal import settings
 import zarr
+
+from elements.models import Sample
+from mandal import settings
+from strainers.models import Straining
+
 
 def sampleToFilename(sample: Sample):
     return "sample-{0}.zarr".format(sample.id)

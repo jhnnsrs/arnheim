@@ -5,10 +5,12 @@ from django.db import models
 from rest_framework import serializers
 
 from filterbank.logic.addins import toimage
-from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
+from larvik.consumers import LarvikConsumer
+from larvik.discover import register_consumer
+from larvik.utils import update_status_on_larvikjob
 from mutaters.models import Mutating
 from mutaters.serializers import ReflectionSerializer, MutatingSerializer
-from mutaters.utils import get_mutating_or_error, update_image_on_reflection, reflection_update_or_create
+from mutaters.utils import get_mutating_or_error, reflection_update_or_create
 from trontheim.consumers import OsloJobConsumer
 
 
@@ -65,6 +67,7 @@ class MutatingOsloJob(OsloJobConsumer):
 
 
 
+@register_consumer("imagemutator")
 class ImageMutator(LarvikConsumer):
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:

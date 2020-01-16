@@ -4,13 +4,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
 
+from larvik.views import LarvikViewSet, LarvikJobViewSet
 from metamorphers.models import Metamorpher, Metamorphing, Display, Exhibit
 from metamorphers.serializers import MetamorpherSerializer, MetamorphingSerializer, DisplaySerializer, \
     ExhibitSerializer
 from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
-class DisplayViewSet(OsloViewSet):
+class DisplayViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -20,30 +21,8 @@ class DisplayViewSet(OsloViewSet):
     serializer_class = DisplaySerializer
     publishers = [["creator"],["sample"]]
 
-    @action(methods=['get'], detail=True,
-            url_path='asimage', url_name='asimage')
-    def asimage(self, request, pk):
-        try:
-            display: Display = self.get_object()
-            image_data = display.image
-            response = HttpResponse(image_data, content_type="image/png")
-            response['Content-Disposition'] = 'attachment; filename="{0}"'.format(display.image.name)
-            return response
-        except:
-            return HttpResponseRedirect("http://via.placeholder.com/1024x1024/000000/ffffff")
 
-    @action(methods=['get'], detail=True,
-            url_path='asnifti', url_name='asnifti')
-    def asnifti(self, request, pk):
-        representation: Display = self.get_object()
-        filepath = representation.nifti.file
-        image_data = open(filepath, 'rb')
-        response = HttpResponse(image_data, content_type="application/gzip")
-        response['Content-Disposition'] = 'inline; filename="' + filepath + '.nii.gz"'
-        return response
-
-
-class ExhibitViewSet(OsloViewSet):
+class ExhibitViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -63,7 +42,7 @@ class ExhibitViewSet(OsloViewSet):
         response['Content-Disposition'] = 'inline; filename="' + filepath + '.nii.gz"'
         return response
 
-class MetamorpherViewSet(viewsets.ModelViewSet):
+class MetamorpherViewSet(LarvikViewSet):
     """<
     API endpoint that allows users to be viewed or edited.
     """
@@ -71,15 +50,14 @@ class MetamorpherViewSet(viewsets.ModelViewSet):
     serializer_class = MetamorpherSerializer
 
 
-class MetamorphingViewSet(OsloActionViewSet):
-    '''Enables publishing to the channel Layed.
+class MetamorphingViewSet(LarvikJobViewSet):
+    '''Enables publishing to the cOsloActionViewSethannel Layed.
     Publishers musst be Provided'''
     queryset = Metamorphing.objects.all()
     serializer_class = MetamorphingSerializer
     publishers = [["creator"]]
     actionpublishers = {"sample": [("creator", "experiment")], "display": [("sample",),("creator",),("nodeid",)], "exhibit": [("sample",),("creator",),("nodeid",)], "metamorphing": [("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
-    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         metamorpher = Metamorpher.objects.get(pk=serializer.data["metamorpher"])

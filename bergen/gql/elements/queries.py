@@ -1,5 +1,6 @@
 import graphene
-from graphene_django_extras import DjangoObjectField, DjangoListObjectField, DjangoFilterPaginateListField,DjangoFilterListField, LimitOffsetGraphqlPagination
+from graphene_django_extras import DjangoFilterListField
+
 from .types import ExperimentType, SampleType
 
 

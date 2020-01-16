@@ -1,112 +1,85 @@
 import json
-from typing import Callable, Dict, Any
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
+import xarray as xr
 from django.db import models
 
-from bioconverter.models import Conversing, Representation
+from bioconverter.models import Representation
+from bioconverter.serializers import RepresentationSerializer
 from filterbank.models import Filtering
 from filterbank.serializers import FilteringSerializer
-from bioconverter.serializers import RepresentationSerializer
-from filterbank.utils import get_inputrepresentationbynode_or_error, get_filtering_or_error, \
-    update_outputrepresentationbynode_or_create
-from larvik.consumers import DaskLarvikConsumer, LarvikError
+from filterbank.utils import (get_filtering_or_error,
+                              get_inputrepresentationbynode_or_error,
+                              update_outputrepresentationbynode_or_create)
+from larvik.consumers import DaskLarvikConsumer, DaskSyncLarvikConsumer
+from larvik.discover import register_consumer
+from larvik.models import LarvikJob
 from trontheim.consumers import OsloJobConsumer
+import dask_image.ndfilters
 
 
-class FilterConsumer(OsloJobConsumer):
+class FilterConsumer(DaskSyncLarvikConsumer):
 
-    async def startparsing(self, data):
-        await self.register(data)
-        print(data)
-        request: Filtering = await get_filtering_or_error(data["data"])
-        settings: dict = await self.getsettings(request.settings, request.filter.defaultsettings)
-        inputrep, array = await get_inputrepresentationbynode_or_error(request)
+    def getRequest(self, data) -> LarvikJob:
+        return Filtering.objects.get(pk=data["id"])
 
-        meta = json.loads(inputrep.meta)
-        request.progress = 20
-        await self.modelCreated(request, FilteringSerializer, "update")
-        parsedarray, newmeta = await self.parse(settings,array,meta)
+    def getSerializers(self):
+        return {"Filtering": FilteringSerializer,
+                "Representation": RepresentationSerializer}
 
-        ## This could be handled in the parsing function itself
-        request.progress = 40
-        await self.modelCreated(request, FilteringSerializer, "update")
-        outputrep, method = await update_outputrepresentationbynode_or_create(request, parsedarray, inputrep, settings, newmeta)
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        raise NotImplementedError
 
-        await self.modelCreated(outputrep, RepresentationSerializer, method)
-
-    async def parse(self, filtersettings: dict,numpyarray: np.array, meta: dict) -> np.array:
+    def parse(self, request: Filtering, settings: dict) -> List[Tuple[str, Any]]:
         raise NotImplementedError
 
 
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
-        try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
+@register_consumer("maxisp")
+class MaxISP(FilterConsumer):
 
-        except:
-            defaultsettings = {}
-            settings = {}
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"hallo": True}
 
-        defaultsettings.update(settings)
-        return defaultsettings
-
-
-
-class MaxISP(DaskLarvikConsumer):
-
-    def getDefaultSettings(self, request: models.Model) -> str:
-        return json.dumps({"hallo": True})
-
-    def getRequestFunction(self) -> Callable[[Dict], models.Model]:
-        def a(data):
-            parsing = Filtering.objects.get(pk=data["id"])
-            if parsing is None:
-                raise LarvikError("ConversionRequest {0} does not exist".format(str(data["id"])))
-            return parsing
-
-        return a
-        pass
-
-    def parse(self, request: Filtering, settings: dict) -> Dict[str, Any]:
+    def parse(self, request: Filtering, settings: dict) -> List[Tuple[str, Any]]:
+        
+        self.progress("Building Graph")
         rep: Representation = request.representation
-        array = rep.loadArray()
+
+        array: xr.DataArray = rep.array
+        new = array.max(axis=3, keep_attrs=True)
+        repout, graph = Representation.distributed.from_xarray_and_request(new, request, name=f"Max ISP of {rep.name}")
+        
+        self.progress("Evaluating Graph")
+        graph.compute()
+
+        return [(repout, "create")]
 
 
-        print(str(self.c))
-        print(array)
+@register_consumer("slicedmaxisp")
+class SlicedMaxISP(DaskSyncLarvikConsumer):
 
-        print("TRYING THE BEST")
+    def getRequest(self, data) -> LarvikJob:
+        return Filtering.objects.get(pk=data["id"])
 
+    def getSerializers(self):
+        return {"Filtering": FilteringSerializer,
+                "Representation": RepresentationSerializer}
 
-class MaxISP2(FilterConsumer):
-    async def parse(self, filtersettings: dict, numpyarray: np.array, meta: dict) -> np.array:
-        array = numpyarray
-        if len(array.shape) == 5:
-            array = np.nanmax(array[:,:,:3,:,0], axis=3)
-        if len(array.shape) == 4:
-            array = np.nanmax(array[:,:,:3,:], axis=3)
-        if len(array.shape) == 3:
-            array = array[:,:,:3]
-        if len(array.shape) == 2:
-            array = array[:,:]
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"hallo": True}
 
-        return array, meta
+    def parse(self, request: Filtering, settings: dict) -> List[Tuple[str, Any]]:
 
+        array: xr.DataArray = request.representation.array
+        print(array.z.size)
 
-class SlicedMaxISP(FilterConsumer):
-    async def parse(self, filtersettings: dict, numpyarray: np.array, meta: dict) -> np.array:
-
-        lowerBound: int = int(filtersettings["lowerBound"])
-        upperBound: int = int(filtersettings["upperBound"])
+        lowerBound: int = int(settings.get("lowerBound",-1))
+        upperBound: int = int(settings.get("upperBound",-1))
 
 
-        array = numpyarray
+
+        array = array
         if len(array.shape) == 5:
             array = np.nanmax(array[:,:,:3,lowerBound:upperBound,0], axis=3)
         if len(array.shape) == 4:
@@ -116,40 +89,35 @@ class SlicedMaxISP(FilterConsumer):
         if len(array.shape) == 2:
             array = array[:,:]
 
-        return array, meta
+        self.progress("Saving File")
+        rep, graph = Representation.distributed.from_xarray_and_request(array, request, name=f"Sliced MaxISP of {request.representation.name} at {request.nodeid}")
+        self.progress("Computing Graph")
+        graph.compute()
 
+        return [(rep, "create")]
 
+@register_consumer("prewitt")
 class PrewittFilter(FilterConsumer):
-    async def parse(self, filtersettings: dict, numpyarray: np.array, meta: dict) -> np.array:
-        import cv2
+    def parse(self, request: Filtering, settings: dict) -> List[Tuple[str, Any]]:
+        rep = request.representation
 
-        array = numpyarray
-        if len(array.shape) == 5:
-            array = np.nanmax(array[:,:,:3,:,0], axis=3)
-        if len(array.shape) == 4:
-            array = np.nanmax(array[:,:,:3,:], axis=3)
-        if len(array.shape) == 3:
-            array = array[:,:,:3]
+        channel = settings.get("channel", rep.array.channel[0])
+        if "time" in rep.array.dims:
+            it = rep.array.sel(time=0).sel(channel=channel)
 
-        if len(array.shape) == 2:
-            gray = array
-        else:
-            gray = array[:, :, 0] #TODO: read from settings
+        prewittfiltered = dask_image.ndfilters.prewitt(it.data)
+        lala = xr.DataArray(prewittfiltered, coords=it.coords, name="data", attrs=it.attrs)
 
-        kernelx = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
-        kernely = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]])
-
-        img_gaussian = cv2.GaussianBlur(gray, (3, 3), 0)
-        img_prewittx = cv2.filter2D(img_gaussian, -1, kernelx)
-        img_prewitty = cv2.filter2D(img_gaussian, -1, kernely)
-
-        images = img_prewittx + img_prewitty
-        return images, meta
+        rep, graph = Representation.distributed.from_xarray_and_request(lala, request, name=f"Max ISP of {rep.name}")
+        graph.compute()
+        return [(rep, "create")]
 
 
 class Mapping(FilterConsumer):
-    async def parse(self, filtersettings: dict, numpyarray: np.array, meta: dict) -> np.array:
+    def parse(self, request: Filtering, settings: dict) -> List[Tuple[str, Any]]:
 
+        numpyarray = request.representation.loadArray()
+        filtersettings = settings
         print(filtersettings)
         # Screens cant resolve more than three colors
         if len(numpyarray.shape) == 5:
@@ -260,4 +228,7 @@ class Mapping(FilterConsumer):
             mappedfile = numpyarray
 
         print("Returned colormap shape {0}".format(str(mappedfile.shape)))
-        return mappedfile, meta
+
+        rep, graph = Representation.distributed.from_array_and_request(mappedfile, request)
+        graph.compute()
+        return [(rep, "create")]

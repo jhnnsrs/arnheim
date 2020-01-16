@@ -24,16 +24,12 @@ import six
 if six.PY3:
     unicode = str
 
-import requests
-import unittest
 import json
 import base64
 from mandal import settings
 import requests
-from django.utils.html import escape
 # import the logging library
 import logging
-import urllib.parse
 import os
 
 

@@ -1,16 +1,22 @@
-from typing import Dict, Any, Callable, Awaitable
+import json
+import os
+from typing import Dict, Any, Callable, Awaitable, List, Tuple
 
-import numpy as np
 import nibabel as nib
+import numpy as np
 from django.db import models
 from rest_framework import serializers
 
 from filterbank.logic.addins import toimage
-from larvik.consumers import LarvikConsumer, update_status_on_larvikjob, LarvikError
-from metamorphers.models import Metamorphing
+from larvik.consumers import LarvikConsumer, LarvikError, DaskLarvikConsumer, DaskSyncLarvikConsumer
+from larvik.discover import register_consumer
+from larvik.models import LarvikJob
+from larvik.utils import update_status_on_larvikjob
+from mandal.settings import NIFTI_ROOT, MEDIA_ROOT
+from metamorphers.models import Metamorphing, Exhibit, Display
 from metamorphers.serializers import DisplaySerializer, ExhibitSerializer, MetamorphingSerializer
 from metamorphers.utils import get_metamorphing_or_error, get_inputrepresentation_or_error, \
-    update_exhibit_or_create, update_display_or_create, exhibit_update_or_create
+    update_display_or_create, exhibit_update_or_create
 from trontheim.consumers import OsloJobConsumer
 
 
@@ -66,38 +72,35 @@ class MetamorphingOsloJobConsumer(OsloJobConsumer):
         defaultsettings.update(settings)
         return defaultsettings
 
-class NiftiMetamorpher(LarvikConsumer):
 
-    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
-        return get_metamorphing_or_error
 
-    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
-        return update_status_on_larvikjob
+@register_consumer("nifti")
+class NiftiMetamorpher(DaskSyncLarvikConsumer):
 
-    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
-        return {
-            "Nifti": exhibit_update_or_create
-        }
+    def getDefaultSettings(self, request: models.Model) -> str:
+        return {"hallo": True}
 
-    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
-        return {
-            "Exhibit": ExhibitSerializer,
-            "Metamorphing": MetamorphingSerializer,
-        }
+    def getRequest(self,data):
+        return Metamorphing.objects.get(pk=data["id"])
 
-    async def parse(self, request: Metamorphing, conversionsettings: dict) -> Dict[str, Any]:
+    def getSerializers(self):
+        return { "Metamorphing": MetamorphingSerializer, "Exhibit": ExhibitSerializer}
 
-        array = request.representation.numpy.get_array()
-        self.logger.info("Trying to Metamorph Array of Shape {0}".format(array.shape))
 
-        rescale = conversionsettings.get("rescale",False)
+    def parse(self, request: Metamorphing, settings: dict) -> List[Tuple[models.Model, str]]:
+
+        array = request.representation.loadArray()
+        self.progress(f"Trying to Metamorph Array of Shape {array.shape}")
+
+        rescale = settings.get("rescale", False)
         if len(array.shape) != 5:
-            self.logger.info("Not the right shape")
-
             raise LarvikError("Not the right shape for the job")
 
         print(array.dtype)
         array = array[:, :, :, :, 0]
+        self.progress(f"Reducing Dimensions")
+        array = array.compute()
+
         cmin = array.min()
         cmax = array.max()
         high = 255
@@ -111,40 +114,55 @@ class NiftiMetamorpher(LarvikConsumer):
 
         scale = float(high - low) / cscale
         if rescale:
-            await self.progress(20, message="Interpolating")
-            self.logger.info("Interpolatiion of Array from {0} to {1}".format(cmin, cmax))
+            self.progress(f"Interpolating from {cmin} to {cmax}")
             array = (array - cmin) * scale + low
             array = (array.clip(low, high) + 0.5).astype("uint8")
         else:
             array = array * 255
 
         array = array.astype("u1")
-        await self.progress(60, message="Swaping Axes")
-        array = array.swapaxes(2, 3)
+        self.progress(f"Swapping Axes")
+        array = np.swapaxes(array,2,3)
         shape_3d = array.shape[0:3]
-        self.logger.info("New Shape is {0}".format(shape_3d))
+        self.progress(f"New Shape is {shape_3d}")
         rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
 
         array = np.ascontiguousarray(array, dtype='u1')
-        await self.progress(80, message="Continuing Array")
+        self.progress("Continuing Array")
         array = array.view(rgb_dtype).reshape(shape_3d)
-        img1 = nib.Nifti1Image(array, np.eye(4))
+        nifti = nib.Nifti1Image(array, np.eye(4))
 
-        return { "Nifti": img1 }
+        niftipaths = "sample-{0}_representation-{1}_nodeid-{2}.nii.gz".format(request.sample.id,request.representation.id, request.nodeid)
+        niftipath = os.path.join(NIFTI_ROOT, niftipaths)
+        nib.save(nifti, niftipath)
+        niftiwebpath = os.path.join(os.path.join(MEDIA_ROOT, "/nifti"), niftipaths)
+        name = "Exhibit of" + request.representation.name
+
+        exhibit = Exhibit.objects.create(representation=request.representation, name=name, creator=request.creator,
+                                         nodeid=request.nodeid, shape=request.representation.shape,
+                                         sample=request.sample, experiment=request.representation.experiment,
+                                         niftipath=niftiwebpath)
+
+        return [(exhibit, "create")]
 
 
 
+@register_consumer("image")
+class ImageMetamorpher(DaskSyncLarvikConsumer):
 
-class ImageMetamorpher(MetamorphingOsloJobConsumer):
+    def getRequest(self, data) -> LarvikJob:
+        return Metamorphing.objects.get(pk=data["id"])
 
-    def getDatabaseFunction(self):
-        return update_display_or_create
+    def getSerializers(self):
+        return { "Metamorphing": MetamorphingSerializer, "Display": DisplaySerializer}
 
-    def getSerializer(self) -> serializers.ModelSerializer:
-        return DisplaySerializer
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"hallo":True}
 
-    async def convert(self, array: np.array, conversionsettings: dict):
-        # TODO: Maybe faktor this one out
+    def parse(self, request: Metamorphing, settings: dict) -> List[Tuple[models.Model, str]]:
+
+        array = request.representation.loadArray()
+
         if len(array.shape) == 5:
             array = np.nanmax(array[:, :, :3, :, 0], axis=3)
         if len(array.shape) == 4:
@@ -183,8 +201,10 @@ class ImageMetamorpher(MetamorphingOsloJobConsumer):
 
             array = target
         print(array.shape)
-        img = toimage(array)
-        return img
+
+        display = Display.objects.from_xarray_and_request(array, request)
+        return [(display, "create")]
+
 
 
 

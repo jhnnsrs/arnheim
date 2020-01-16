@@ -3,6 +3,7 @@ import json
 import numpy as np
 from rest_framework import serializers
 
+from larvik.discover import register_consumer
 from revamper.models import Revamping, Mask
 from revamper.utils import get_revamping_or_error, update_outputtransformation_or_create
 from transformers.serializers import TransformationSerializer
@@ -63,6 +64,7 @@ class RevampingOsloJob(OsloJobConsumer):
 
 
 
+@register_consumer("masking")
 class MaskingRevamper(RevampingOsloJob):
 
     def getDatabaseFunction(self):

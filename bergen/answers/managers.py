@@ -1,6 +1,6 @@
 from django.db import models
 
-from elements.models import Sample, Numpy, Pandas
+from elements.models import Pandas
 from larvik.logging import get_module_logger
 from mandal import settings
 

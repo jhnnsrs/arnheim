@@ -5,10 +5,11 @@ from bioconverter.models import Representation
 from bioconverter.serializers import RepresentationSerializer
 from drawing.models import ROI
 from drawing.serializers import RoiSerializer
+from larvik.views import LarvikViewSet
 from trontheim.viewsets import OsloViewSet
 
 
-class RoiViewSet(OsloViewSet):
+class RoiViewSet(LarvikViewSet):
     queryset = ROI.objects.all()
     serializer_class = RoiSerializer
     publishers = [["representation"],["creator"],["sample"],["sample","display"]]
@@ -16,12 +17,15 @@ class RoiViewSet(OsloViewSet):
     filter_fields = ("representation","sample","creator","display")
 
 
-class RepresentationViewSet(OsloViewSet):
+class RepresentationViewSet(LarvikViewSet):
 
     queryset = Representation.objects.all()
     serializer_class = RepresentationSerializer
     filter_backends = (DjangoFilterBackend,)
     publishers = [["sample"],["creator"]]
     filter_fields = ("sample",)
+
+
+
 
 

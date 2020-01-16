@@ -65,3 +65,7 @@ numcodecs
 xarray
 seaborn
 ptvsd
+blosc
+python-decouple
+autodiscover
+dask-image

@@ -1,11 +1,12 @@
+import logging
+import os
+
 import bioformats
-import numpy as np
 import javabridge
+import numpy as np
 from bs4 import BeautifulSoup
-import logging, os
 
 from bioconverter.logic.structures import BioMetaStructure, BioImage
-
 
 javabridge.start_vm(class_path=bioformats.JARS, run_headless=True)
 
@@ -44,6 +45,20 @@ def loadBioMetaFromFile(filepath) -> BioMetaStructure:
     return biometa
 
 
+def ChannelProperties(object):
+
+        def __init__(self):
+            self.PinholeSize = None
+            self.PinholeSizeUnit = None
+            self.AcquisitionMode = None
+            self.ContrastMethod = None
+            self.ExcitationWavelength = None
+            self.ExcitationWavelengthUnit = None
+            self.EmissionWavelength = None
+            self.Color = None
+
+
+
 def loadBioMetaSeriesFromFile(filepath, series):
     meta = loadBioMetaFromFile(filepath)
     allmeta = meta.metadata.findAll("Image")
@@ -64,8 +79,12 @@ def loadBioMetaSeriesFromFile(filepath, series):
 
         meta.physicalsizex = float(seriesmeta.find("Pixels").attrs.get("PhysicalSizeX",1)) or 1
         meta.physicalsizey = float(seriesmeta.find("Pixels").attrs.get("PhysicalSizeY",1)) or 1
+        meta.physicalsizez = float(seriesmeta.find("Pixels").attrs.get("PhysicalSizeZ",1)) or 1
+        meta.timeincrement = float(seriesmeta.find("Pixels").attrs.get("TimeIncrement",1)) or 1
         meta.physicalsizexunit = seriesmeta.find("Pixels").attrs.get("PhysicalSizeXUnit","pix") or "pix"
         meta.physicalsizeyunit = seriesmeta.find("Pixels").attrs.get("PhysicalSizeYUnit","pix") or "pix"
+        meta.physicalsizezunit = seriesmeta.find("Pixels").attrs.get("PhysicalSizeZUnit","pix") or "pix"
+        meta.timeincrementunit = seriesmeta.find("Pixels").attrs.get("TimeIncrementUnit","pix") or "pix"
 
     except Exception as e:
 
@@ -75,6 +94,10 @@ def loadBioMetaSeriesFromFile(filepath, series):
 
     # Try to Load ChannelNames FallBack to R,G,B notation
     channelexplain = ["C1","C2","C3","C4","C5","C6","C7","C8","C9"]
+
+
+
+
     try:
         meta.channellist = [i.attrs["Name"] for index, i in enumerate(allmeta[series].findAll("Channel"))]
     except KeyError:

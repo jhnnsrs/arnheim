@@ -1,13 +1,9 @@
-import os
-
 from django.contrib.auth.models import User
-from django.core.files.storage import FileSystemStorage
 from django.db import models
 
 # Create your models here.
 from bioconverter.models import Representation
 from elements.models import Experiment, Sample
-from mandal import settings
 
 
 class Filter(models.Model):
@@ -28,6 +24,10 @@ class Filtering(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE,blank=True, null=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
+
+    # This is for NodeUpdates
+    statuscode = models.IntegerField(blank=True, null=True)
+    statusmessage = models.CharField(max_length=500, blank=True, null=True)
 
     def __str__(self):
         return "{1} of {0} on Sample {2}".format(self.representation.name, self.filter.name, self.sample.name)

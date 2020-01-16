@@ -3,10 +3,10 @@ import os
 from django.contrib.auth.models import User
 from django.db import models
 
+from bioconverter.models import Representation
 # Create your models here.
 from elements.models import Experiment, Sample
-from bioconverter.models import Representation
-
+from metamorphers.managers import DisplayManager
 
 
 class Display(models.Model):
@@ -18,6 +18,8 @@ class Display(models.Model):
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(upload_to="representation_images", blank=True, null=True)
+
+    objects = DisplayManager()
 
     def delete(self, *args, **kwargs):
         print("Trying to remove Image of path", self.image.path)

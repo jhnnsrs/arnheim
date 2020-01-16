@@ -16,13 +16,11 @@
 
 from __future__ import division, print_function, absolute_import
 
-# Functions which need the PIL
-
 import numpy
-import tempfile
+from numpy import (amin, amax, ravel, asarray, arange, ones, newaxis,
+                   transpose, iscomplexobj, uint8)
 
-from numpy import (amin, amax, ravel, asarray, cast, arange, ones, newaxis,
-                   transpose, iscomplexobj, uint8, issubdtype, array)
+# Functions which need the PIL
 
 try:
     from PIL import Image, ImageFilter

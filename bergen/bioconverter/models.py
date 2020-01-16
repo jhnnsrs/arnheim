@@ -24,6 +24,7 @@ class Conversing(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     nodeid = models.CharField(max_length=300, null=True, blank=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null= True)
+
     # This is for NodeUpdates
     statuscode = models.IntegerField(blank=True, null=True)
     statusmessage = models.CharField(max_length=500, blank=True, null=True)
@@ -57,12 +58,24 @@ class Representation(models.Model):
         if self.numpy:
             return self.numpy.get_array()
 
+    @property
+    def array(self):
+        if self.zarr:
+            return self.zarr.openArray(chunks= "auto", name="data")
+        if self.numpy:
+            return self.numpy.get_array()
+
 
     def __str__(self):
         return self.name
 
+    def _repr_html_(self):
+        return "<h3>" + str(self.name) + "</h3>"
+
     def delete(self, *args, **kwargs):
         if self.numpy:
             self.numpy.delete()
+        if self.zarr:
+            self.zarr.delete()
 
         super(Representation, self).delete(*args, **kwargs)

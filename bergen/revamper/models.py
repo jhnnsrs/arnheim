@@ -1,10 +1,10 @@
 from django.db import models
-
 # Create your models here.
 from registration.forms import User
 
 from elements.models import Experiment, Sample
 from transformers.models import Transformation
+
 
 class Mask(models.Model):
     nodeid = models.CharField(max_length=400, null=True, blank=True)

@@ -3,7 +3,7 @@ import os
 import dask
 import h5py
 import xarray
-import zarr
+import zarr as zr
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
@@ -17,6 +17,8 @@ from elements.utils import toFileName
 from larvik.logging import get_module_logger
 from mandal import settings
 from .storage.store import getStore, openDataset
+
+import elements.extenders
 
 logger = get_module_logger(__name__)
 
@@ -163,6 +165,12 @@ class Zarr(models.Model):
 
     objects = ZarrManager()
 
+    @property
+    def array(self):
+        dataset = openDataset(self.store, self.group, chunks="auto")
+        return dataset["data"]
+
+    @property
     def info(self):
         dataset = openDataset(self.store, self.group)
         return dataset.info()
@@ -173,12 +181,32 @@ class Zarr(models.Model):
     def loadDataset(self, chunks="auto") -> xarray.Dataset:
         return openDataset(self.store, self.group, chunks=chunks)
 
-    def openArray(self, chunks="auto", name="data") -> xarray.Dataset:
+    def openArray(self, chunks="auto", name="data") -> xarray.DataArray:
         dataset = openDataset(self.store, self.group, chunks=chunks)
         return dataset[name]
 
     def saveDataset(self, dataset, compute=True) -> dask.delayed:
         return dataset.to_zarr(store=getStore(self.store), mode="w", group=self.group,compute=compute)
+
+    def delete(self, *args, **kwargs):
+        store = getStore(self.store)
+        try:
+            if zr.storage.contains_group(store, self.group):
+                logger.info(f"Removing Group {self.group} from Store {self.store}")
+                zr.storage.rmdir(store, self.group)
+                logger.info(f"Removing Group {self.group} from Store {self.store}")
+            else:
+                logger.info(f"Group {self.group} in Store {self.store} does no longer Exist")
+        except Exception as e:
+            logger.error(f"Error while handling Store {self.store}: {e}")
+
+        super(Zarr, self).delete(*args, **kwargs)
+
+    def __str__(self):
+        return f"Zarr Group {self.group} at Store {self.store}"
+
+    def _repr_html_(self):
+        return "<h1>" + str(self.group) + "</h1>"
 
 
 class Pandas(models.Model):

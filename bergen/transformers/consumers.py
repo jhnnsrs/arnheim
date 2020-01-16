@@ -1,13 +1,16 @@
 import json
-from typing import Dict, Any, Callable, Awaitable
+from typing import Dict, Any, Callable, Awaitable, List, Tuple
 
 import numpy as np
 from django.db import models
 from rest_framework import serializers
 
-from larvik.consumers import LarvikConsumer, update_status_on_larvikjob, LarvikError
+from larvik.consumers import LarvikConsumer, LarvikError, DaskLarvikConsumer
+from larvik.discover import register_consumer
+from larvik.models import LarvikJob
+from larvik.utils import update_status_on_larvikjob
 from transformers.logic.linerectifier_logic import translateImageFromLine
-from transformers.models import Transforming
+from transformers.models import Transforming, Transformation
 from transformers.serializers import TransformationSerializer, TransformingSerializer
 from transformers.utils import get_transforming_or_error, outputtransformation_update_or_create
 
@@ -15,41 +18,44 @@ from transformers.utils import get_transforming_or_error, outputtransformation_u
 # import the logging library
 
 
-class LineRectifierTransformer(LarvikConsumer):
+@register_consumer("linerect")
+class LineRectifierTransformer(DaskLarvikConsumer):
 
-    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
-        return get_transforming_or_error
+    def getRequest(self, data) -> LarvikJob:
+        return Transforming.objects.get(pk=data["id"])
 
-    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
-        return update_status_on_larvikjob
-
-    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
-
-        return { "array" : outputtransformation_update_or_create}
-
-    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
-
+    def getSerializers(self):
         return {
             "Transforming": TransformingSerializer,
             "Transformation": TransformationSerializer,
         }
 
-    async def parse(self, request: Transforming, settings: dict) -> Dict[str, Any]:
-        array = request.representation.numpy.get_array()
-        roi = request.roi
-        vectors = json.loads(roi.vectors)
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"overwrite": True}
 
+    def parse(self, request: Transforming, settings: dict) -> List[Tuple[str, Any]]:
+        array = request.representation.loadArray()
+        roi = request.roi
+
+        self.progress("Getting Vectors")
+        vectors = json.loads(roi.vectors)
         vertices = [[key["x"], key["y"]] for key in vectors]
 
         self.logger.info("Array has max of {0}".format(array.max()))
+
+        self.progress("Conversing to Float64 for OpenCV")
         array = np.float64(array)
 
-        await self.progress(10, message="Converting array")
-        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, settings.get("scale",10))
+        self.progress("Converting array")
+        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, settings.get("scale", 10))
 
-        return {"array": image}
+        print(array)
+        transformation = Transformation.distributed.from_xarray(image)
+        return [("create",transformation)]
 
 
+
+@register_consumer("sliceline")
 class SliceLineTransformer(LarvikConsumer):
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:

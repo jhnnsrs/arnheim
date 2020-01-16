@@ -1,12 +1,14 @@
 # import the logging library
 import logging
 import os
-import string
 import random
-import zarr
+import string
+
 import h5py
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models.manager import BaseManager
+from django.db.models.query import QuerySet
 from pandas import HDFStore
 
 from elements.utils import toFileName
@@ -64,8 +66,17 @@ class PandasManager(models.Manager):
 
         return super(PandasManager,self).create(**obj_data)
 
+class ZarrQueryMixin(object):
+    """ Methods that appear both in the manager and queryset. """
+    def delete(self):
+        # Use individual queries to the attachment is removed.
+        for zarr in self.all():
+            zarr.delete()
 
-class ZarrManager(models.Manager):
+class ZarrQuerySet(ZarrQueryMixin, QuerySet):
+    pass
+
+class ZarrManager(BaseManager.from_queryset(ZarrQuerySet)):
 
     def id_generator(self, size=6, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for _ in range(size))

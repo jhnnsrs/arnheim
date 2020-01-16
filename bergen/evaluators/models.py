@@ -1,14 +1,14 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-# Create your models here.
-from taggit.managers import TaggableManager
-
 from bioconverter.models import Representation
-from elements.models import Experiment, Sample
 from biouploader.models import BioMeta
 from drawing.models import ROI
+from elements.models import Experiment, Sample
 from transformers.models import Transformation
+
+
+# Create your models here.
 
 class Evaluator(models.Model):
     name = models.CharField(max_length=100)

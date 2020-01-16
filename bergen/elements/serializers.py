@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from elements.models import Antibody, Experiment, Sample, ExperimentalGroup, Animal, FileMatchString, Numpy
+from elements.models import Antibody, Experiment, Sample, ExperimentalGroup, Animal, FileMatchString, Numpy, Zarr
 
 
 class AntibodySerializer(serializers.ModelSerializer):
@@ -41,3 +41,9 @@ class SampleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sample
         fields = "__all__"
+
+
+class ZarrSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Zarr
+        exclude =("store",)

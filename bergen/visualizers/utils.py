@@ -1,14 +1,10 @@
-import json
 import logging
 import os
 
 from channels.db import database_sync_to_async
 from pandas import DataFrame
 
-from answers.models import Answering, Answer
 from mandal.settings import PROFILES_ROOT, EXCELS_ROOT
-from transformers.models import Transforming, Transformation
-
 # Get an instance of a logger
 from visualizers.managers import toFileName, toExcelFileName
 from visualizers.models import Visualizing, Profile, ExcelExport

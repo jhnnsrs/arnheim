@@ -3,10 +3,9 @@ import os
 
 from django.db import models
 
-from elements.models import Sample, Numpy, Pandas
 from mandal import settings
 # Get an instance of a logger
-from mandal.settings import MEDIA_ROOT, MEDIA_URL
+from mandal.settings import MEDIA_URL
 
 logger = logging.getLogger(__name__)
 

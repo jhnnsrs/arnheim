@@ -1,11 +1,8 @@
-import os
-
 from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
 from answers.models import Answer
-from mandal.settings import MEDIA_ROOT
 from visualizers.managers import ProfileManager, ExcelExportManager
 
 

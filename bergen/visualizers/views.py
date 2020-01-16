@@ -1,24 +1,24 @@
 # Create your views here.
-import os
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
 
-from mandal.settings import MEDIA_ROOT
+from larvik.views import LarvikViewSet, LarvikJobViewSet
 from trontheim.viewsets import OsloActionViewSet
 from visualizers.serializers import *
 
-class VisualizerViewSet(viewsets.ModelViewSet):
+
+class VisualizerViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
     queryset = Visualizer.objects.all()
     serializer_class = VisualizerSerializer
 
-class ProfileViewSet(viewsets.ModelViewSet):
+class ProfileViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -33,7 +33,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         profile: Profile = self.get_object()
         return HttpResponseRedirect(profile.htmlfile.url)
 
-class ExcelExportViewSet(viewsets.ModelViewSet):
+class ExcelExportViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -50,7 +50,7 @@ class ExcelExportViewSet(viewsets.ModelViewSet):
 
 
 
-class VisualizingViewSet(OsloActionViewSet):
+class VisualizingViewSet(LarvikJobViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     queryset = Visualizing.objects.all()
@@ -61,7 +61,6 @@ class VisualizingViewSet(OsloActionViewSet):
                         "excelexport": [["creator"], ["nodeid"],["answer"]],
                         }
     # this publishers will be send to the Action Handles and then they can send to the according
-    actiontype = "startconverting"
 
     def preprocess_jobs(self, serializer):
         visualizer = Visualizer.objects.get(pk=serializer.data["visualizer"])
