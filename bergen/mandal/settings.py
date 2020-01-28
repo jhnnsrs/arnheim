@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 import os
+import numpy as np
 
 # General Debug or Production Settings
 arnheim_debug = os.getenv("ARNHEIM_DEBUG",False)
@@ -25,14 +26,12 @@ PANDAS_COMPRESSION =  os.getenv("PANDAS_COMPRESSION",None)
 REPRESENTATION_DTYPE =  os.getenv("REPRESENTATION_DTYPE",None)
 REPRESENTATION_COMPRESSION =  os.getenv("REPRESENTATION_COMPRESSION",None)
 ZARR_COMPRESSION = os.getenv("ZARR_COMPRESSION",None)
-ZARR_DTYPE = os.getenv("ZARR_DTYPE","float64")
+
+
+ZARR_DTYPE = os.getenv("ZARR_DTYPE",float)
 
 # Redis Settings
 redis_host = os.environ.get('REDIS_HOST', 'redis')
-
-# HDFServer settings
-hdfserver_host = os.environ.get('HDFSERVER_HOST', 'hdfserver')
-hdfserver_port = int(os.environ.get('HDFSERVER_PORT', 5000))
 
 # Postgres
 postgres_host = os.environ.get('POSTGRES_HOST', 'postgres')
@@ -58,9 +57,11 @@ UPLOAD_ROOT = os.path.join(MEDIA_ROOT, "_upload")
 
 MEDIA_URL = "/images/"
 DOCKER = False
+
+
 DEBUG = arnheim_debug
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'e+uck-nbb+_%(d@%s-@l@*o!xp__p7rssglb74xr*6=m5lh=vx'
+SECRET_KEY = os.environ.get('ARNHEIM_KEY', 'e+uck-nbb+_%(d@%s-@l@*o!xp__p7rssglb74xr*6=m5lh=vx')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 if arnheim_debug:
@@ -100,7 +101,6 @@ INSTALLED_APPS = [
     'transformers',
     'evaluators',
     'mutaters',
-    'filterbank',
     'bioconverter',
     'biouploader',
     'drawing',
@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     'visualizers',
     'importer',
     'strainers',
+    'filters'
 ]
 
 # Taggit Settings
@@ -148,8 +149,6 @@ OAUTH2_PROVIDER = {
 # Rest Framework settings
 
 
-
-
 if arnheim_debug:
     REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -161,7 +160,7 @@ if arnheim_debug:
 else:
     REST_FRAMEWORK = {
         'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+            'rest_framework.permissions.IsAuthenticated',
         ),
         'DEFAULT_AUTHENTICATION_CLASSES': (
             'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
@@ -224,25 +223,16 @@ if arnheim_debug or True:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db/db.sqlite3'),
+            'NAME': os.path.join(BASE_DIR, 'datafile.sqlite3'),
         }
     }
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'postgres',
-            'USER': 'postgres',
-            'HOST': postgres_host,
-            'PORT': postgres_port,
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'datafile.sqlite3'),
         }
     }
-
-# HDF Server Settings
-HDFSERVER = {
-    "host" : hdfserver_host,
-    "port" : hdfserver_port
-}
 
 
 # Password validation
@@ -278,12 +268,6 @@ LOGPIPE = {
     'KAFKA_CONSUMER_KWARGS': {
         'group_id': 'django-logpipe',
     },
-
-    # Optional Settings
-    # 'KAFKA_SEND_TIMEOUT': 10,
-    # 'KAFKA_MAX_SEND_RETRIES': 0,
-    # 'MIN_MESSAGE_LAG_MS': 0,
-    # 'DEFAULT_FORMAT': 'json',
 }
 
 LOGGING = {

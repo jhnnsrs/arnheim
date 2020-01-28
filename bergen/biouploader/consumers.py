@@ -5,19 +5,28 @@ import javabridge as javabridge
 from django.db import models
 from rest_framework import serializers
 
-from bioconverter.logic.bioparser import getSeriesNamesFromFile
-from biouploader.models import Analyzing
+from bioconverter.logic.meta import getSeriesNamesForFile
+from biouploader.models import Analyzing, Analyzer, BioSeries, BioImage
 from biouploader.serializers import BioSeriesSerializer, AnalyzingSerializer
 from biouploader.utils import get_analyzing_or_error, bioseries_create_or_update
-from larvik.consumers import LarvikConsumer, ModelFuncAsyncLarvikConsumer
+from larvik.consumers import ModelFuncAsyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob
 from larvik.utils import update_status_on_larvikjob
 
 javabridge.start_vm(class_path=bioformats.JARS, run_headless=True)
 
-@register_consumer("biometa")
+
+
+@register_consumer("biometa", model= Analyzer)
 class BioAnalyzer(ModelFuncAsyncLarvikConsumer):
+    name = "Biometa"
+    path = "BioMeta"
+    settings = {"reload": True}
+    inputs = [BioImage]
+    outputs = [BioSeries]
+
+
 
     def getModelFuncDict(self):
         return { "BioSeries" : bioseries_create_or_update}
@@ -41,7 +50,7 @@ class BioAnalyzer(ModelFuncAsyncLarvikConsumer):
         self.logger.info("Trying to parse bioimage at Path {0}".format(filepath))
         await self.progress("Opening Files")
 
-        seriesnames = getSeriesNamesFromFile(filepath)
+        seriesnames = getSeriesNamesForFile(filepath)
         bioseries = []
         for index, seriesname in enumerate(seriesnames):
             bioseries.append({"name": seriesname, "index": index})

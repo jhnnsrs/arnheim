@@ -51,7 +51,7 @@ class AnalyzingViewSet(LarvikJobViewSet):
     publishers = [["nodeid"]]
     actionpublishers = {"bioseries": [("experiment",),("creator",),("locker",),("nodeid",)], "analyzing": [("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
-    channel = "analyzer"
+    channel = "biometa"
     actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):

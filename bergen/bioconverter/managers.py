@@ -1,13 +1,12 @@
 import os
 
 import xarray
+from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import models
-from django.db.models.manager import BaseManager
+from django.db.models.manager import BaseManager, Manager
 from django.db.models.query import QuerySet
 
-from elements.models import Numpy, Sample, Zarr
-from django.conf import settings
+from elements.models import Sample, Zarr
 
 
 def buildZarrName(name, nodeid):
@@ -26,32 +25,10 @@ class RepQueryMixin(object):
 class RepresentationQuerySet(RepQueryMixin, QuerySet):
     pass
 
-class RepresentationManager(BaseManager.from_queryset(RepresentationQuerySet)):
+class RepresentationManager(Manager):
 
-    def create(self, **obj_data):
-        # Do some extra stuff here on the submitted data before saving...
-        # For example...
-        if "nparray" in obj_data:
-            print("Creating Representation with help of np.array")
-            sample: Sample = obj_data["sample"]
-            vid = str(obj_data["vid"])
-
-            # TODO: if sample is not provided this should raise an exception
-            numpy = Numpy.objects.create(vid=vid,
-                                         numpy=obj_data["nparray"],
-                                         sample=sample,
-                                         iszarr=False,
-                                         type="representation",
-                                         dtype=obj_data.get("dtype",settings.REPRESENTATION_DTYPE),
-                                         compression=obj_data.get("compression", settings.REPRESENTATION_COMPRESSION)
-                                         )
-
-            obj_data["numpy"] = numpy
-            del obj_data["nparray"]
-
-
-        # Now call the super method which does the actual creation
-        return super().create(**obj_data)  # Python 3 syntax!!
+    def get_queryset(self):
+        return RepresentationQuerySet(self.model, using=self._db)
 
     def from_xarray(self, array: xarray.DataArray,
                     sample: Sample= None,
@@ -75,7 +52,6 @@ class RepresentationManager(BaseManager.from_queryset(RepresentationQuerySet)):
                                   creator=creator,
                                   sample= sample,
                                   inputrep=inputrep,
-                                  numpy= None,
                                   zarr= zarr,
                                   experiment=experiment,
                                   nodeid=nodeid)  # Python 3 syntax!!
@@ -96,36 +72,16 @@ class DistributedRepresentationQuerySet(QuerySet):
             obj.query.filter_is_sticky = True
             obj._sticky_filter = False
         obj.__dict__.update(kwargs)
-        return db.from_sequence([item.zarr.openArray() for item in obj])
+        return db.from_sequence([item.zarr.array for item in obj])
 
 
 
-class DistributedRepresentationManager(BaseManager.from_queryset(DistributedRepresentationQuerySet)):
-
-    def create(self, **obj_data):
-        # Do some extra stuff here on the submitted data before saving...
-        # For example...
-        if "nparray" in obj_data:
-            print("Creating Representation with help of np.array")
-            sample: Sample = obj_data["sample"]
-            vid = str(obj_data["vid"])
-
-            # TODO: if sample is not provided this should raise an exception
-            numpy = Numpy.objects.create(vid=vid,
-                                         numpy=obj_data["nparray"],
-                                         sample=sample,
-                                         iszarr=False,
-                                         type="representation",
-                                         dtype=obj_data.get("dtype",settings.REPRESENTATION_DTYPE),
-                                         compression=obj_data.get("compression", settings.REPRESENTATION_COMPRESSION)
-                                         )
-
-            obj_data["numpy"] = numpy
-            del obj_data["nparray"]
+class DistributedRepresentationManager(Manager):
 
 
-        # Now call the super method which does the actual creation
-        return super().create(**obj_data)  # Python 3 syntax!!
+    def get_queryset(self):
+        return DistributedRepresentationQuerySet(self.model, using=self._db)
+
 
     def from_xarray(self, array: xarray.DataArray,
                     sample: Sample= None,
@@ -147,7 +103,6 @@ class DistributedRepresentationManager(BaseManager.from_queryset(DistributedRepr
                                   creator=creator,
                                   sample=sample,
                                   inputrep=inputrep,
-                                  numpy=None,
                                   zarr=zarr,
                                   experiment=experiment,
                                   nodeid=nodeid), delayed

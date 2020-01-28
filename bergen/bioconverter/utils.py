@@ -4,7 +4,6 @@ import xarray
 from channels.db import database_sync_to_async
 from django.db import models
 
-from bioconverter.logic.structures import BioMetaStructure
 from bioconverter.models import Conversing, Representation
 from biouploader.models import BioMeta
 from elements.models import Sample
@@ -44,45 +43,15 @@ def get_sample_or_error(sample: Sample) -> Sample:
     return parsing
 
 
-@database_sync_to_async
-def update_outputrepresentation_or_create(request: Conversing, sample: Sample, numpyarray, meta: BioMetaStructure, settings):
-    """
-    Tries to fetch a room for the user, checking permissions along the way.
-    """
-    method = "error"
-    overwrite = settings.get("overwrite", True)
-    physicalX = 0.65
-    physicalY = 0.65
-    physicalZ = 0.65
-
-    # Representation Counts
-    lala = xarray.DataArray(numpyarray, dims=('x', 'y', 'channels', "z", "time"), coords={'channels': meta.channellist})
-    lala = xarray.DataArray(numpyarray, dims=('x', 'y', 'channels', "z", "time"),
-                            coords={"x": (lala.x * meta.physicalsizex), 'y': (lala.y * physicalsizey), "z": (lala.z * physicalZ),
-                                    'channels': meta.channellist})
-    lala.attrs["Seriesname"] = meta.seriesname
-    lala.attrs['X-PhysicalSize'] = meta.physicalsizex
-    lala.attrs['X-PhysicalSize-Unit'] = meta.physicalsizexunit
-    lala.attrs['Y-PhysicalSize'] = meta.physicalsizey
-    lala.attrs['Y-PhysicalSize-Unit'] = meta.physicalsizeyunit
-    lala.attrs['AcquisitionDate'] = meta.date
-
-    rep = Representation.objects.from_xarray(lala, name="Initial Stack", creator=request.creator, overwrite=overwrite,
-                                       sample=sample, nodeid=request.nodeid)
-
-
-    #TODO: CHeck if that makes sense
-    ## TODO: This really needs to be set by the meta correctly
-    return rep, "create"
 
 @database_sync_to_async
-def update_outputrepresentation_or_create2(request: Conversing, sample: Sample, numpyarray, meta: BioMetaStructure, settings):
+def update_outputrepresentation_or_create2(request: Conversing, sample: Sample, xarray: xarray.DataArray, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
 
 
-    rep = Representation.objects.from_xarray(numpyarray, name="Initial Stack", creator=request.creator, overwrite=True,
+    rep = Representation.objects.from_xarray(xarray, name="Initial Stack", creator=request.creator, overwrite=True,
                                        sample=sample, nodeid=request.nodeid)
 
 
@@ -156,10 +125,10 @@ def update_sample_with_meta2(sample: Sample, meta: dict,settings=None):
         raise ClientError(f"Sample {sample} does not exist")
     elif sample is not None:
         # TODO: update array of output
-        scan = meta["scan"].iloc[0]
-        channellist = json.dumps(meta["channels"].to_dict(orient="records"))
+        scan = meta["scan"]
+        channellist = json.dumps(meta["channels"])
 
-        outputmeta = BioMeta.objects.create(channellist=json.dumps(meta["channels"].to_dict(orient="records")),
+        outputmeta = BioMeta.objects.create(channellist=channellist,
                                             xresolution=scan["SizeX"],
                                             yresolution=scan["SizeY"],
                                             zresolution=scan["SizeZ"],
@@ -169,7 +138,7 @@ def update_sample_with_meta2(sample: Sample, meta: dict,settings=None):
                                             yphysical=scan["PhysicalSizeY"],
                                             zphysical=scan["PhysicalSizeZ"],  # TODO: MAASSSSIVEE BUG
                                             spacial_units=scan["PhysicalSizeXUnit"],
-                                            temporal_units=["PhysicalSizeZUnit"],  # TODO: MASSIVE BUG HERE)
+                                            temporal_units=scan["TimeIncrement"],  # TODO: MASSIVE BUG HERE)
                                             )
 
         outputmeta.save()

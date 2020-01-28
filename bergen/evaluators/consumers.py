@@ -4,18 +4,25 @@ import numpy as np
 from django.db import models
 from rest_framework import serializers
 
+from elements.models import Sample
 from evaluators.logic.clusterAnalysis import findConnectedCluster
-from evaluators.models import Evaluating
+from evaluators.models import Evaluating, Evaluator, ClusterData, LengthData
 from evaluators.serializers import EvaluatingSerializer, ClusterDataSerializer, \
     LengthDataSerializer
 from evaluators.utils import get_evaluating_or_error, lengthdata_update_or_create, clusterdata_update_or_create
 from larvik.consumers import ModelFuncAsyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.utils import update_status_on_larvikjob
+from transformers.models import Transformation
 
 
-@register_consumer("lengthdata")
+@register_consumer("lengthdata", model= Evaluator)
 class LengthDataFromIntensityProfile(ModelFuncAsyncLarvikConsumer):
+    name = "Length Data"
+    path = "LengthData"
+    settings = {"reload": True}
+    inputs = [Sample, Transformation]
+    outputs = [LengthData]
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_evaluating_or_error
@@ -89,8 +96,15 @@ class LengthDataFromIntensityProfile(ModelFuncAsyncLarvikConsumer):
         return {"data": data}
 
 
-@register_consumer("clusterdata")
+
+
+@register_consumer("clusterdata", model= Evaluator)
 class ClusterDataConsumer(ModelFuncAsyncLarvikConsumer):
+    name = "Cluster Data"
+    path = "ClusterData"
+    settings = {"reload": True}
+    inputs = [Sample, Transformation]
+    outputs = [ClusterData]
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_evaluating_or_error

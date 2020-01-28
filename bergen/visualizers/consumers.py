@@ -1,14 +1,15 @@
 from rest_framework import serializers
 
+from answers.models import Answer
+from larvik.consumers import AsyncLarvikConsumer
 from larvik.discover import register_consumer
-from trontheim.consumers import OsloJobConsumer
-from visualizers.models import Visualizing
+from visualizers.models import Visualizing, Visualizer, ExcelExport, Profile
 from visualizers.serializers import ProfileSerializer, VisualizingSerializer, ExcelExportSerializer
 from visualizers.utils import get_visualizing_or_error, update_profile_or_create, update_status_on_visualizing, \
     update_excelexport_or_create
 
 
-class VisualizingOsloJob(OsloJobConsumer):
+class VisualizingOsloJob(AsyncLarvikConsumer):
 
     def __init__(self, scope):
         super().__init__(scope)
@@ -74,8 +75,14 @@ class VisualizingOsloJob(OsloJobConsumer):
         return defaultsettings
 
 
-@register_consumer("profiler")
+
+@register_consumer("pandaprofiler", model= Visualizer)
 class Profiler(VisualizingOsloJob):
+    name = "Slice Line Rectifier"
+    path = "SliceLineRectifier"
+    settings = {"reload": True}
+    inputs = [Answer]
+    outputs = [Profile]
 
     def getDatabaseFunction(self):
         return update_profile_or_create
@@ -92,8 +99,14 @@ class Profiler(VisualizingOsloJob):
         return report
 
 
-@register_consumer("excel")
+
+@register_consumer("excel", model= Visualizer)
 class ExcelExporter(VisualizingOsloJob):
+    name = "Excel Exporter"
+    path = "ExcelExporter"
+    settings = {"reload": True}
+    inputs = [Answer]
+    outputs = [ExcelExport]
 
     def getDatabaseFunction(self):
         return update_excelexport_or_create

@@ -1,14 +1,10 @@
 version: "3.4"
 
 services:
-  db:
-    image: postgres
-    volumes:
-      - dbdata:/var/lib/postgresql/data
   redis:
     image: redis:latest
   web:
-    build: bergen
+    image: jhnnsrs/bergen
     command: python manage.py runserver 0.0.0.0:8000
     env_file:
       - arnheim.env
@@ -21,25 +17,9 @@ services:
     links:
       - redis
       - worker
-      - db
-      - hdfserver
-  oslo:
-    build: bergen
-    command: python manage.py runworker websocket
-    env_file:
-      - arnheim.env
-      - development.env
-    volumes:
-      - ./bergen:/code
-      - media:/code/media
-      - ./database:/code/db
-      - files:/code/files
-    links:
-      - redis
-      - hdfserver
   worker:
-    build: bergen
-    command: python manage.py runworker maxisp bioconverter nifti image test prewitt linerect masking transformimage lengthdata analyzer slicedmaxisp mapping sliceline kafka kafkain masker clusterdata pandas profiler excelexport importer intensityprofiler
+    image: jhnnsrs/bergen
+    command: python manage.py runallworkers
     env_file:
       - arnheim.env
       - development.env
@@ -50,23 +30,22 @@ services:
       - files:/code/files
     links:
       - redis
-      - hdfserver
   nginx:
     image: nginx:latest
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf
       - media:/media
+      - ./cloud/:/cloud
     ports:
       - 80:80
       - 443:443
     links:
       - web
       - worker
-      - hdfserver
       - notebook
       - daskscheduler
   notebook:
-    build: jupjup
+    image: jhnnsrs/jupjup
     command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/notebooks/
     environment:
       - HOME=home
@@ -75,6 +54,7 @@ services:
       - arnheim.env
       - development.env
     volumes:
+      - ./cloud:/cloud
       - ./notebooks:/notebooks
       - ./bergen:/code/
       - ./jupjup:/config/
@@ -86,31 +66,17 @@ services:
     links:
       - web
       - worker
-      - hdfserver
       - daskscheduler
-  hdfserver:
-    build: hdfserver
-    command: python h5serv --datapath=/data
-    env_file:
-      - arnheim.env
-      - development.env
-    volumes:
-      - media:/data
-      - ./hdfserver:/usr/local/src/h5serv
-      - ./config/h5serv-conf.py:/usr/local/src/h5serv/h5serv/config.py
   daskscheduler:
-    build: dask
+    image: jhnnsrs/dask
     ports:
       - "8786:8786"
       - "8787:8787"
     command: dask-scheduler --dashboard-prefix=daskboard
   daskworker:
-    build: dask
+    image: jhnnsrs/dask
     command: ["dask-worker", "tcp://daskscheduler:8786"]
     volumes:
-      - ./notebooks:/notebooks
-      - ./bergen:/code/
-      - ./jupjup:/config/
       - ./database:/code/db
       - media:/code/media
       - files:/code/files
@@ -121,10 +87,10 @@ volumes:
   media:
     driver_opts:
       type: none
-      device: /c/Programme/Trontheim/arnheim/media
+      device: /c/Users/jhnns/PycharmProjects/arnheim/media
       o: bind
   files:
     driver_opts:
       type: none
-      device: /c/Data/Files
+      device: /c/Users/jhnns/PycharmProjects/arnheim/files
       o: bind

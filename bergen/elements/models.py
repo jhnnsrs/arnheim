@@ -109,56 +109,6 @@ class Sample(models.Model):
 
 
 
-class Numpy(models.Model):
-    filepath = models.FilePathField(max_length=400) # aka h5files/$sampleid.h5
-    vid = models.CharField(max_length=1000) # aca vid0, vid1, vid2, vid3
-    type = models.CharField(max_length=100)
-    iszarr = models.BooleanField()
-    dtype = models.CharField(max_length=300, blank=True, null=True)
-    compression = models.CharField(max_length=300, blank=True, null=True)
-    shape = models.CharField(max_length=400, blank=True, null=True)
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name="numpys")
-    # Custom Manager to simply create an array
-    objects = NumpyManager()
-
-    def get_array(self):
-        with h5py.File(self.filepath, 'a') as file:
-            logger.info("Trying to access file {0} to get array".format(self.filepath))
-            hf = file[self.type]
-            array = hf.get(self.vid)[()]
-        return array
-
-    def set_array(self,array):
-        with h5py.File(self.filepath, 'a') as file:
-            logger.info("Trying to access file {0} to set array".format(self.filepath))
-            hf = file[self.type]
-            if self.vid in hf: del hf[self.vid]
-            hf.create_dataset(self.vid, data=array, dtype=self.dtype, compression=self.compression)
-
-    def get_z_bounded_array(self,zl,zu):
-        with h5py.File(self.filepath, "a") as file:
-            logger.info("Trying to access file {0} to set array".format(self.filepath))
-            hf = file[self.type]
-            ## This is not working great so far
-            array = hf.get(self.vid)[:,:,:,zl:zu,:]
-        return array
-
-    def delete(self, *args, **kwargs):
-        logger.info("Trying to remove Dataset from Filepath {0}".format(self.filepath))
-        with h5py.File(self.filepath, 'a') as file:
-            logger.info("Trying to Access Vid from file {0} to delete array".format(self.filepath))
-            hf = file[self.type]
-            if self.vid in hf:
-                del hf[self.vid]
-                logger.info("Delteted Vid {1} from file {0}".format(self.filepath,self.vid))
-
-        super(Numpy, self).delete(*args, **kwargs)
-
-    def __str__(self):
-        return "Numpy Object with VID " + str(self.vid) + " at " + str(self.filepath)
-
-
-
 class Zarr(models.Model):
     store = models.FilePathField(max_length=600)
     group = models.CharField(max_length=800)
@@ -181,8 +131,8 @@ class Zarr(models.Model):
     def loadDataset(self, chunks="auto") -> xarray.Dataset:
         return openDataset(self.store, self.group, chunks=chunks)
 
-    def openArray(self, chunks="auto", name="data") -> xarray.DataArray:
-        dataset = openDataset(self.store, self.group, chunks=chunks)
+    def openArray(self, name="data", chunks="auto") -> xarray.DataArray:
+        dataset = openDataset(self.store, self.group)
         return dataset[name]
 
     def saveDataset(self, dataset, compute=True) -> dask.delayed:

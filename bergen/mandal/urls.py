@@ -27,7 +27,7 @@ import biouploader.routes
 import drawing.routes
 import elements.routes
 import evaluators.routes
-import filterbank.routes
+import filters.routes
 import flow.routes
 import importer.routes
 import metamorphers.routes
@@ -44,7 +44,7 @@ router = routers.DefaultRouter()
 router.registry.extend(social.routes.router.registry)
 router.registry.extend(drawing.routes.router.registry)
 router.registry.extend(elements.routes.router.registry)
-router.registry.extend(filterbank.routes.router.registry)
+router.registry.extend(filters.routes.router.registry)
 router.registry.extend(bioconverter.routes.router.registry)
 router.registry.extend(biouploader.routes.router.registry)
 router.registry.extend(metamorphers.routes.router.registry)

@@ -4,16 +4,24 @@ from django.db import models
 from pandas.io.json import json_normalize
 from rest_framework import serializers
 
-from answers.models import Answering
+from answers.models import Answering, Oracle, Question, Answer
 from answers.serializers import AnswerSerializer, AnsweringSerializer
 from answers.utils import get_answering_or_error, answer_update_or_create
+from elements.models import Pandas
 from gql.schema import schema
 from larvik.consumers import ModelFuncAsyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.utils import update_status_on_larvikjob
 
-@register_consumer("pandas")
+
+
+@register_consumer("pandas", model= Oracle)
 class PandaAnswer(ModelFuncAsyncLarvikConsumer):
+    name = "Pandas"
+    path = "Pandas"
+    settings = {"reload": True}
+    inputs = [Question]
+    outputs = [Answer]
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_answering_or_error

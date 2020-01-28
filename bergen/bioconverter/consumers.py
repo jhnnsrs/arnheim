@@ -1,21 +1,24 @@
 from typing import Dict, Callable, Awaitable
 
+import bioformats
+import javabridge
 from django.db import models
 from rest_framework import serializers
 
-from bioconverter.logic import bioconverter
-from bioconverter.logic.bioparser import loadSeriesFromFile
-from bioconverter.models import Conversing
+from bioconverter.logic.parsing import convertBioImageToXArray
+from bioconverter.models import Conversing, Converter, Representation
 from bioconverter.serializers import RepresentationSerializer, ConversingSerializer
-from bioconverter.utils import update_outputrepresentation_or_create, update_sample_with_meta, \
-    create_sample_or_override, get_conversing_or_error, \
+from bioconverter.utils import create_sample_or_override, get_conversing_or_error, \
     update_status_on_conversing, update_sample_with_meta2, update_outputrepresentation_or_create2
+from biouploader.models import BioSeries
 from biouploader.serializers import BioImageSerializer
+from elements.models import Sample
 from elements.serializers import SampleSerializer
 from larvik.consumers import AsyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob
 
+javabridge.start_vm(class_path=bioformats.JARS, run_headless=True)
 
 class ConverterConsumer(AsyncLarvikConsumer):
 
@@ -51,16 +54,23 @@ class ConverterConsumer(AsyncLarvikConsumer):
             await self.progress(f"{str(samplemethod).capitalize()} Sample {sample.name}")
             await self.updateModel(sample,samplemethod)
 
-            await self.progress("Saving File as Representation")
-            rep, repmethod = await update_outputrepresentation_or_create2(request, sample, array, meta, settings)
+            await self.progress("Compressing and Saving")
+            rep, repmethod = await update_outputrepresentation_or_create2(request, sample, array, settings)
             await self.updateModel(rep,repmethod)
 
         except FileNotFoundError as e:
             self.logger.error("File Not Found")
 
 
-@register_consumer("bioconverter")
+@register_consumer("bioconverter",model = Converter)
 class BioConverter(ConverterConsumer):
+    name = "Bioconverter"
+    path = "BioConverter"
+    settings = {"reload": True,
+                "overwrite": False}
+    inputs = [BioSeries]
+    outputs = [Sample, Representation]
+
 
     async def parseProgress(self,message):
         await self.progress(message)
@@ -69,10 +79,8 @@ class BioConverter(ConverterConsumer):
         filepath = request.bioserie.bioimage.file.path
         index = request.bioserie.index
 
-        item = await bioconverter.constructParsing(filepath, index, self.progress)
-
-        array = await bioconverter.getStack(item, self.progress)
-        return array, item
+        array, parseimagemeta = await convertBioImageToXArray(filepath, index, self.progress)
+        return array, parseimagemeta
 
 
 

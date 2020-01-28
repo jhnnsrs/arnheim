@@ -4,21 +4,29 @@ import numpy as np
 from django.db import models
 from rest_framework import serializers
 
-from larvik.consumers import LarvikConsumer, LarvikError, DaskSyncLarvikConsumer
+from larvik.consumers import LarvikError, DaskSyncLarvikConsumer, AsyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob
 from larvik.utils import update_status_on_larvikjob
-from strainers.models import Straining
+from strainers.models import Straining, Strainer
 from strainers.serializers import StrainingSerializer
 from strainers.utils import get_straining_or_error, outputtransformation_update_or_create
+from transformers.models import Transformation
 from transformers.serializers import TransformationSerializer
 
 
 # import the logging library
 
 
-@register_consumer("profiler")
+
+@register_consumer("intensityprofiler", model= Strainer)
 class IntensityProfiler(DaskSyncLarvikConsumer):
+    name = "Intensity Profiler"
+    path = "Intensity Profiler"
+    settings = {"reload": True}
+    inputs = [Transformation]
+    outputs = [Transformation]
+
     # TODO: Broken
     def getRequest(self, data) -> LarvikJob:
         return Straining.objects.get(pk=data["id"])
@@ -71,8 +79,15 @@ class IntensityProfiler(DaskSyncLarvikConsumer):
         return {"array": intensity}
 
 
-@register_consumer("masker")
-class Masker(LarvikConsumer):
+
+
+@register_consumer("masker", model= Strainer,)
+class Masker(AsyncLarvikConsumer):
+    name = "Masker"
+    path = "Masker"
+    settings = {"reload": True}
+    inputs = [Transformation]
+    outputs = [Transformation]
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_straining_or_error

@@ -4,7 +4,12 @@ import xarray
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
 
-from filterbank.logic.addins import toimage
+
+def renormalize(n, range1, range2):
+    delta1 = range1[1] - range1[0]
+    delta2 = range2[1] - range2[0]
+    return (delta2 * (n - range1[0]) / delta1) + range2[0]
+
 
 
 class DisplayManager(models.Manager):
@@ -13,8 +18,10 @@ class DisplayManager(models.Manager):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
 
+        from skimage.util import img_as_ubyte
+
         name = "Display of " + request.representation.name
-        image = toimage(array)
+        image = img_as_ubyte(array)
 
         display = self.create(representation=request.representation,
                             name=name,

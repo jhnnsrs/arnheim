@@ -7,10 +7,9 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from flow.models import Layout, ForeignNodeRequest, Node, ForeignNodeStatus, External, ExternalRequest
+from flow.models import Layout, Node, External, ExternalRequest
 from flow.policies import ExternalAccessPolicy
-from flow.serializers import FlowSerializer, Flow, NodeSerializer, LayoutSerializer, ForeignNodeRequestSerializer, \
-    ForeignNodeStatusSerializer, ExternalSerializer, ExternalRequestSerializer, ExternalNewSerializer
+from flow.serializers import FlowSerializer, Flow, NodeSerializer, LayoutSerializer, ExternalSerializer, ExternalRequestSerializer, ExternalNewSerializer
 from larvik.views import LarvikViewSet
 from trontheim.viewsets import OsloViewSet
 
@@ -36,24 +35,7 @@ class LayoutViewSet(LarvikViewSet):
     publishers = [["creator"]]
 
 
-class ForeignNodeRequestViewSet(LarvikViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    filter_backends = (DjangoFilterBackend,)
-    queryset = ForeignNodeRequest.objects.all()
-    serializer_class = ForeignNodeRequestSerializer
-    publishers = [["nodeid"]]
 
-
-class ForeignNodeStatusViewSet(LarvikViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    filter_backends = (DjangoFilterBackend,)
-    queryset = ForeignNodeStatus.objects.all()
-    serializer_class = ForeignNodeStatusSerializer
-    publishers = [["creator",], ["nodes_for_foreign"]]
 
 
 class NodeViewSet(LarvikViewSet):

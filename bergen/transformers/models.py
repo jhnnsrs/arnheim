@@ -4,7 +4,8 @@ from django.db import models
 from bioconverter.models import Representation
 from drawing.models import ROI
 # Create your models here.
-from elements.models import Experiment, Sample, Numpy, Zarr
+from elements.models import Experiment, Sample,Zarr
+from larvik.models import LarvikConsumer, LarvikJob
 from transformers.managers import TransformationManager, DistributedTransformationManager
 
 
@@ -15,7 +16,6 @@ class Transformation(models.Model):
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     shape = models.CharField(max_length=100, blank=True, null= True)
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='transformations')
-    numpy = models.ForeignKey(Numpy, on_delete=models.CASCADE, blank=True, null=True)
     zarr = models.ForeignKey(Zarr, on_delete=models.CASCADE, blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True,null=True)
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE, related_name='transformations')
@@ -45,28 +45,19 @@ class Transformation(models.Model):
         super(Transformation, self).delete(*args, **kwargs)
 
 
-class Transformer(models.Model):
-    name = models.CharField(max_length=100)
-    channel = models.CharField(max_length=100,null=True, blank=True)
-    defaultsettings = models.CharField(max_length=400) #json decoded standardsettings
+class Transformer(LarvikConsumer):
 
     def __str__(self):
         return "{0} at Path {1}".format(self.name, self.channel)
 
 
-class Transforming(models.Model):
+class Transforming(LarvikJob):
     transformer = models.ForeignKey(Transformer, on_delete=models.CASCADE)
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
-    settings = models.CharField(max_length=1000) # jsondecoded
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE,blank=True, null=True)
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE)
-    nodeid = models.CharField(max_length=400, null=True, blank=True)
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE)
 
-    # STATUS SETTINGS
-    statuscode = models.IntegerField(blank=True, null=True)
-    statusmessage = models.CharField(max_length=500, blank=True, null=True)
 
     def __str__(self):
         return "Parsing Request for Filter: {0}".format(self.transformer)

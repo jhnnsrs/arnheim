@@ -12,7 +12,7 @@ OauthMiddleWareStack = lambda inner: QueryAuthMiddleware(AuthMiddlewareStack(inn
 # selecting on either the connection type (ProtocolTypeRouter) or properties
 # of the connection's scope (like URLRouter, which looks at scope["path"])
 # For more, see http://channels.readthedocs.io/en/latest/topics/routing.html
-autodiscover()
+consumers = autodiscover()
 
 application = ProtocolTypeRouter({
 
@@ -29,5 +29,5 @@ application = ProtocolTypeRouter({
             path("oslo", OsloConsumer)
         ]),
     ),
-    "channel": ChannelNameRouter(CONSUMERS),
+    "channel": ChannelNameRouter(consumers),
 })

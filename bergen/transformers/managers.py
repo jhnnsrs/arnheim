@@ -3,31 +3,14 @@ import os
 import xarray
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.manager import BaseManager
+from django.db.models.manager import BaseManager, Manager
 from django.db.models.query import QuerySet
 
-from elements.models import Sample, Numpy, Zarr
+from elements.models import Sample, Zarr
 from mandal import settings
 
 
 class TransformationManager(models.Manager):
-
-    def create(self, **obj_data):
-        # Do some extra stuff here on the submitted data before saving...
-        # For example...
-        if "nparray" in obj_data:
-            print("Creating Transformation with help of np.array")
-            sample: Sample = obj_data["sample"]
-            vid = str(obj_data["vid"])
-
-            # TODO: if sample is not provided this should raise an exception
-            numpy = Numpy.objects.create(vid=vid, numpy=obj_data["nparray"], sample=sample, type="transformations", dtype=obj_data.get("dtype",settings.TRANSFORMATION_DTYPE), compression=obj_data.get("compression",settings.TRANSFORMATION_COMPRESSION))
-
-            obj_data["numpy"] = numpy
-            del obj_data["nparray"]
-
-        # Now call the super method which does the actual creation
-        return super().create(**obj_data)  # Python 3 syntax!!
 
     def from_xarray(self, array: xarray.DataArray,
                     sample: Sample= None,
@@ -80,32 +63,10 @@ class DistributedTransformationQuerySet(QuerySet):
 
 
 
-class DistributedTransformationManager(BaseManager.from_queryset(DistributedTransformationQuerySet)):
+class DistributedTransformationManager(Manager):
 
-    def create(self, **obj_data):
-        # Do some extra stuff here on the submitted data before saving...
-        # For example...
-        if "nparray" in obj_data:
-            print("Creating Representation with help of np.array")
-            sample: Sample = obj_data["sample"]
-            vid = str(obj_data["vid"])
-
-            # TODO: if sample is not provided this should raise an exception
-            numpy = Numpy.objects.create(vid=vid,
-                                         numpy=obj_data["nparray"],
-                                         sample=sample,
-                                         iszarr=False,
-                                         type="representation",
-                                         dtype=obj_data.get("dtype",settings.REPRESENTATION_DTYPE),
-                                         compression=obj_data.get("compression", settings.REPRESENTATION_COMPRESSION)
-                                         )
-
-            obj_data["numpy"] = numpy
-            del obj_data["nparray"]
-
-
-        # Now call the super method which does the actual creation
-        return super().create(**obj_data)  # Python 3 syntax!!
+    def get_queryset(self):
+        return DistributedTransformationQuerySet(self.model, using=self._db)
 
     def from_xarray(self, array: xarray.DataArray,
                     sample: Sample= None,

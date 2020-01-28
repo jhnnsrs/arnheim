@@ -5,9 +5,10 @@ from django.db import models
 from rest_framework import serializers
 
 from biouploader.serializers import BioImageSerializer
+from importer.models import Importer
 from importer.serializers import ImportingSerializer
 from importer.utils import *
-from larvik.consumers import LarvikConsumer, LarvikError, ModelFuncAsyncLarvikConsumer
+from larvik.consumers import LarvikError, ModelFuncAsyncLarvikConsumer
 from larvik.discover import register_consumer
 from mandal.settings import FILES_ROOT
 
@@ -39,8 +40,14 @@ class ImportingConsumer(ModelFuncAsyncLarvikConsumer):
 
 
 
-@register_consumer("importer")
+
+@register_consumer("importer", model= Importer, )
 class Importer(ImportingConsumer):
+    name = "Home Importer"
+    path = "HomeImporter"
+    settings = {"reload": True}
+    inputs = [Locker, "Creator"]
+    outputs = [BioImage]
 
     async def parse(self, request: Importing, settings: dict):
         # TODO: Maybe faktor this one out

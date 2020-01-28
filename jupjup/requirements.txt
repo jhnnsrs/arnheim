@@ -17,4 +17,9 @@ python-dateutil
 tables
 pandas-profiling
 cloud-volume
+python-decouple
+autodiscover
 dask-image
+tensorflow
+scikit-learn
+dask-ml[complete]

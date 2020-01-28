@@ -8,12 +8,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
 
-from elements.models import Antibody, Sample, Experiment, ExperimentalGroup, Animal, FileMatchString, Numpy, Zarr
+from elements.models import Antibody, Sample, Experiment, ExperimentalGroup, Animal, FileMatchString, Zarr
 from elements.serializers import AntibodySerializer, SampleSerializer, ExperimentSerializer, \
-    ExperimentalGroupSerializer, AnimalSerializer, FileMatchStringSerializer, NumpySerializer, ZarrSerializer
-from hdfserver.idgetter import getDataSetUUIDforNumpy, queryDataSetUUID
+    ExperimentalGroupSerializer, AnimalSerializer, FileMatchStringSerializer, ZarrSerializer
 from larvik.views import LarvikViewSet
-from trontheim.viewsets import OsloViewSet
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -55,60 +53,6 @@ class ExperimentalGroupViewSet(LarvikViewSet):
     serializer_class = ExperimentalGroupSerializer
     publishers = [["experiment"]]
     filter_fields = ("creator", "name", "experiment")
-
-
-
-
-class NumpyViewSet(LarvikViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    filter_backends = (DjangoFilterBackend,)
-    queryset = Numpy.objects.all()
-    serializer_class = NumpySerializer
-    publishers = [["sample"]]
-    filter_fields = ("sample",)
-
-
-    @action(methods=['get'], detail=True,
-            url_path='value', url_name='value')
-    def value(self, request, pk):
-        numpy: Numpy = self.get_object()
-        query_params = request.query_params
-
-        domain, datasetid = getDataSetUUIDforNumpy(numpy)
-
-        # We are trying to pass on selection params
-        query = "?select={0}".format(query_params["select"]) if "select" in query_params else ""
-        logger.info("Passing on SelectQuery: {0}".format(query))
-
-        answer = queryDataSetUUID(domain, datasetid,"/value" + query)
-        response = HttpResponse(answer, content_type="application/json")
-        return response
-
-    @action(methods=['get'], detail=True,
-            url_path='shape', url_name='shape')
-    def shape(self, request, pk):
-        numpy: Numpy = self.get_object()
-        query_params = request.query_params
-
-        domain, datasetid = getDataSetUUIDforNumpy(numpy)
-
-        answer = queryDataSetUUID(domain, datasetid, "/shape")
-        response = HttpResponse(answer, content_type="application/json")
-        return response
-
-    @action(methods=['get'], detail=True,
-            url_path='type', url_name='type')
-    def type(self, request, pk):
-        numpy: Numpy = self.get_object()
-        query_params = request.query_params
-
-        domain, datasetid = getDataSetUUIDforNumpy(numpy)
-
-        answer = queryDataSetUUID(domain, datasetid, "/type")
-        response = HttpResponse(answer, content_type="application/json")
-        return response
 
 
 

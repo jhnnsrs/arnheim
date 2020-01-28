@@ -7,7 +7,7 @@ import string
 import h5py
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models.manager import BaseManager
+from django.db.models.manager import BaseManager, Manager
 from django.db.models.query import QuerySet
 from pandas import HDFStore
 
@@ -76,7 +76,9 @@ class ZarrQueryMixin(object):
 class ZarrQuerySet(ZarrQueryMixin, QuerySet):
     pass
 
-class ZarrManager(BaseManager.from_queryset(ZarrQuerySet)):
+class ZarrManager(Manager):
+    def get_queryset(self):
+        return ZarrQuerySet(self.model, using=self._db)
 
     def id_generator(self, size=6, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for _ in range(size))
