@@ -83,6 +83,7 @@ services:
       - files:/code/files
 
 volumes:
+  postgres_data:
   vscode:
   dbdata:
   media:
