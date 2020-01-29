@@ -17,7 +17,7 @@ arnheim_debug = os.getenv("ARNHEIM_DEBUG", False)
 if arnheim_debug: print("Debugging build")
 
 # Arnheim Settings
-arnheim_host = os.getenv("ARNHEIM_HOST","localhost")
+arnheim_host = os.getenv("ARNHEIM_DOMAIN","localhost")
 
 # Compression Settings
 TRANSFORMATION_DTYPE =  os.getenv("TRANSFORMATION_DTYPE",None)
