@@ -97,14 +97,6 @@ class Sample(models.Model):
 
     def delete(self, *args, **kwargs):
         logger.info("Trying to remove Sample H5File")
-        for item in self.numpys.all():
-            item.delete()
-
-        filepath = os.path.join(settings.H5FILES_ROOT,toFileName(self))
-        if os.path.isfile(filepath):
-            os.remove(filepath)
-            logger.info("Removed Sample H5File {0}".format(filepath))
-
         super(Sample, self).delete(*args, **kwargs)
 
 
@@ -192,3 +184,15 @@ class Pandas(models.Model):
 
     def __str__(self):
         return "Pandas with VID " + str(self.vid) + " at " + str(self.filepath)
+
+
+class Channel(object):
+    pass
+
+
+class Slice(object):
+    pass
+
+
+class ChannelMap(object):
+    pass

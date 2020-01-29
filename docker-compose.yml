@@ -4,21 +4,20 @@ services:
   redis:
     image: redis:latest
   web:
-    image: jhnnsrs/bergen
+    image: jhnnsrs/bergen:dask
     command: python manage.py runserver 0.0.0.0:8000
     env_file:
       - arnheim.env
       - development.env
     volumes:
       - ./bergen:/code
-      - ./database:/code/db
       - media:/code/media
       - files:/code/files
     links:
       - redis
       - worker
   worker:
-    image: jhnnsrs/bergen
+    image: jhnnsrs/bergen:dask
     command: python manage.py runallworkers
     env_file:
       - arnheim.env
@@ -26,7 +25,6 @@ services:
     volumes:
       - ./bergen:/code
       - media:/code/media
-      - ./database:/code/db
       - files:/code/files
     links:
       - redis
@@ -45,7 +43,7 @@ services:
       - notebook
       - daskscheduler
   notebook:
-    image: jhnnsrs/jupjup
+    image: jhnnsrs/jupjup:latest
     command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/notebooks/
     environment:
       - HOME=home
@@ -54,11 +52,9 @@ services:
       - arnheim.env
       - development.env
     volumes:
-      - ./cloud:/cloud
       - ./notebooks:/notebooks
       - ./bergen:/code/
       - ./jupjup:/config/
-      - ./database:/code/db
       - media:/code/media
       - files:/code/files
     ports:
@@ -68,16 +64,15 @@ services:
       - worker
       - daskscheduler
   daskscheduler:
-    image: jhnnsrs/dask
+    image: jhnnsrs/dask:latest
     ports:
       - "8786:8786"
       - "8787:8787"
     command: dask-scheduler --dashboard-prefix=daskboard
   daskworker:
-    image: jhnnsrs/dask
+    image: jhnnsrs/dask:latest
     command: ["dask-worker", "tcp://daskscheduler:8786"]
     volumes:
-      - ./database:/code/db
       - media:/code/media
       - files:/code/files
 

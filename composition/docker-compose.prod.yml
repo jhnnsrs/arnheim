@@ -1,0 +1,61 @@
+version: "3.4"
+
+
+services:
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./config/nginx-production.conf:/etc/nginx/nginx.conf
+      - ./media:/media
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    ports:
+      - 80:80
+      - 443:443
+    links:
+      - web
+      - worker
+      - certbot
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+  web:
+    volumes:
+      - ./bergen:/code
+      - ./database:/code/db
+      - ./media:/code/media
+      - ./files:/code/files
+  worker:
+    volumes:
+      - ./bergen:/code
+      - ./media:/code/media
+      - ./database:/code/db
+      - ./files:/code/files
+  notebook:
+    volumes:
+      - ./notebooks:/notebooks
+      - ./bergen:/code/
+      - ./jupjup:/config/
+      - ./media:/code/media
+      - ./database:/code/db
+      - ./files:/code/files
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+
+volumes:
+  vscode:
+  dbdata:
+  media:
+    driver_opts:
+      type: none
+      device: /home/ubuntu/media
+      o: bind
+  files:
+    driver_opts:
+      type: none
+      device: /home/ubuntu/files
+      o: bind

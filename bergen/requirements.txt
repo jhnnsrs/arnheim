@@ -59,7 +59,7 @@ tables
 pandas-profiling
 openpyxl
 zarr
-dask[complete]
+dask[complete]==2.9.2
 lz4
 numcodecs
 xarray

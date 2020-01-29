@@ -5,11 +5,13 @@ RUN conda install --yes \
     python-blosc \
     cytoolz \
     zarr \
-    dask[complete] \
+    dask==2.9.2\
     lz4 \
+    zarr \
     nomkl \
-    numpy \
-    pandas \
+    numpy==1.17.3 \
+    scipy==1.4.1 \
+    pandas==0.25.2 \
     tini\
     xarray \
     seaborn \
@@ -27,10 +29,14 @@ ADD . /tmp
 WORKDIR /tmp
 RUN /opt/conda/bin/pip install -r requirements.txt
 
-WORKDIR /code
+ENV PYTHONPATH="$PYTHONPATH:/code"
+ENV DJANGO_SETTINGS_MODULE="mandal.settings"
 
+WORKDIR /config
 COPY prepare.sh /usr/bin/prepare.sh
 
 RUN mkdir /opt/app
+
+
 
 #ENTRYPOINT ["tini", "-g", "--", "/usr/bin/prepare.sh"]

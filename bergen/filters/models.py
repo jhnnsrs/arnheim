@@ -14,3 +14,4 @@ class Filtering(LarvikJob):
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE)
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
     pass
+

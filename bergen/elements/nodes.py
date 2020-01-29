@@ -12,8 +12,6 @@ class WatcherType(NodeType):
 
 
 
-
-
 @register_node("rep-selector")
 class RepresentationSelector(SelectorType):
     inputs = ["Locker", "Sample", "Roi"]

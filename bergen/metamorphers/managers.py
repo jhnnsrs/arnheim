@@ -1,6 +1,8 @@
 import io
+import json
 
 import xarray
+from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
 
@@ -17,18 +19,14 @@ class DisplayManager(models.Manager):
     def from_xarray_and_request(self, array: xarray.DataArray, request):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
-
-        from skimage.util import img_as_ubyte
-
+        img = Image.fromarray(array)
         name = "Display of " + request.representation.name
-        image = img_as_ubyte(array)
-
         display = self.create(representation=request.representation,
                             name=name,
                             creator=request.creator,
                             nodeid=request.nodeid,
                             sample=request.sample,
-                            shape=request.representation.shape,
+                            shape=json.dumps(list(array.shape)),
                             experiment=request.representation.experiment)
 
 
@@ -36,7 +34,7 @@ class DisplayManager(models.Manager):
         path = "sample-{0}_representation-{1}_node-{2}".format(str(display.sample.id), str(display.representation.id),
                                                                str(request.nodeid))
         img_io = io.BytesIO()
-        image.save(img_io, format='jpeg', quality=100)
+        img.save(img_io, format='jpeg', quality=100)
         thumb_file = InMemoryUploadedFile(img_io, None, path + ".jpeg", 'image/jpeg',
                                           img_io.tell, None)
 

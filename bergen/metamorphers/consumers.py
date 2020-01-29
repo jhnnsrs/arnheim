@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 
 import nibabel as nib
 import numpy as np
+import dask.array as da
 from django.db import models
 from rest_framework import serializers
 
@@ -18,59 +19,6 @@ from metamorphers.models import Metamorphing, Exhibit, Display, Metamorpher
 from metamorphers.serializers import DisplaySerializer, ExhibitSerializer, MetamorphingSerializer
 from metamorphers.utils import get_metamorphing_or_error, get_inputrepresentation_or_error
 from trontheim.consumers import OsloJobConsumer
-
-
-class MetamorphingOsloJobConsumer(OsloJobConsumer):
-
-    def __init__(self, scope):
-        super().__init__(scope)
-        self.request = None
-
-    async def startJob(self, data):
-        await self.register(data)
-        print(data)
-        request: Metamorphing = await get_metamorphing_or_error(data["data"])
-        self.request = request
-        settings: dict = await self.getsettings(request.settings, request.metamorpher.defaultsettings)
-
-        inputrep, array = await get_inputrepresentation_or_error(request)
-
-        file = await self.convert(array, settings)
-        if not file: return
-
-        func = self.getDatabaseFunction()
-        model, method = await func(request, file)
-
-        await self.modelCreated(model, self.getSerializer(), method)
-
-    async def convert(self, settings: dict, array: np.array):
-        """ If you create objects make sure you are handling them in here
-        and publish if necessary with its serializer """
-        raise NotImplementedError
-
-    def getDatabaseFunction(self):
-        """ This should update the newly generated model, will get called with the request and the convert"""
-        raise NotImplementedError
-
-    def getSerializer(self) -> serializers.ModelSerializer:
-        raise NotImplementedError
-
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
-        try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
-
-        except:
-            defaultsettings = {}
-            settings = {}
-
-        defaultsettings.update(settings)
-        return defaultsettings
 
 
 @register_consumer("exhibit", model=Metamorpher, )
@@ -160,52 +108,27 @@ class ImageMetamorpher(DaskSyncLarvikConsumer):
         array = request.representation.array
 
         if "z" in array.dims:
-            array = array.max(dims="z")
+            array = array.max(dim="z")
         if "t" in array.dims:
             array = array.sel(t=0)
+
+        print(array)
         if "c" in array.dims:
-            array = array.sel(c=[0,1,2])
+            if array.c.size >= 3:
+                array = array.sel(c=[0,1,2]).data
+            elif array.c.size == 2:
+                array = da.concatenate([array.sel(c=[0,1]).data,da.zeros((array.x.size, array.y.size, 1))], axis=2)
+            elif array.c.size == 1:
+                raise NotImplementedError("We need to figure Matplotlib conversion for single-Channel Images")
+        else:
+            raise NotImplementedError("We need to figure Matplotlib conversion for single-Channel Images")
 
 
-
-        if len(array.shape) == 5:
-            array = np.nanmax(array[:, :, :3, :, 0], axis=3)
-        if len(array.shape) == 4:
-            array = np.nanmax(array[:, :, :3, :], axis=3)
-        if len(array.shape) == 3:
-            array = array[:, :, :3]
-            if array.shape[2] == 1:
-                x = array[:, :, 0]
-
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3))
-
-                # do expand
-                target[:x.shape[0], :x.shape[1], 0] = x
-
-                array = target
-            if array.shape[2] == 2:
-                x = array[:, :, :1]
-
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3))
-
-                # do expand
-                target[:x.shape[0], :x.shape[1], :1] = x
-
-                array = target
-
-        if len(array.shape) == 2:
-            x = array[:, :]
-
-            # expand to what shape
-            target = np.zeros((array.shape[0], array.shape[1], 3))
-
-            # do expand
-            target[:x.shape[0], :x.shape[1], 0] = x
-
-            array = target
-        print(array.shape)
+        self.progress("Rescaling")
+        min, max = array.min(), array.max()
+        print(array)
+        array = np.interp(array.compute(), (min, max), (0, 255))
+        array = array.astype(np.uint8)
 
         display = Display.objects.from_xarray_and_request(array, request)
         return [(display, "create")]

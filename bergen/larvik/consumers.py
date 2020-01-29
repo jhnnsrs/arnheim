@@ -1,5 +1,5 @@
 from typing import Callable, Awaitable, Any, Dict, List, Tuple
-
+import dask
 from asgiref.sync import async_to_sync
 from channels.consumer import AsyncConsumer, SyncConsumer
 from channels.layers import get_channel_layer
@@ -322,7 +322,16 @@ class DaskSyncLarvikConsumer(SyncLarvikConsumer):
 
     def __init__(self, scope):
         super().__init__(scope)
-        self.c = Client(cluster)
+        self.iscluster = False
+
+    def compute(self, graph):
+        if self.iscluster:
+            return self.c.compute(graph)
+        else:
+            with dask.config.set(scheduler='threads'):
+                result = graph.compute()
+                return result
+
 
     def getRequest(self, data) -> LarvikJob:
         raise NotImplementedError
