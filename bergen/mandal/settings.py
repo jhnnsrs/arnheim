@@ -13,7 +13,7 @@ import os
 import numpy as np
 
 # General Debug or Production Settings
-arnheim_debug = os.getenv("ARNHEIM_DEBUG",False)
+arnheim_debug = os.getenv("ARNHEIM_DEBUG", False)
 if arnheim_debug: print("Debugging build")
 
 # Arnheim Settings
@@ -69,7 +69,8 @@ if arnheim_debug:
 else:
     ALLOWED_HOSTS = [arnheim_host, "web"]
 
-
+print("Hosting on: ", arnheim_host)
+print(ALLOWED_HOSTS)
 
 #Cors Settings and SSL settings
 CORS_ORIGIN_ALLOW_ALL = True
