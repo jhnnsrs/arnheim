@@ -18,6 +18,7 @@ from larvik.models import LarvikJob
 
 
 class FilterConsumer(DaskSyncLarvikConsumer):
+    type= "filter"
 
     def getRequest(self, data) -> LarvikJob:
         return Filtering.objects.get(pk=data["id"])

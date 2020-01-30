@@ -23,6 +23,7 @@ from trontheim.consumers import OsloJobConsumer
 
 @register_consumer("exhibit", model=Metamorpher, )
 class ExhibitMetamorpher(DaskSyncLarvikConsumer):
+    type="metamorpher"
     name = "ExhibitMetamorpher"
     path = "ExhibitMetamorpher"
     settings = {"reload": True}
@@ -87,6 +88,7 @@ class ExhibitMetamorpher(DaskSyncLarvikConsumer):
 
 @register_consumer("image", model=Metamorpher)
 class ImageMetamorpher(DaskSyncLarvikConsumer):
+    type="metamorpher"
     name = "Image Metamorpher"
     path = "ImageMetamorpher"
     settings = {"reload": True,
