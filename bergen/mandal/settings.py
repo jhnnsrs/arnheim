@@ -16,7 +16,7 @@ from larvik.logging import get_module_logger
 logger = get_module_logger(__name__)
 # General Debug or Production Settings
 arnheim_debug = os.getenv("ARNHEIM_DEBUG", False)
-
+print(arnheim_debug)
 
 # Arnheim Settings
 arnheim_host = os.getenv("ARNHEIM_DOMAIN","localhost")
