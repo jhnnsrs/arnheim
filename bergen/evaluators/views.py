@@ -1,12 +1,10 @@
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 
 from evaluators.models import Evaluator, Data, Evaluating, VolumeData, ClusterData, LengthData
 from evaluators.serializers import EvaluatorSerializer, DataSerializer, EvaluatingSerializer, VolumeDataSerializer, \
     ClusterDataSerializer, LengthDataSerializer
 from larvik.views import LarvikJobViewSet, LarvikViewSet
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
 class EvaluatorViewSet(LarvikViewSet):

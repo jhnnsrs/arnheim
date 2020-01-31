@@ -3,11 +3,9 @@
 from django.http import HttpResponseRedirect
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 from rest_framework.decorators import action
 
 from larvik.views import LarvikViewSet, LarvikJobViewSet
-from trontheim.viewsets import OsloActionViewSet
 from visualizers.serializers import *
 
 

@@ -1,17 +1,12 @@
-import pandas as pd
-import json
-import numpy as np
 import xarray as xr
-import zarr as zr
-import dask.array as da
 import bioformats
-from bs4 import BeautifulSoup
+import dask.array as da
+import xarray as xr
 
 from bioconverter.logic.meta import loadBioMetaFromFile, parseMeta
-from  bioconverter.logic.ome import imagetree
-import javabridge
-
+from bioconverter.logic.ome import imagetree
 from bioconverter.logic.utils import constructDim, calculateRescaleAndScaleFactor
+
 
 async def convertBioImageToXArray(filepath, index, progress):
     await progress("Loading Biometa")

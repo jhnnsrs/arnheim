@@ -16,6 +16,13 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
 
+    try:
+        import larvik.extenders as e
+    except ImportError as exc:
+        raise ImportError(
+            "No Larvik extensions Defined"
+        ) from exc
+
     execute_from_command_line(sys.argv)
 
 

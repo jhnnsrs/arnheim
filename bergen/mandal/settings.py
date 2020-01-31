@@ -10,11 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 import os
-import numpy as np
 
+from larvik.logging import get_module_logger
+
+logger = get_module_logger(__name__)
 # General Debug or Production Settings
 arnheim_debug = os.getenv("ARNHEIM_DEBUG", False)
-if arnheim_debug: print("Debugging build")
+
 
 # Arnheim Settings
 arnheim_host = os.getenv("ARNHEIM_DOMAIN","localhost")
@@ -65,12 +67,13 @@ SECRET_KEY = os.environ.get('ARNHEIM_KEY', 'e+uck-nbb+_%(d@%s-@l@*o!xp__p7rssglb
 
 # SECURITY WARNING: don't run with debug turned on in production!
 if arnheim_debug:
-    ALLOWED_HOSTS = ['129.206.5.200','127.0.0.1',"localhost",'johannesroos.de','129.206.173.171',"192.168.0.116","192.168.137.1","192.168.99.100","web", arnheim_host]
+    ALLOWED_HOSTS = ["*"]
 else:
     ALLOWED_HOSTS = [arnheim_host, "web"]
 
-print("Hosting on: ", arnheim_host)
-print(ALLOWED_HOSTS)
+if arnheim_debug:
+    logger.info("Debugging build")
+    logger.info(f"Hosting on {repr(ALLOWED_HOSTS)}")
 
 #Cors Settings and SSL settings
 CORS_ORIGIN_ALLOW_ALL = True
@@ -224,14 +227,14 @@ if arnheim_debug or True:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'datafile.sqlite3'),
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
 else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'datafile.sqlite3'),
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
 

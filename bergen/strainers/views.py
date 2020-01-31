@@ -1,10 +1,8 @@
 # Create your views here.
-from rest_framework import viewsets
 
 from larvik.views import LarvikViewSet, LarvikJobViewSet
 from strainers.models import Straining, Strainer
 from strainers.serializers import StrainerSerializer, StrainingSerializer
-from trontheim.viewsets import OsloActionViewSet
 
 
 class StrainerViewSet(LarvikViewSet):

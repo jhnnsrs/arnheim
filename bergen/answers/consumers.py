@@ -7,12 +7,10 @@ from rest_framework import serializers
 from answers.models import Answering, Oracle, Question, Answer
 from answers.serializers import AnswerSerializer, AnsweringSerializer
 from answers.utils import get_answering_or_error, answer_update_or_create
-from elements.models import Pandas
 from gql.schema import schema
 from larvik.consumers import ModelFuncAsyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.utils import update_status_on_larvikjob
-
 
 
 @register_consumer("pandas", model= Oracle)

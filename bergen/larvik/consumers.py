@@ -1,21 +1,21 @@
 from typing import Callable, Awaitable, Any, Dict, List, Tuple
+
 import dask
 from asgiref.sync import async_to_sync
 from channels.consumer import AsyncConsumer, SyncConsumer
 from channels.layers import get_channel_layer
-from dask.distributed import Client
 from django.db import models
-from django.db.models import Model
 from rest_framework import serializers
 
 from larvik.discover import NodeType
 from larvik.logging import get_module_logger
 from larvik.models import LarvikJob
 from larvik.structures import StatusCode, LarvikStatus, larvikError, larvikProgress
+from mandal.settings import arnheim_debug
 
 channel_layer = get_channel_layer()
 
-from dask.distributed import Client, LocalCluster
+from dask.distributed import LocalCluster
 cluster = LocalCluster()
 
 
@@ -50,7 +50,7 @@ class AsyncLarvikConsumer(AsyncConsumer,NodeType):
         serialized = serializerclass(model)
         stream = str(type(model).__name__).lower()
         if stream in self.publishers.keys():
-            self.logger.info("Found stream {0} in Publishers. Tyring to publish".format(str(stream)))
+            #self.logger.info("Found stream {0} in Publishers. Tyring to publish".format(str(stream)))
             await self.publish(serialized, method,self.publishers[stream],stream)
 
     async def publish(self,serializer, method, publishers,stream):
@@ -66,7 +66,7 @@ class AsyncLarvikConsumer(AsyncConsumer,NodeType):
                         path += "{0}_".format((str(modelfield)))
                 path = path[:-1] # Trim the last underscore
 
-                self.logger.info("Publishing to Channel {0}".format(path))
+                #self.logger.info("Publishing to Channel {0}".format(path))
 
                 await channel_layer.group_send(
                     path,
@@ -131,8 +131,12 @@ class AsyncLarvikConsumer(AsyncConsumer,NodeType):
             await self.updateRequest(LarvikStatus(StatusCode.ERROR, e.message))
         except Exception as e:
             self.logger.error(e)
-            await self.updateRequest(LarvikStatus(StatusCode.ERROR, "Uncaught Error on Server, check log there"))
-            raise e
+            if arnheim_debug:
+                await self.updateRequest(LarvikStatus(StatusCode.ERROR, e))
+                raise e
+            else:
+                await self.updateRequest(LarvikStatus(StatusCode.ERROR, "Uncaught Error on Server, check log there"))
+
 
 
     def _getsettings(self, settings: str, defaultsettings: Dict):
@@ -189,7 +193,10 @@ class ModelFuncAsyncLarvikConsumer(AsyncLarvikConsumer):
             await self.updateRequest(LarvikStatus(StatusCode.ERROR, e.message))
         except Exception as e:
             self.logger.error(e)
-            await self.updateRequest(LarvikStatus(StatusCode.ERROR, "Uncaught Error on Server, check log there"))
+            if arnheim_debug:
+                await self.updateRequest(LarvikStatus(StatusCode.ERROR, e))
+            else:
+                await self.updateRequest(LarvikStatus(StatusCode.ERROR, "Uncaught Error on Server, check log there"))
 
 
 class SyncLarvikConsumer(SyncConsumer, NodeType):
@@ -217,7 +224,7 @@ class SyncLarvikConsumer(SyncConsumer, NodeType):
         serialized = serializerclass(model)
         stream = str(type(model).__name__).lower()
         if stream in self.publishers.keys():
-            self.logger.info("Found stream {0} in Publishers. Tyring to publish".format(str(stream)))
+            #self.logger.info("Found stream {0} in Publishers. Tyring to publish".format(str(stream)))
             self.publish(serialized, method,self.publishers[stream],stream)
 
     def progress(self,message=None):
@@ -233,11 +240,11 @@ class SyncLarvikConsumer(SyncConsumer, NodeType):
                         value = serializer.data[modelfield]
                         path += "{0}_{1}_".format(str(modelfield), str(value))
                     except:
-                        self.logger.info("Modelfield {0} does not exist on {1}".format(str(modelfield), str(stream)))
+                        #self.logger.info("Modelfield {0} does not exist on {1}".format(str(modelfield), str(stream)))
                         path += "{0}_".format((str(modelfield)))
                 path = path[:-1] # Trim the last underscore
 
-                self.logger.info("Publishing to Channel {0}".format(path))
+                #self.logger.info("Publishing to Channel {0}".format(path))
 
                 async_to_sync(channel_layer.group_send)(
                     path,
@@ -296,8 +303,12 @@ class SyncLarvikConsumer(SyncConsumer, NodeType):
             self.updateStatus(larvikError(repr(e)))
         except Exception as e:
             self.logger.error(e)
-            self.updateStatus(larvikError(repr(e)))
-            raise e
+            if arnheim_debug:
+                 self.updateStatus(larvikError(repr(e)))
+                 raise e
+            else:
+                 self.updateStatus(LarvikStatus(StatusCode.ERROR, "Uncaught Error on Server, check log there"))
+
 
 
     def _getsettings(self, settings: str, defaultsettings: Dict):

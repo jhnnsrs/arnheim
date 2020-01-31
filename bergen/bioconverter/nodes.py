@@ -1,10 +1,7 @@
 from bioconverter.models import Representation
-from biouploader.models import BioImage, Locker
-from elements.nodes import WatcherType, SelectorType
 from elements.models import Channel
-from larvik.discover import register_node, NodeType
-
-
+from elements.nodes import WatcherType, SelectorType
+from larvik.discover import register_node
 
 
 @register_node("watcher-rep")

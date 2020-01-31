@@ -1,16 +1,14 @@
-import json
 from typing import Any, Dict, List, Tuple
 
-import dask_image.ndfilters
 import dask.array as da
-import numpy as np
+import dask_image.ndfilters
 import xarray as xr
 from django.db import models
 
 from bioconverter.models import Representation
 from bioconverter.serializers import RepresentationSerializer
-from filters.models import Filter, Filtering
 from elements.models import Channel, Slice, ChannelMap
+from filters.models import Filter, Filtering
 from filters.serializers import FilteringSerializer
 from larvik.consumers import DaskSyncLarvikConsumer
 from larvik.discover import register_consumer

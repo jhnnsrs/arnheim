@@ -1,6 +1,6 @@
 from biouploader.models import BioImage, Locker, BioSeries
 from elements.nodes import WatcherType, CollectorType
-from larvik.discover import register_node, NodeType
+from larvik.discover import register_node
 
 
 @register_node("watcher-locker")

@@ -3,13 +3,11 @@ from django.http import HttpResponse
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
 from pandas import DataFrame
-from rest_framework import viewsets
 from rest_framework.decorators import action
 
 from answers.models import Answering, Oracle, Answer, Question
 from answers.serializers import AnsweringSerializer, AnswerSerializer, OracleSerializer, QuestionSerializer
 from larvik.views import LarvikViewSet, LarvikJobViewSet
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
 class OracleViewSet(LarvikViewSet):

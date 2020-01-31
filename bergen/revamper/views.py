@@ -1,11 +1,9 @@
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 
 from larvik.views import LarvikViewSet, LarvikJobViewSet
 from revamper.models import Mask, Revamper, Revamping
 from revamper.serializers import MaskSerializer, RevamperSerializer, RevampingSerializer
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
 class MaskViewSet(LarvikViewSet):

@@ -2,7 +2,7 @@ from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter, ChannelNameRouter
 from django.urls import path
 
-from larvik.discover import CONSUMERS, autodiscover
+from larvik.discover import autodiscover
 from trontheim.consumers import OsloConsumer
 from trontheim.middleware import QueryAuthMiddleware
 
@@ -12,7 +12,6 @@ OauthMiddleWareStack = lambda inner: QueryAuthMiddleware(AuthMiddlewareStack(inn
 # selecting on either the connection type (ProtocolTypeRouter) or properties
 # of the connection's scope (like URLRouter, which looks at scope["path"])
 # For more, see http://channels.readthedocs.io/en/latest/topics/routing.html
-consumers = autodiscover()
 
 application = ProtocolTypeRouter({
 
@@ -29,5 +28,5 @@ application = ProtocolTypeRouter({
             path("oslo", OsloConsumer)
         ]),
     ),
-    "channel": ChannelNameRouter(consumers),
+    "channel": ChannelNameRouter(autodiscover()),
 })

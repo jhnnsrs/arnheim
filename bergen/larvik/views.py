@@ -8,8 +8,6 @@ from rest_framework import viewsets
 from larvik.logging import get_module_logger
 from larvik.utils import UUIDEncoder
 
-
-
 channel_layer = get_channel_layer()
 
 class LarvikJobWrapper(object):

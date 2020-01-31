@@ -3,19 +3,17 @@ from django.http import JsonResponse
 # Create your views here.
 from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 
 from biouploader.models import BioImage, BioSeries, Analyzing, Analyzer, Locker, BioMeta
 from biouploader.serializers import BioImageSerializer, BioSeriesSerializer, AnalyzingSerializer, AnalyzerSerializer, \
     LockerSerializer, BioMetaSerializer
 from biouploader.upload_utils import upload_file
 from larvik.views import LarvikViewSet, LarvikJobViewSet
-from trontheim.viewsets import OsloViewSet, OsloActionViewSet, channel_layer
 
 
+channel_layer = None
 class BioImageViewSet(LarvikViewSet):
 
-    # MAKE THIS AN ACTION PUBLISHER THAT WILL PIPE IT THROUGH A META OBJECT CREATOR
 
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ("creator","locker")

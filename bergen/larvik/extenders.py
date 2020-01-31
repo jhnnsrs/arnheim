@@ -1,15 +1,16 @@
-import xarray as xr
 import pandas as pd
-import dask.array as da
+import xarray as xr
 
 from larvik.logging import get_module_logger
+from mandal.settings import arnheim_debug
 
 logger = get_module_logger(__name__)
 
-logger.info("Making DataArrays Look Beautiful")
+if arnheim_debug:
+    logger.info("Making DataArrays Look Beautiful")
+    logger.info("Extending DataArray")
 
 xr.set_options(display_style="html")
-logger.info("Extending DataArray")
 
 
 class ArnheimError(Exception):

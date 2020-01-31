@@ -1,14 +1,14 @@
 import hashlib
 import json
 import uuid
-from datetime import time
 from imp import find_module
 from importlib import import_module
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import OperationalError, models
+from django.db import OperationalError
 from django.db.models import Manager, Model
+
 from larvik.logging import get_module_logger
 
 CONSUMERS = {}
@@ -63,7 +63,6 @@ class register_consumer(object):
         once, as part of the decoration process! You can only give
         it a single argument, which is the function object.
         """
-        logger.info(f"Installing {cls.__name__} as {self.name} on {self.channel}")
 
 
         if self.channel in NODES: raise Exception(f"The node {self.node} does already exist. Check for Duplicates")
@@ -85,7 +84,6 @@ class register_consumer(object):
 
                 try:
                     node = Node.objects.get(hash=createUniqeNodeName(self.channel))
-                    logger.info(f"{self.name} did exist on {self.model.__name__} - Updating")
                     node.name = self.name
                     node.path = self.path
                     node.variety = self.type
@@ -96,7 +94,6 @@ class register_consumer(object):
                     node.entityid = object.id
                     node.save()
 
-                    print(node)
 
 
                 except ObjectDoesNotExist as e:
@@ -109,10 +106,10 @@ class register_consumer(object):
                                                inputmodel=self.inputmodel,
                                                outputmodel=self.outputmodel,
                                                defaultsettings=self.settings)
+                    logger.info(f"{self.name} did not yet exist on {self.channel} - Creating")
 
-                    print(node)
 
-               # TODO: When everything was mirated consumers should be called here CONSUMERS[self.name] = cls
+            # TODO: When everything was mirated consumers should be called here CONSUMERS[self.name] = cls
             except OperationalError as e:
                 logger.error(f'Consumer cannot be installed, migrate first: {e}')
 
@@ -145,13 +142,10 @@ class register_node(object):
         once, as part of the decoration process! You can only give
         it a single argument, which is the function object.
         """
-        logger.info(f"Installing {cls.__name__} as {self.node} on {self.node}")
-
         if self.node in NODES: raise Exception(f"The node {self.node} does already exist. Check for Duplicates")
         try:
             try:
                 node = Node.objects.get(hash=createUniqeNodeName(self.node))
-                logger.info(f"{cls.name} did exist on {self.node} - Updating")
                 node.name = cls.name
                 node.path = cls.path
                 node.variety = cls.type
@@ -161,8 +155,6 @@ class register_node(object):
                 node.channel = "None"
                 node.entityid = None
                 node.save()
-
-                print(node)
 
             except ObjectDoesNotExist as e:
                 node = Node.objects.create(hash=createUniqeNodeName(self.node),
@@ -175,8 +167,11 @@ class register_node(object):
                                            outputmodel=self.getModelForPuts(cls.outputs),
                                            defaultsettings=json.dumps(cls.settings))
 
-                print(node)
-           # TODO: When everything was mirated consumers should be called here CONSUMERS[self.name] = cls
+                logger.info(f"Installing {cls.__name__} as {self.node} on {self.node}")
+
+
+
+        # TODO: When everything was mirated consumers should be called here CONSUMERS[self.name] = cls
         except OperationalError as e:
             logger.error(f'Consumer cannot be installed, migrate first: {e}')
 

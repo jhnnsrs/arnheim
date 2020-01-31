@@ -1,7 +1,4 @@
-import os
-
 import dask
-import h5py
 import xarray
 import zarr as zr
 from django.contrib.auth import get_user_model
@@ -12,13 +9,9 @@ from pandas import HDFStore
 from taggit.managers import TaggableManager
 
 from biouploader.models import BioMeta, BioSeries
-from elements.managers import NumpyManager, PandasManager, ZarrManager
-from elements.utils import toFileName
+from elements.managers import PandasManager, ZarrManager
 from larvik.logging import get_module_logger
-from mandal import settings
 from .storage.store import getStore, openDataset
-
-import elements.extenders
 
 logger = get_module_logger(__name__)
 

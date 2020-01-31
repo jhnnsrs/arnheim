@@ -1,14 +1,12 @@
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 from rest_framework.decorators import action
 
 from larvik.views import LarvikViewSet, LarvikJobViewSet
 from metamorphers.models import Metamorpher, Metamorphing, Display, Exhibit
 from metamorphers.serializers import MetamorpherSerializer, MetamorphingSerializer, DisplaySerializer, \
     ExhibitSerializer
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
 class DisplayViewSet(LarvikViewSet):

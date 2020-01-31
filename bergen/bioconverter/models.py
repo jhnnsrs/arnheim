@@ -7,7 +7,7 @@ from django.db import models
 from bioconverter.managers import DistributedRepresentationManager, RepresentationManager
 from biouploader.models import BioSeries
 from elements.models import Experiment, Sample, Zarr
-from larvik.models import LarvikConsumer, LarvikJob
+from larvik.models import LarvikConsumer, LarvikJob, LarvikArrayProxy
 
 
 class Converter(LarvikConsumer):
@@ -31,7 +31,7 @@ class Conversing(LarvikJob):
         return "ConversionRequest for Converter: {0}".format(self.converter)
 
 
-class Representation(models.Model):
+class Representation(LarvikArrayProxy):
     name = models.CharField(max_length=1000)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     vid = models.CharField(max_length=1000,blank=True, null=True) #deprecated
@@ -49,12 +49,6 @@ class Representation(models.Model):
     def loadArray(self, chunks="auto", name="data"):
         if self.zarr:
             return self.zarr.openArray(chunks= chunks, name=name)
-
-    @property
-    def array(self):
-        if self.zarr:
-            return self.zarr.openArray(chunks= "auto", name="data")
-
 
     def __str__(self):
         return self.name

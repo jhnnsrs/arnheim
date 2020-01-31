@@ -46,7 +46,6 @@ class QueryAuthMiddleware:
                 user_auth_tuple = authenticator.authenticate(get_request)
                 if user_auth_tuple is not None:
                     user, auth = user_auth_tuple
-                    print(user)
                     break
 
         # Return the inner application directly and let it run everything else

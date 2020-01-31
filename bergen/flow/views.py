@@ -9,9 +9,9 @@ from rest_framework.response import Response
 
 from flow.models import Layout, Node, External, ExternalRequest
 from flow.policies import ExternalAccessPolicy
-from flow.serializers import FlowSerializer, Flow, NodeSerializer, LayoutSerializer, ExternalSerializer, ExternalRequestSerializer, ExternalNewSerializer
+from flow.serializers import FlowSerializer, Flow, NodeSerializer, LayoutSerializer, ExternalSerializer, \
+    ExternalRequestSerializer, ExternalNewSerializer
 from larvik.views import LarvikViewSet
-from trontheim.viewsets import OsloViewSet
 
 
 class FlowViewSet(LarvikViewSet):

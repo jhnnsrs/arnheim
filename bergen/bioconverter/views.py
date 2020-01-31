@@ -3,7 +3,6 @@ from rest_framework import viewsets
 
 from bioconverter.serializers import *
 from larvik.views import LarvikJobViewSet
-from trontheim.viewsets import OsloActionViewSet
 
 
 class ConverterViewSet(viewsets.ModelViewSet):

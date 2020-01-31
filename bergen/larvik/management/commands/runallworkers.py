@@ -1,11 +1,10 @@
 import logging
 
-from django.core.management import BaseCommand, CommandError
-
 from channels import DEFAULT_CHANNEL_LAYER
 from channels.layers import get_channel_layer
 from channels.routing import get_default_application
 from channels.worker import Worker
+from django.core.management import BaseCommand, CommandError
 
 from larvik.discover import CONSUMERS, autodiscover
 

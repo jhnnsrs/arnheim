@@ -1,11 +1,9 @@
 # Create your views here.
 # Create your views here.
-from rest_framework import viewsets
 
 from importer.policies import *
 from importer.serializers import *
 from larvik.views import LarvikViewSet, LarvikJobViewSet
-from trontheim.viewsets import OsloActionViewSet
 
 
 class ImporterViewSet(LarvikViewSet):

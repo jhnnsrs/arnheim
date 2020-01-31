@@ -1,4 +1,3 @@
-from bioconverter.models import Representation
 from larvik.discover import register_node, NodeType
 
 class SelectorType(NodeType):

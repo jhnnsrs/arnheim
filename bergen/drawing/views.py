@@ -6,7 +6,6 @@ from bioconverter.serializers import RepresentationSerializer
 from drawing.models import ROI
 from drawing.serializers import RoiSerializer
 from larvik.views import LarvikViewSet
-from trontheim.viewsets import OsloViewSet
 
 
 class RoiViewSet(LarvikViewSet):

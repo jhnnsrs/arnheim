@@ -1,14 +1,10 @@
 import os
 from typing import Dict, List, Tuple
 
-import os
-from typing import Dict, List, Tuple
-
+import dask.array as da
 import nibabel as nib
 import numpy as np
-import dask.array as da
 from django.db import models
-from rest_framework import serializers
 
 from bioconverter.models import Representation
 from larvik.consumers import LarvikError, DaskSyncLarvikConsumer
@@ -17,8 +13,6 @@ from larvik.models import LarvikJob
 from mandal.settings import NIFTI_ROOT, MEDIA_ROOT
 from metamorphers.models import Metamorphing, Exhibit, Display, Metamorpher
 from metamorphers.serializers import DisplaySerializer, ExhibitSerializer, MetamorphingSerializer
-from metamorphers.utils import get_metamorphing_or_error, get_inputrepresentation_or_error
-from trontheim.consumers import OsloJobConsumer
 
 
 @register_consumer("exhibit", model=Metamorpher, )
@@ -114,7 +108,6 @@ class ImageMetamorpher(DaskSyncLarvikConsumer):
         if "t" in array.dims:
             array = array.sel(t=0)
 
-        print(array)
         if "c" in array.dims:
             if array.c.size >= 3:
                 array = array.sel(c=[0,1,2]).data
@@ -128,7 +121,6 @@ class ImageMetamorpher(DaskSyncLarvikConsumer):
 
         self.progress("Rescaling")
         min, max = array.min(), array.max()
-        print(array)
         array = np.interp(array.compute(), (min, max), (0, 255))
         array = array.astype(np.uint8)
 

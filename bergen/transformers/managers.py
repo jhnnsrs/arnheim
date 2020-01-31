@@ -3,7 +3,7 @@ import os
 import xarray
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.manager import BaseManager, Manager
+from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 
 from elements.models import Sample, Zarr
