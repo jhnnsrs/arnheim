@@ -16,7 +16,6 @@ from larvik.logging import get_module_logger
 logger = get_module_logger(__name__)
 # General Debug or Production Settings
 arnheim_debug = os.getenv("ARNHEIM_DEBUG", "False") == "True"
-print(arnheim_debug)
 
 # Arnheim Settings
 arnheim_host = os.getenv("ARNHEIM_DOMAIN","localhost")
@@ -61,7 +60,7 @@ MEDIA_URL = "/images/"
 DOCKER = False
 
 
-DEBUG = arnheim_debug
+DEBUG = arnheim_debug # DEBUG IS STILL ON ON
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('ARNHEIM_KEY', 'e+uck-nbb+_%(d@%s-@l@*o!xp__p7rssglb74xr*6=m5lh=vx')
 
@@ -309,7 +308,6 @@ STATIC_ROOT =  os.path.join(BASE_DIR, "static_collected")
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
-    os.path.join(BASE_DIR, "build/static")
 ]
 
 
