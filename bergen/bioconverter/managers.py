@@ -1,12 +1,15 @@
 import os
 
 import xarray
+import dask.bag as db
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 
 from elements.models import Sample, Zarr
+from elements.storage.store import openDataset
+from larvik.querysets import LarvikArrayQueryset
 
 
 def buildZarrName(name, nodeid):
@@ -59,28 +62,11 @@ class RepresentationManager(Manager):
 
 
 
-
-
-
-class DistributedRepresentationQuerySet(QuerySet):
-
-    def asArrays(self,*args, **kwargs):
-        import dask.bag as db
-
-        obj = self._clone()
-        if obj._sticky_filter:
-            obj.query.filter_is_sticky = True
-            obj._sticky_filter = False
-        obj.__dict__.update(kwargs)
-        return db.from_sequence([item.zarr.array for item in obj])
-
-
-
 class DistributedRepresentationManager(Manager):
 
 
     def get_queryset(self):
-        return DistributedRepresentationQuerySet(self.model, using=self._db)
+        return LarvikArrayQueryset(self.model, using=self._db)
 
 
     def from_xarray(self, array: xarray.DataArray,

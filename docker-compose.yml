@@ -73,6 +73,7 @@ services:
     image: jhnnsrs/dask:latest
     command: ["dask-worker", "tcp://daskscheduler:8786"]
     volumes:
+      - ./bergen:/code
       - media:/code/media
       - files:/code/files
 

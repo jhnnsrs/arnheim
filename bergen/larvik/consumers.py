@@ -8,6 +8,7 @@ from django.db import models
 from rest_framework import serializers
 
 from larvik.discover import NodeType
+from larvik.helpers import LarvikManager
 from larvik.logging import get_module_logger
 from larvik.models import LarvikJob
 from larvik.structures import StatusCode, LarvikStatus, larvikError, larvikProgress
@@ -199,7 +200,7 @@ class ModelFuncAsyncLarvikConsumer(AsyncLarvikConsumer):
                 await self.updateRequest(LarvikStatus(StatusCode.ERROR, "Uncaught Error on Server, check log there"))
 
 
-class SyncLarvikConsumer(SyncConsumer, NodeType):
+class SyncLarvikConsumer(SyncConsumer, NodeType, LarvikManager):
 
     def __init__(self, scope):
         super().__init__(scope)
@@ -342,6 +343,9 @@ class DaskSyncLarvikConsumer(SyncLarvikConsumer):
             with dask.config.set(scheduler='threads'):
                 result = graph.compute()
                 return result
+
+    def persist(self, graph):
+        return graph.persist()
 
 
     def getRequest(self, data) -> LarvikJob:

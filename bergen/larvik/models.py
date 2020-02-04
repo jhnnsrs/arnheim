@@ -50,6 +50,9 @@ class LarvikArrayProxy(models.Model):
     @property
     def array(self):
         if self.zarr:
-            return self.zarr.openArray(chunks="auto", name="data")
+            array =  self.zarr.openArray(chunks="auto", name="data")
+            if self.name is not None:
+                array.name = str(self.name)
+            return array
 
 

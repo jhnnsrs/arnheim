@@ -46,10 +46,6 @@ class Representation(LarvikArrayProxy):
     objects = RepresentationManager()
     distributed = DistributedRepresentationManager()
 
-    def loadArray(self, chunks="auto", name="data"):
-        if self.zarr:
-            return self.zarr.openArray(chunks= chunks, name=name)
-
     def __str__(self):
         return self.name
 
