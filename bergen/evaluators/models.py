@@ -1,16 +1,17 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-# Create your models here.
-from taggit.managers import TaggableManager
-
 from bioconverter.models import Representation
-from elements.models import Experiment, Sample
 from biouploader.models import BioMeta
 from drawing.models import ROI
+from elements.models import Experiment, Sample
+from larvik.models import LarvikConsumer, LarvikJob
 from transformers.models import Transformation
 
-class Evaluator(models.Model):
+
+# Create your models here.
+
+class Evaluator(LarvikConsumer):
     name = models.CharField(max_length=100)
     channel = models.CharField(max_length=100, null=True, blank=True)
     defaultsettings = models.CharField(max_length=400)  # json decoded standardsettings
@@ -19,20 +20,13 @@ class Evaluator(models.Model):
         return "{0} at Channel {1}".format(self.name, self.channel)
 
 
-class Evaluating(models.Model):
+class Evaluating(LarvikJob):
     evaluator = models.ForeignKey(Evaluator, on_delete=models.CASCADE)
-    nodeid = models.CharField(max_length=400, null=True, blank=True)
     override = models.BooleanField()
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
-    settings = models.CharField(max_length=1000) # jsondecoded
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE,blank=True, null=True)
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE)
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE)
-    error = models.CharField(max_length=300,blank=True,null=True)
-
-    statuscode = models.IntegerField(blank=True, null=True)
-    statusmessage = models.CharField(max_length=500, blank=True, null=True)
 
     def __str__(self):
         return "Evaluating for Evaluator: {0}".format(self.evaluator)

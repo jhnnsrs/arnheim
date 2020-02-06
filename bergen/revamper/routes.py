@@ -1,7 +1,6 @@
 
 from rest_framework import routers
 
-from mutaters.views import *
 from revamper.views import MaskViewSet, RevampingViewSet, RevamperViewSet
 
 router = routers.SimpleRouter()

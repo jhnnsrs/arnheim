@@ -3,8 +3,11 @@ import json
 import numpy as np
 from rest_framework import serializers
 
-from revamper.models import Revamping, Mask
+from larvik.consumers import AsyncLarvikConsumer
+from larvik.discover import register_consumer
+from revamper.models import Revamping, Mask, Revamper
 from revamper.utils import get_revamping_or_error, update_outputtransformation_or_create
+from transformers.models import Transformation
 from transformers.serializers import TransformationSerializer
 from trontheim.consumers import OsloJobConsumer
 
@@ -63,7 +66,14 @@ class RevampingOsloJob(OsloJobConsumer):
 
 
 
-class MaskingRevamper(RevampingOsloJob):
+
+@register_consumer("masking", model= Revamper)
+class MaskingRevamper(AsyncLarvikConsumer):
+    name = "Masker"
+    path = "Masker"
+    settings = {"reload": True}
+    inputs = [Transformation, Mask]
+    outputs = [Transformation]
 
     def getDatabaseFunction(self):
         return update_outputtransformation_or_create

@@ -1,12 +1,13 @@
 import json
 
+import xarray
 from channels.db import database_sync_to_async
 from django.db import models
 
-from bioconverter.logic.structures import BioMetaStructure
 from bioconverter.models import Conversing, Representation
-from elements.models import Sample
 from biouploader.models import BioMeta
+from elements.models import Sample
+from larvik.structures import LarvikStatus
 
 
 @database_sync_to_async
@@ -21,11 +22,12 @@ def get_conversing_or_error(request: dict) -> Conversing:
 
 
 @database_sync_to_async
-def update_status_on_conversing(parsing: Conversing, status):
+def update_status_on_conversing(parsing: Conversing, status: LarvikStatus):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
-    parsing.status = status
+    parsing.statuscode = status.statuscode
+    parsing.statusmessage = status.message
     parsing.save()
     return parsing
 
@@ -41,42 +43,21 @@ def get_sample_or_error(sample: Sample) -> Sample:
     return parsing
 
 
+
 @database_sync_to_async
-def update_outputrepresentation_or_create(request: Conversing, sample: Sample, numpyarray, meta, settings):
+def update_outputrepresentation_or_create2(request: Conversing, sample: Sample, xarray: xarray.DataArray, settings):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
-    method = "error"
 
-    # Representation Counts
-    vidfirst = "representation_bioserie-{0}_converter-{1}_node-{2}".format(str(request.bioserie_id), str(request.converter_id), str(request.nodeid))
-    representations = Representation.objects.filter(vid__startswith=vidfirst)
-    vidsub = "_{0}".format(str(representations.count()) if representations.count() else 0)
-    vid = vidfirst + vidsub
-    outputrep = representations.last()
+
+    rep = Representation.objects.from_xarray(xarray, name="Initial Stack", creator=request.creator, overwrite=True,
+                                       sample=sample, nodeid=request.nodeid)
 
 
     #TODO: CHeck if that makes sense
     ## TODO: This really needs to be set by the meta correctly
-    repmeta = {"channels": {"x": "px", "y": "px", "c": meta.channellist, "z": "NOTSET", "t": "sec"}}
-    repmetajson = json.dumps(repmeta)
-
-
-    if outputrep is None or not settings.get("overwrite", False):
-        method = "create"
-        outputrep = Representation.objects.create(name="Initial Stack", creator=request.creator, nodeid=request.nodeid,
-                                                  sample=sample, experiment=request.experiment,
-                                                  vid=vid,
-                                                  nparray=numpyarray, shape=json.dumps(numpyarray.shape),
-                                                  meta=repmetajson)
-    elif outputrep is not None:
-        method = "update"
-        outputrep.numpy.set_array(numpyarray)
-        outputrep.shape = json.dumps(numpyarray.shape)
-        outputrep.meta = repmetajson
-        outputrep.vid = vid
-        outputrep.save()
-    return outputrep, method
+    return rep, "create"
 
 
 @database_sync_to_async
@@ -106,14 +87,13 @@ def create_sample_or_override(request: Conversing,settings):
 
 
 @database_sync_to_async
-def update_sample_with_meta(sampleid, meta: BioMetaStructure,settings):
+def update_sample_with_meta(sample: Sample, meta: dict,settings=None):
     """
     Tries to fetch a room for the user, checking permissions along the way.
     """
     method = "error"
-    sample = Sample.objects.get(pk=sampleid)
     if sample is None:
-        raise ClientError("Sample {0} does not exist".format(str(sampleid)))
+        raise ClientError(f"Sample {sample} does not exist")
     elif sample is not None:
         # TODO: update array of output
         outputmeta = BioMeta.objects.create(channellist=json.dumps(meta.channellist),
@@ -127,6 +107,38 @@ def update_sample_with_meta(sampleid, meta: BioMetaStructure,settings):
                                             zphysical=meta.physicalsizex,  # TODO: MAASSSSIVEE BUG
                                             spacial_units=meta.physicalsizexunit,
                                             temporal_units=meta.physicalsizeyunit,  # TODO: MASSIVE BUG HERE)
+                                            )
+
+        outputmeta.save()
+        sample.meta = outputmeta
+        sample.save()
+        method = "update"
+    return sample, method
+
+@database_sync_to_async
+def update_sample_with_meta2(sample: Sample, meta: dict,settings=None):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    method = "error"
+    if sample is None:
+        raise ClientError(f"Sample {sample} does not exist")
+    elif sample is not None:
+        # TODO: update array of output
+        scan = meta["scan"]
+        channellist = json.dumps(meta["channels"])
+
+        outputmeta = BioMeta.objects.create(channellist=channellist,
+                                            xresolution=scan["SizeX"],
+                                            yresolution=scan["SizeY"],
+                                            zresolution=scan["SizeZ"],
+                                            cresolution=scan["SizeC"],
+                                            tresolution=scan["SizeT"],
+                                            xphysical=scan["PhysicalSizeX"],
+                                            yphysical=scan["PhysicalSizeY"],
+                                            zphysical=scan["PhysicalSizeZ"],  # TODO: MAASSSSIVEE BUG
+                                            spacial_units=scan["PhysicalSizeXUnit"],
+                                            temporal_units=scan["TimeIncrement"],  # TODO: MASSIVE BUG HERE)
                                             )
 
         outputmeta.save()

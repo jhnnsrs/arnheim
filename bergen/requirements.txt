@@ -58,3 +58,17 @@ python-dateutil
 tables
 pandas-profiling
 openpyxl
+zarr
+dask[complete]==2.9.2
+lz4
+numcodecs
+xarray
+seaborn
+ptvsd
+blosc
+python-decouple
+autodiscover
+dask-image
+tensorflow
+scikit-learn
+dask-ml[complete]

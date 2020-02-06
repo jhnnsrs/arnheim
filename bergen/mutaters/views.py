@@ -1,17 +1,13 @@
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
-
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 from rest_framework.decorators import action
 
-from mutaters.models import *
+from larvik.views import LarvikViewSet, LarvikJobViewSet
 from mutaters.serializers import *
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
-class ReflectionViewSet(OsloViewSet):
+class ReflectionViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -34,7 +30,7 @@ class ReflectionViewSet(OsloViewSet):
             return HttpResponseRedirect("http://via.placeholder.com/1024x1024/000000/ffffff")
 
 
-class MutaterViewSet(viewsets.ModelViewSet):
+class MutaterViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -42,7 +38,7 @@ class MutaterViewSet(viewsets.ModelViewSet):
     serializer_class = MutaterSerializer
 
 
-class MutatingViewSet(OsloActionViewSet):
+class MutatingViewSet(LarvikJobViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     queryset = Mutating.objects.all()
@@ -51,7 +47,6 @@ class MutatingViewSet(OsloActionViewSet):
     actionpublishers = {"sample": [("creator", "experiment")], "reflection": [["creator"],["roi"],["nodeid"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "image"
-    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         metamorpher = Mutater.objects.get(pk=serializer.data["mutater"])

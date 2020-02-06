@@ -7,13 +7,17 @@ drf-access-policy
 channels>=2.0.2
 channels_redis~=2.0
 service_identity
+graphene-django
+graphene-django-extras
 nibabel
 SimpleITK
 
-
-graphene-django
-graphene-django-extras
 python-dateutil
 tables
 pandas-profiling
-ipyvolume
+python-decouple
+autodiscover
+dask-image
+tensorflow
+scikit-learn
+dask-ml[complete]

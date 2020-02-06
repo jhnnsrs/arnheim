@@ -4,7 +4,6 @@ import logging
 from channels.db import database_sync_to_async
 
 from answers.models import Answering, Answer
-from transformers.models import Transforming, Transformation
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)

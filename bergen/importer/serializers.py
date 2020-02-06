@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from importer.models import *
 
+
 class ImporterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Importer

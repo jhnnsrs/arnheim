@@ -4,14 +4,22 @@ from django.db import models
 from pandas.io.json import json_normalize
 from rest_framework import serializers
 
-from answers.models import Answering
+from answers.models import Answering, Oracle, Question, Answer
 from answers.serializers import AnswerSerializer, AnsweringSerializer
 from answers.utils import get_answering_or_error, answer_update_or_create
 from gql.schema import schema
-from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
+from larvik.consumers import ModelFuncAsyncLarvikConsumer
+from larvik.discover import register_consumer
+from larvik.utils import update_status_on_larvikjob
 
 
-class PandaAnswer(LarvikConsumer):
+@register_consumer("pandas", model= Oracle)
+class PandaAnswer(ModelFuncAsyncLarvikConsumer):
+    name = "Pandas"
+    path = "Pandas"
+    settings = {"reload": True}
+    inputs = [Question]
+    outputs = [Answer]
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_answering_or_error
@@ -33,13 +41,13 @@ class PandaAnswer(LarvikConsumer):
     async def parse(self, request: Answering, settings: dict) -> Dict[str, Any]:
         query = request.question.querystring
         self.logger.info("Executing Schema")
-        await self.progress(20, "Querying Schema")
+        await self.progress("Querying Schema")
         result = schema.execute(query)
 
         resultdict = result.to_dict()
         datapackages = []
         data = resultdict["data"]
-        await self.progress(80, "Creating Answers")
+        await self.progress("Creating Answers")
         for key in data.keys():
             dataframe = json_normalize(data[key])
             datapackages.append((key, dataframe))

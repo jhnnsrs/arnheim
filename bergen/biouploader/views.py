@@ -1,21 +1,19 @@
 from asgiref.sync import async_to_sync
 from django.http import JsonResponse
-
-
 # Create your views here.
 from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 
 from biouploader.models import BioImage, BioSeries, Analyzing, Analyzer, Locker, BioMeta
 from biouploader.serializers import BioImageSerializer, BioSeriesSerializer, AnalyzingSerializer, AnalyzerSerializer, \
     LockerSerializer, BioMetaSerializer
 from biouploader.upload_utils import upload_file
-from trontheim.viewsets import OsloViewSet, OsloActionViewSet, channel_layer
+from larvik.views import LarvikViewSet, LarvikJobViewSet
 
-class BioImageViewSet(OsloViewSet):
 
-    # MAKE THIS AN ACTION PUBLISHER THAT WILL PIPE IT THROUGH A META OBJECT CREATOR
+channel_layer = None
+class BioImageViewSet(LarvikViewSet):
+
 
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ("creator","locker")
@@ -25,7 +23,7 @@ class BioImageViewSet(OsloViewSet):
 
 
 
-class BioSeriesViewSet(OsloViewSet):
+class BioSeriesViewSet(LarvikViewSet):
 
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ("creator", "locker", "bioimage")
@@ -33,7 +31,7 @@ class BioSeriesViewSet(OsloViewSet):
     serializer_class = BioSeriesSerializer
     publishers = [["experiment"]]
 
-class LockerViewSet(OsloViewSet):
+class LockerViewSet(LarvikViewSet):
 
     queryset = Locker.objects.all()
     serializer_class = LockerSerializer
@@ -41,7 +39,7 @@ class LockerViewSet(OsloViewSet):
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ("creator",)
 
-class AnalyzingViewSet(OsloActionViewSet):
+class AnalyzingViewSet(LarvikJobViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     filter_backends = (DjangoFilterBackend,)
@@ -49,16 +47,16 @@ class AnalyzingViewSet(OsloActionViewSet):
     queryset = Analyzing.objects.all()
     serializer_class = AnalyzingSerializer
     publishers = [["nodeid"]]
-    actionpublishers = {"bioseries": [("experiment",),("creator",),("locker",),("nodeid",)]}
+    actionpublishers = {"bioseries": [("experiment",),("creator",),("locker",),("nodeid",)], "analyzing": [("nodeid",)]}
     # this publishers will be send to the Action Handles and then they can send to the according
-    channel = "analyzer"
+    channel = "biometa"
     actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         return [self.create_job(data=serializer.data, job=serializer.data, channel=self.channel)]
 
 
-class AnalyzerViewSet(viewsets.ModelViewSet):
+class AnalyzerViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -125,7 +123,7 @@ def upload_complete(request):
     return JsonResponse({"message":"No Data sent Complete"})
 
 
-class BioMetaViewSet(OsloViewSet):
+class BioMetaViewSet(LarvikViewSet):
     queryset = BioMeta.objects.all()
     serializer_class = BioMetaSerializer
     filter_backends = (DjangoFilterBackend,)

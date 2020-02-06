@@ -3,22 +3,21 @@ from django.http import HttpResponse
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
 from pandas import DataFrame
-from rest_framework import viewsets
 from rest_framework.decorators import action
 
 from answers.models import Answering, Oracle, Answer, Question
 from answers.serializers import AnsweringSerializer, AnswerSerializer, OracleSerializer, QuestionSerializer
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
+from larvik.views import LarvikViewSet, LarvikJobViewSet
 
 
-class OracleViewSet(viewsets.ModelViewSet):
+class OracleViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
     queryset = Oracle.objects.all()
     serializer_class = OracleSerializer
 
-class QuestionViewSet(OsloViewSet):
+class QuestionViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -29,7 +28,7 @@ class QuestionViewSet(OsloViewSet):
     publishers = [["creator"], ["nodeid"]]
 
 
-class AnswerViewSet(OsloViewSet):
+class AnswerViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -57,7 +56,7 @@ class AnswerViewSet(OsloViewSet):
             response.write(line)
         return response
 
-class AnsweringViewSet(OsloActionViewSet):
+class AnsweringViewSet(LarvikJobViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     queryset = Answering.objects.all()
@@ -65,7 +64,6 @@ class AnsweringViewSet(OsloActionViewSet):
     publishers = [["nodeid"]]
     actionpublishers = {"answering": [("nodeid",)], "answer": [["creator"], ["nodeid"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
-    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         oracle = Oracle.objects.get(pk=serializer.data["oracle"])

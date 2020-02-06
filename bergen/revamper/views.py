@@ -1,15 +1,12 @@
-from django.shortcuts import render
-
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 
+from larvik.views import LarvikViewSet, LarvikJobViewSet
 from revamper.models import Mask, Revamper, Revamping
 from revamper.serializers import MaskSerializer, RevamperSerializer, RevampingSerializer
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
 
 
-class MaskViewSet(OsloViewSet):
+class MaskViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -21,7 +18,7 @@ class MaskViewSet(OsloViewSet):
 
 
 
-class RevamperViewSet(viewsets.ModelViewSet):
+class RevamperViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -29,14 +26,13 @@ class RevamperViewSet(viewsets.ModelViewSet):
     serializer_class = RevamperSerializer
 
 
-class RevampingViewSet(OsloActionViewSet):
+class RevampingViewSet(LarvikJobViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     queryset = Revamping.objects.all()
     serializer_class = RevampingSerializer
     publishers = [["creator"]]
     actionpublishers = {"sample": [("creator", "experiment")], "transformation": [["creator"],["roi"],["nodeid"]]}
-    actiontype = "startconverting"
 
     def preprocess_jobs(self, serializer):
         metamorpher = Revamper.objects.get(pk=serializer.data["revamper"])

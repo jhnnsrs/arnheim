@@ -8,9 +8,11 @@ possible. Its architrecture consists of
  * Bergen (the Backend, a django-driven API-Backend)
  * Oslo (the Frontend, react-based orchestrator of the modules, separate GitHub)
  * Database (either sqlite or postgres database for object persistence)
- * JupJup (the Jupyter-Server for easy Access to the Models Provided)
+ * JupJup (the Jupyter-Server for easy Access to the Models Provided and the Dask Runtime)
+ * Dask (Scheduler and Worker for cluster analysis)
  
-Non-Working Modules are also included in this repository for future directions: Apache Kafka, Certbot, VSCode
+ 
+Production Modules are also included in this repository: Apache Kafka, Certbot, VSCode
 
 Arnheim uses OAuth system to provide authoriazion and authentification; users are only able to
 use the application once registered on the backend, and can login from a variety of different clients (checkout foreign for a 
@@ -72,6 +74,7 @@ please beware that you are using an Alpha-Version
 - Import and Export of Samples
 - Implementation of standard image processing
 - Machine Learning Pipeline (Kafka)
+- Transition to Zarr (dropping HDF5, for multithreaded access)
 
 ## Deployment
 

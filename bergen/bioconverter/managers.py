@@ -1,29 +1,104 @@
-from django.db import models
+import os
 
-from elements.models import Sample, Numpy
-from mandal import settings
+import xarray
+import dask.bag as db
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db.models.manager import Manager
+from django.db.models.query import QuerySet
+
+from elements.models import Sample, Zarr
+from elements.storage.store import openDataset
+from larvik.querysets import LarvikArrayQueryset
 
 
-class RepresentationManager(models.Manager):
-    def create(self, **obj_data):
+def buildZarrName(name, nodeid):
+    if nodeid is not None:
+        return f"{name} {nodeid}"
+    else:
+        return f"{name}"
+
+class RepQueryMixin(object):
+    """ Methods that appear both in the manager and queryset. """
+    def delete(self):
+        # Use individual queries to the attachment is removed.
+        for rep in self.all():
+            rep.delete()
+
+class RepresentationQuerySet(RepQueryMixin, QuerySet):
+    pass
+
+class RepresentationManager(Manager):
+
+    def get_queryset(self):
+        return RepresentationQuerySet(self.model, using=self._db)
+
+    def from_xarray(self, array: xarray.DataArray,
+                    sample: Sample= None,
+                    name: str ="Initial Stack",
+                    overwrite=True,
+                    creator: User = None,
+                    inputrep = None,
+                    experiment = None,
+                    nodeid= None,
+                    compute=True):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
-        if "nparray" in obj_data:
-            print("Creating Representation with help of np.array")
-            sample: Sample = obj_data["sample"]
-            vid = str(obj_data["vid"])
 
-            # TODO: if sample is not provided this should raise an exception
-            numpy = Numpy.objects.create(vid=vid,
-                                         numpy=obj_data["nparray"],
-                                         sample=sample,
-                                         type="representation",
-                                         dtype=obj_data.get("dtype",settings.REPRESENTATION_DTYPE),
-                                         compression=obj_data.get("compression", settings.REPRESENTATION_COMPRESSION)
-                                         )
+        zarrname = buildZarrName(name, nodeid)
+        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
+        zarr = Zarr.objects.fromRequest(name=name, store=store, type="representation", overwrite=overwrite)
+        delayed = zarr.saveArray(array,compute=True)
 
-            obj_data["numpy"] = numpy
-            del obj_data["nparray"]
+            # Now call the super method which does the actual creation
+        return super().create(name=name,#
+                                  creator=creator,
+                                  sample= sample,
+                                  inputrep=inputrep,
+                                  zarr= zarr,
+                                  experiment=experiment,
+                                  nodeid=nodeid)  # Python 3 syntax!!
+
+
+
+
+class DistributedRepresentationManager(Manager):
+
+
+    def get_queryset(self):
+        return LarvikArrayQueryset(self.model, using=self._db)
+
+
+    def from_xarray(self, array: xarray.DataArray,
+                    sample: Sample= None,
+                    name: str ="Initial Stack",
+                    overwrite=True,
+                    creator: User = None,
+                    inputrep = None,
+                    experiment = None,
+                    nodeid= None):
+        # Do some extra stuff here on the submitted data before saving...
+        # For example...
+        zarrname = buildZarrName(name, nodeid)
+        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
+        zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="representation", overwrite=overwrite)
+        delayed = zarr.saveArray(array,compute=False)
 
         # Now call the super method which does the actual creation
-        return super().create(**obj_data)  # Python 3 syntax!!
+        return super().create(name=name,  #
+                                  creator=creator,
+                                  sample=sample,
+                                  inputrep=inputrep,
+                                  zarr=zarr,
+                                  experiment=experiment,
+                                  nodeid=nodeid), delayed
+
+
+    def from_xarray_and_request(self, array: xarray.DataArray, request, name: str= None):
+        return self.from_xarray(array,
+                                sample=request.sample,
+                                name=name,
+                                creator=request.creator,
+                                inputrep=request.representation,
+                                nodeid=request.nodeid)
+

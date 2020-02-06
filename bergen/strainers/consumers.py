@@ -1,84 +1,48 @@
-import json
 from typing import Dict, Any, Callable, Awaitable
 
 import numpy as np
 from django.db import models
 from rest_framework import serializers
 
-from bioconverter.models import Representation
-from drawing.models import ROI
-from larvik.consumers import LarvikConsumer, update_status_on_larvikjob, LarvikError
-from strainers.models import Straining
+from larvik.consumers import LarvikError, DaskSyncLarvikConsumer, AsyncLarvikConsumer
+from larvik.discover import register_consumer
+from larvik.models import LarvikJob
+from larvik.utils import update_status_on_larvikjob
+from strainers.models import Straining, Strainer
 from strainers.serializers import StrainingSerializer
-from strainers.utils import get_straining_or_error, update_outputtransformation_or_create, \
-    outputtransformation_update_or_create
-from transformers.models import  Transformation
+from strainers.utils import get_straining_or_error, outputtransformation_update_or_create
+from transformers.models import Transformation
 from transformers.serializers import TransformationSerializer
-from trontheim.consumers import OsloJobConsumer
+
+
 # import the logging library
 
-class StrainerConsumer(OsloJobConsumer):
-
-    async def startparsing(self, data):
-        await self.register(data)
-        print(data)
-        request: Straining = await get_straining_or_error(data["data"])
-        settings: dict = await self.getsettings(request.settings, request.strainer.defaultsettings)
-
-        transformation: Transformation = request.transformation
-
-        parsedarray = await self.parse(settings,transformation)
-
-        transformation, method = await update_outputtransformation_or_create(request, settings, parsedarray)
-
-        await self.modelCreated(transformation, TransformationSerializer, method)
-
-    async def parse(self, settings: dict,rep: Representation, roi: ROI) -> np.array:
-        raise NotImplementedError
-
-    async def raiseError(self, error):
-        self.data["error"] = error
-        await self.modelCreated(self.data, StrainingSerializer, "update")
-
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
-        try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
-
-        except:
-            defaultsettings = {}
-            settings = {}
-
-        defaultsettings.update(settings)
-        return defaultsettings
 
 
+@register_consumer("intensityprofiler", model= Strainer)
+class IntensityProfiler(DaskSyncLarvikConsumer):
+    name = "Intensity Profiler"
+    path = "Intensity Profiler"
+    settings = {"reload": True}
+    inputs = [Transformation]
+    outputs = [Transformation]
 
-class IntensityProfiler(LarvikConsumer):
+    # TODO: Broken
+    def getRequest(self, data) -> LarvikJob:
+        return Straining.objects.get(pk=data["id"])
 
-    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
-        return get_straining_or_error
+    def getSerializers(self):
+        return {"Straining": StrainingSerializer,
+                "Transformation": TransformationSerializer
+                }
 
-    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
-        return update_status_on_larvikjob
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"parse": True}
 
-    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
-        return { "array" : outputtransformation_update_or_create}
+    def parse(self, request: Straining, settings: dict) -> Dict[str, Any]:
+        print(str(self.c))
 
-    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
-        return {
-            "Transformation": TransformationSerializer,
-            "Straining": StrainingSerializer
-        }
-
-    async def parse(self, request: Straining, settings: dict) -> Dict[str, Any]:
-
-        transformation_image = request.transformation.numpy.get_array()
+        transformation_image = request.transformation.loadArray()
         height = 0
         ndim = 2
 
@@ -115,7 +79,15 @@ class IntensityProfiler(LarvikConsumer):
         return {"array": intensity}
 
 
-class Masker(LarvikConsumer):
+
+
+@register_consumer("masker", model= Strainer,)
+class Masker(AsyncLarvikConsumer):
+    name = "Masker"
+    path = "Masker"
+    settings = {"reload": True}
+    inputs = [Transformation]
+    outputs = [Transformation]
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_straining_or_error
@@ -124,7 +96,7 @@ class Masker(LarvikConsumer):
         return update_status_on_larvikjob
 
     def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
-        return { "array" : outputtransformation_update_or_create}
+        return {"array": outputtransformation_update_or_create}
 
     def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
         return {
@@ -150,9 +122,3 @@ class Masker(LarvikConsumer):
         print(restored.shape)
 
         return {"array": restored}
-
-
-
-
-
-

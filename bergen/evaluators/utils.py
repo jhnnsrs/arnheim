@@ -1,7 +1,9 @@
-from channels.db import database_sync_to_async
-from evaluators.models import Evaluating, Data, VolumeData, ClusterData, LengthData
 # import the logging library
 import logging
+
+from channels.db import database_sync_to_async
+
+from evaluators.models import Evaluating, ClusterData, LengthData
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)

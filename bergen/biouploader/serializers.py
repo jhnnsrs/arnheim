@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from biouploader.models import BioImage, BioSeries, Analyzing, Analyzer, Locker, BioMeta
 
+
 class BioImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BioImage

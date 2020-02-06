@@ -7,8 +7,8 @@ from channels.db import database_sync_to_async
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from bioconverter.models import Representation
-from metamorphers.models import Metamorphing, Display, Exhibit
 from mandal.settings import MEDIA_ROOT, NIFTI_ROOT
+from metamorphers.models import Metamorphing, Display, Exhibit
 
 
 @database_sync_to_async

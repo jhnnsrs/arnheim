@@ -1,14 +1,13 @@
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
 
 from evaluators.models import Evaluator, Data, Evaluating, VolumeData, ClusterData, LengthData
 from evaluators.serializers import EvaluatorSerializer, DataSerializer, EvaluatingSerializer, VolumeDataSerializer, \
     ClusterDataSerializer, LengthDataSerializer
-from trontheim.viewsets import OsloActionViewSet, OsloViewSet
+from larvik.views import LarvikJobViewSet, LarvikViewSet
 
 
-class EvaluatorViewSet(viewsets.ModelViewSet):
+class EvaluatorViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -16,7 +15,7 @@ class EvaluatorViewSet(viewsets.ModelViewSet):
     serializer_class = EvaluatorSerializer
 
 
-class DataViewSet(OsloViewSet):
+class DataViewSet(LarvikViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
@@ -26,21 +25,21 @@ class DataViewSet(OsloViewSet):
     publishers = [["sample"],["transformation"]]
 
 
-class VolumeDataViewSet(OsloViewSet):
+class VolumeDataViewSet(LarvikViewSet):
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ["transformation","roi"]
     queryset = VolumeData.objects.all()
     serializer_class = VolumeDataSerializer
     publishers = [["sample"],["transformation"]]
 
-class ClusterDataViewSet(OsloViewSet):
+class ClusterDataViewSet(LarvikViewSet):
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ["transformation","roi"]
     queryset = ClusterData.objects.all()
     serializer_class = ClusterDataSerializer
     publishers = [["sample"],["transformation"]]
 
-class LengthDataViewSet(OsloViewSet):
+class LengthDataViewSet(LarvikViewSet):
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ["transformation","roi"]
     queryset = LengthData.objects.all()
@@ -48,7 +47,7 @@ class LengthDataViewSet(OsloViewSet):
     publishers = [["sample"],["transformation"]]
 
 
-class EvaluatingViewSet(OsloActionViewSet):
+class EvaluatingViewSet(LarvikJobViewSet):
     '''Enables publishing to the channel Layed.
     Publishers musst be Provided'''
     queryset = Evaluating.objects.all()
@@ -62,7 +61,6 @@ class EvaluatingViewSet(OsloActionViewSet):
                         }
     # this publishers will be send to the Action Handles and then they can send to the according
     channel = "maxisp"
-    actiontype = "startJob"
 
     def preprocess_jobs(self, serializer):
         evaluator = Evaluator.objects.get(pk=serializer.data["evaluator"])

@@ -1,7 +1,6 @@
-import numpy as np
 import cv2
+import numpy as np
 from PIL import Image
-
 
 
 def findConnectedCluster(array, size_thresh=2):

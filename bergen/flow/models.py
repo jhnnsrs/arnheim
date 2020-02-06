@@ -4,9 +4,11 @@ from django.contrib.auth.models import User, Group
 from django.db import models
 
 # Create your models here.
+from larvik.discover import createUniqeNodeName
+
 
 class Flow(models.Model):
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     type = models.CharField(max_length=100)
     name = models.CharField(max_length=100, null=True, default="Not Set")
@@ -15,8 +17,10 @@ class Flow(models.Model):
 
 
 class Node(models.Model):
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     entityid = models.IntegerField(null=True, blank=True)
+    hash = models.CharField(max_length=300, default=createUniqeNodeName, unique=True)
+    variety = models.CharField(max_length=100,  null=True, blank=True)
     name = models.CharField(max_length=100)
     nodeclass = models.CharField(max_length=300, default="classic-node")
     path = models.CharField(max_length=500)
@@ -29,17 +33,6 @@ class Node(models.Model):
     def __str__(self):
         return "{0} at Path {1}".format(self.name, self.path)
 
-
-class ForeignNodeRequest(models.Model):
-    nodeid = models.CharField(max_length=100)
-    origin = models.CharField(max_length=300)
-    data = models.TextField()
-
-class ForeignNodeStatus(models.Model):
-    nodeid = models.CharField(max_length=100)
-    name = models.CharField(max_length=100)
-    status = models.CharField(max_length=200)
-    creator = models.ForeignKey(User,on_delete=models.CASCADE,null=True, blank=True)
 
 class External(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -4,11 +4,13 @@ import numpy as np
 from django.db import models
 from rest_framework import serializers
 
-from filterbank.logic.addins import toimage
-from larvik.consumers import LarvikConsumer, update_status_on_larvikjob
-from mutaters.models import Mutating
+from larvik.consumers import AsyncLarvikConsumer
+from larvik.discover import register_consumer
+from larvik.utils import update_status_on_larvikjob
+from mutaters.models import Mutating, Mutater, Reflection
 from mutaters.serializers import ReflectionSerializer, MutatingSerializer
-from mutaters.utils import get_mutating_or_error, update_image_on_reflection, reflection_update_or_create
+from mutaters.utils import get_mutating_or_error, reflection_update_or_create
+from transformers.models import Transformation
 from trontheim.consumers import OsloJobConsumer
 
 
@@ -65,7 +67,14 @@ class MutatingOsloJob(OsloJobConsumer):
 
 
 
-class ImageMutator(LarvikConsumer):
+
+@register_consumer("imagemutater", model= Mutater)
+class ImageMutator(AsyncLarvikConsumer):
+    name = "Image Mutater"
+    path = "Image Mutater"
+    settings = {"reload": True}
+    inputs = [Transformation]
+    outputs = [Reflection]
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_mutating_or_error
@@ -122,6 +131,6 @@ class ImageMutator(LarvikConsumer):
             array = target
 
         self.logger.info("Output image has shape {0}".format(array.shape))
-        img = toimage(array)
+        img = None # TODO: Impelemnt
         return {"image": img }
 

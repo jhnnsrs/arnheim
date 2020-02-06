@@ -1,6 +1,6 @@
-import os
-
-import h5py
+import dask
+import xarray
+import zarr as zr
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
@@ -8,12 +8,10 @@ from django.db import models
 from pandas import HDFStore
 from taggit.managers import TaggableManager
 
-from biouploader.models import BioSeries, BioMeta
-from elements.managers import NumpyManager, PandasManager
-from elements.utils import toFileName
+from biouploader.models import BioMeta, BioSeries
+from elements.managers import PandasManager, ZarrManager
 from larvik.logging import get_module_logger
-from mandal import settings
-
+from .storage.store import getStore, openDataset
 
 logger = get_module_logger(__name__)
 
@@ -92,63 +90,58 @@ class Sample(models.Model):
 
     def delete(self, *args, **kwargs):
         logger.info("Trying to remove Sample H5File")
-        for item in self.numpys.all():
-            item.delete()
-
-        filepath = os.path.join(settings.H5FILES_ROOT,toFileName(self))
-        if os.path.isfile(filepath):
-            os.remove(filepath)
-            logger.info("Removed Sample H5File {0}".format(filepath))
-
         super(Sample, self).delete(*args, **kwargs)
 
 
-class Numpy(models.Model):
-    filepath = models.FilePathField(max_length=400) # aka h5files/$sampleid.h5
-    vid = models.CharField(max_length=1000) # aca vid0, vid1, vid2, vid3
-    type = models.CharField(max_length=100)
-    dtype = models.CharField(max_length=300, blank=True, null=True)
-    compression = models.CharField(max_length=300, blank=True, null=True)
-    shape = models.CharField(max_length=400, blank=True, null=True)
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name="numpys")
-    # Custom Manager to simply create an array
-    objects = NumpyManager()
 
-    def get_array(self):
-        with h5py.File(self.filepath, 'a') as file:
-            logger.info("Trying to access file {0} to get array".format(self.filepath))
-            hf = file[self.type]
-            array = hf.get(self.vid)[()]
-        return array
+class Zarr(models.Model):
+    store = models.FilePathField(max_length=600)
+    group = models.CharField(max_length=800)
 
-    def set_array(self,array):
-        with h5py.File(self.filepath, 'a') as file:
-            logger.info("Trying to access file {0} to set array".format(self.filepath))
-            hf = file[self.type]
-            if self.vid in hf: del hf[self.vid]
-            hf.create_dataset(self.vid, data=array, dtype=self.dtype, compression=self.compression)
+    objects = ZarrManager()
 
-    def get_z_bounded_array(self,zl,zu):
-        with h5py.File(self.filepath, "a") as file:
-            logger.info("Trying to access file {0} to set array".format(self.filepath))
-            hf = file[self.type]
-            ## This is not working great so far
-            array = hf.get(self.vid)[:,:,:,zl:zu,:]
-        return array
+    @property
+    def array(self):
+        dataset = openDataset(self.store, self.group, chunks="auto")
+        return dataset["data"]
+
+    @property
+    def info(self):
+        dataset = openDataset(self.store, self.group)
+        return dataset.info()
+
+    def saveArray(self, array, compute=True, name="data")-> dask.delayed:
+        return array.to_dataset(name=name).to_zarr(store=getStore(self.store), mode="w", group=self.group, compute=compute)
+
+    def loadDataset(self, chunks="auto") -> xarray.Dataset:
+        return openDataset(self.store, self.group, chunks=chunks)
+
+    def openArray(self, name="data", chunks="auto") -> xarray.DataArray:
+        dataset = openDataset(self.store, self.group)
+        return dataset[name]
+
+    def saveDataset(self, dataset, compute=True) -> dask.delayed:
+        return dataset.to_zarr(store=getStore(self.store), mode="w", group=self.group,compute=compute)
 
     def delete(self, *args, **kwargs):
-        logger.info("Trying to remove Dataset from Filepath {0}".format(self.filepath))
-        with h5py.File(self.filepath, 'a') as file:
-            logger.info("Trying to Access Vid from file {0} to delete array".format(self.filepath))
-            hf = file[self.type]
-            if self.vid in hf:
-                del hf[self.vid]
-                logger.info("Delteted Vid {1} from file {0}".format(self.filepath,self.vid))
+        store = getStore(self.store)
+        try:
+            if zr.storage.contains_group(store, self.group):
+                logger.info(f"Removing Group {self.group} from Store {self.store}")
+                zr.storage.rmdir(store, self.group)
+                logger.info(f"Removing Group {self.group} from Store {self.store}")
+            else:
+                logger.info(f"Group {self.group} in Store {self.store} does no longer Exist")
+        except Exception as e:
+            logger.error(f"Error while handling Store {self.store}: {e}")
 
-        super(Numpy, self).delete(*args, **kwargs)
+        super(Zarr, self).delete(*args, **kwargs)
 
     def __str__(self):
-        return "Numpy Object with VID " + str(self.vid) + " at " + str(self.filepath)
+        return f"Zarr Group {self.group} at Store {self.store}"
+
+    def _repr_html_(self):
+        return "<h1>" + str(self.group) + "</h1>"
 
 
 class Pandas(models.Model):
@@ -184,3 +177,15 @@ class Pandas(models.Model):
 
     def __str__(self):
         return "Pandas with VID " + str(self.vid) + " at " + str(self.filepath)
+
+
+class Channel(object):
+    pass
+
+
+class Slice(object):
+    pass
+
+
+class ChannelMap(object):
+    pass

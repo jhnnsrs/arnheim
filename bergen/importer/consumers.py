@@ -5,13 +5,18 @@ from django.db import models
 from rest_framework import serializers
 
 from biouploader.serializers import BioImageSerializer
+from importer.models import Importer
 from importer.serializers import ImportingSerializer
-from larvik.consumers import LarvikConsumer, LarvikError
-from mandal.settings import FILES_ROOT
 from importer.utils import *
+from larvik.consumers import LarvikError, ModelFuncAsyncLarvikConsumer
+from larvik.discover import register_consumer
+from mandal.settings import FILES_ROOT
 
 
-class ImportingConsumer(LarvikConsumer):
+class ImportingConsumer(ModelFuncAsyncLarvikConsumer):
+
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"hallo":True}
 
     def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
         return get_importing_or_error
@@ -24,7 +29,7 @@ class ImportingConsumer(LarvikConsumer):
             "BioImage": create_bioimages_from_list
         }
 
-    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
+    def getSerializers(self) -> Dict[str, type(serializers.Serializer)]:
         return {
             "Importing": ImportingSerializer,
             "BioImage": BioImageSerializer,
@@ -35,9 +40,16 @@ class ImportingConsumer(LarvikConsumer):
 
 
 
-class Importer(ImportingConsumer):
 
-    async def parse(self, request: Importing, conversionsettings: dict):
+@register_consumer("importer", model= Importer, )
+class Importer(ImportingConsumer):
+    name = "Home Importer"
+    path = "HomeImporter"
+    settings = {"reload": True}
+    inputs = [Locker, "Creator"]
+    outputs = [BioImage]
+
+    async def parse(self, request: Importing, settings: dict):
         # TODO: Maybe faktor this one out
         creator: User = request.creator
         locker = request.locker

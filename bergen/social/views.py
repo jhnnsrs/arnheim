@@ -1,12 +1,9 @@
 from django.contrib.auth.models import User
-from django.shortcuts import render
-
 # Create your views here.
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 
 from social.models import Comment
 from social.serializers import UserSerializer, CommentSerializer
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 
 
 class UserViewSet(viewsets.ModelViewSet):
