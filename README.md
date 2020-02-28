@@ -20,6 +20,10 @@ working implementation using PyQT)
 
 Real-Time Communication is based on an implementation of Django-Channels that is only available for signed-in users.
 
+### Design
+![Design](./images/design.svg)
+<img src="./images/design.svg">
+
 ### Prerequisites
 
 As Arnheim is based on Docker it needs a working Docker instance running on your Machine
