@@ -3,7 +3,7 @@ import logging
 from channels.worker import Worker
 from django.core.management import BaseCommand
 
-from larvik.discover import autodiscover
+from larvik.discover import autodiscover, setDiscover
 
 logger = logging.getLogger("django.channels.worker")
 
@@ -19,4 +19,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Get the backend to use
+        setDiscover(True)
         autodiscover()
+        logger.info("DONE - Restart")

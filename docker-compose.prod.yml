@@ -63,7 +63,7 @@ services:
     image: jhnnsrs/jupjup:latest
     command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/notebooks/
     environment:
-      - HOME=home
+      - HOME=/jup
       - DASK_SCHEDULER_ADDRESS="tcp://daskscheduler:8786"
     env_file:
       - arnheim.env

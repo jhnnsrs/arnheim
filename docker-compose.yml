@@ -34,6 +34,8 @@ services:
       - ./config/nginx.conf:/etc/nginx/nginx.conf
       - media:/media
       - ./cloud/:/cloud
+    logging:
+      driver: none
     ports:
       - 80:80
       - 443:443
@@ -46,7 +48,7 @@ services:
     image: jhnnsrs/jupjup:latest
     command: jupyter lab --port=90 --ip=0.0.0.0 --allow-root --notebook-dir=/notebooks/
     environment:
-      - HOME=home
+      - HOME=/config
       - DASK_SCHEDULER_ADDRESS="tcp://daskscheduler:8786"
     env_file:
       - arnheim.env
@@ -54,7 +56,7 @@ services:
     volumes:
       - ./notebooks:/notebooks
       - ./bergen:/code/
-      - ./jupjup:/config/
+      - ./jupjup/.config/dask:/config/.config/dask
       - media:/code/media
       - files:/code/files
     ports:
@@ -71,7 +73,7 @@ services:
     command: dask-scheduler --dashboard-prefix=daskboard
   daskworker:
     image: jhnnsrs/dask:latest
-    command: ["dask-worker", "tcp://daskscheduler:8786"]
+    command: ["dask-worker", "tcp://daskscheduler:8786", "--local-directory=/tmp"]
     volumes:
       - ./bergen:/code
       - media:/code/media

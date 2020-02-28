@@ -51,7 +51,7 @@ def update_outputrepresentation_or_create2(request: Conversing, sample: Sample, 
     """
 
 
-    rep = Representation.objects.from_xarray(xarray, name="Initial Stack", creator=request.creator, overwrite=True,
+    rep = Representation.objects.from_xarray(xarray, name="Initial Stack", creator=request.creator, overwrite=True, type="initial", chain="initial",
                                        sample=sample, nodeid=request.nodeid)
 
 
