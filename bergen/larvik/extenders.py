@@ -1,6 +1,7 @@
 import pandas as pd
 import xarray as xr
 
+import dask.dataframe as dd
 from larvik.logging import get_module_logger
 from mandal.settings import arnheim_debug
 
@@ -52,7 +53,7 @@ class MetaAccessor:
         """Return the geographic center point of this dataset."""
         # we can use a cache on our accessor objects, because accessors
         # themselves are cached on instances that access them.
-        lala = pd.DataFrame(self._obj.channels.data.compute())
+        lala = dd.from_dask_array(self._obj.channels.data)
         return lala
 
     @property
@@ -62,7 +63,8 @@ class MetaAccessor:
         """Return the geographic center point of this dataset."""
         # we can use a cache on our accessor objects, because accessors
         # themselves are cached on instances that access them.
-        lala = pd.DataFrame(self._obj.planes.data.flatten().compute())
+
+        lala = dd.from_dask_array(self._obj.channels.data.flatten())
         return lala
 
     @property
@@ -77,21 +79,46 @@ class MetaAccessor:
         self._obj = xarray_obj
         self.log = logger.info
 
-    def show(self, maxisp=True, t=0, rgb=(0, 1, 2)):
+    def show(self, maxisp=True, t=0, rgb=(0, 1, 2), figsize=None, scale=12):
+        import matplotlib.pyplot as plt
+
+        figsize = (scale + scale/4, scale * (self._obj.shape[0]/self._obj.shape[1]))
+        if figsize:
+            figsize = figsize
+
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
+
+
         image = self._obj
-        if "t" in image.coords:
+        if "t" in image.dims:
             self.log(f"Stack has {len(image.t)} Timepoints: selecting t={t}")
             image = image.sel(t=t)
-        if "z" in image.coords and maxisp:
+        if "z" in image.dims and maxisp:
             self.log(f"Stack has {len(image.z)} Z Planes: Projecting maximum intensity")
             image = image.max(dim="z")
 
-        if "c" in image.coords:
-            if len(image.c) > 3:
-                image = image.sel(c=rgb)
-            if len(image.c) == 1:
+        if "c" in image.dims:
+            nchannels = len(image.c)
+            if nchannels == 1:
+                channelname = str(image.channels.data["Name"].compute())
                 image = image.sel(c=image.c[0])
-                return image.plot.imshow()
-            return image.plot.imshow(rgb="c")
+                plot = image.plot.imshow(ax= ax)
+            elif nchannels == 2:
+                self.log(f"Stack has 2 Channels: Merging intensity")
+                channelname = "Merged " + " & ".join(image.channels.data["Name"].compute())
+                image = image.max(dim="c")
+                plot = image.plot.imshow(ax= ax)
+            elif nchannels == 3:
+                channelname = " & ".join(image.channels.data["Name"].compute())
+                plot = image.plot.imshow(ax= ax, rgb="c")
+            elif nchannels > 3:
+                image = image.sel(c=rgb)
+                channelname = " & ".join(image.channels.data["Name"].compute())
+                plot = image.plot.imshow(rgb="c",ax= ax)
         else:
-            return image.plot.imshow()
+            channelname = "Not Set"
+            plot = image.plot.imshow(ax= ax)
+
+        ax.set_title(channelname)
+        return plot

@@ -1,6 +1,7 @@
 from bioconverter.models import Representation
+from biouploader.models import BioSeries
 from elements.models import Channel
-from elements.nodes import WatcherType, SelectorType
+from elements.nodes import WatcherType, SelectorType, FilterType
 from larvik.discover import register_node
 
 
@@ -15,9 +16,17 @@ class RepresentationWatcherNode(WatcherType):
 
 
 @register_node("selector-channel")
-class RepresentationWatcherNode(SelectorType):
+class ChannelSelectorNode(SelectorType):
     inputs = [Representation]
     outputs = [Channel]
     name = "Channel Selector"
     path = "ChannelSelector"
+    settings = {"rescale": True}
+
+@register_node("filter-bioseries")
+class BioSeriesFilterNode(FilterType):
+    inputs = [BioSeries]
+    outputs = [BioSeries]
+    name = "BioSeries Filter"
+    path = "BioSeriesFilter"
     settings = {"rescale": True}

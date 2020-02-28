@@ -1,5 +1,6 @@
 import hashlib
 import json
+import pickle
 import uuid
 from imp import find_module
 from importlib import import_module
@@ -12,6 +13,12 @@ from django.db.models import Manager, Model
 from larvik.logging import get_module_logger
 
 CONSUMERS = {}
+
+ISDISCOVER = False
+
+def setDiscover(mode):
+    global ISDISCOVER
+    ISDISCOVER = mode
 
 NODES = {}
 
@@ -33,6 +40,11 @@ class NodeType(object):
     type = None
 
 
+def saveConsumers(CONSUMERLIST):
+    pickle.dump(CONSUMERLIST, "consumers")
+
+
+
 class register_consumer(object):
 
     def __init__(self, channel, model: Model= None):
@@ -48,7 +60,6 @@ class register_consumer(object):
         return json.dumps([input.lower() if isinstance(input,str) else input.__name__.lower() for input in puts]) if puts is not None else json.dumps([])
 
     def __call__(self, cls: NodeType):
-
         self.name = cls.name if cls.name is not None else cls.channel
         self.path = cls.path if cls.path is not None else cls.name
         self.type = cls.type if cls.type is not None else "consumer"
@@ -65,10 +76,12 @@ class register_consumer(object):
         """
 
 
+
         if self.channel in NODES: raise Exception(f"The node {self.node} does already exist. Check for Duplicates")
         if self.channel in CONSUMERS: raise Exception(f"The node {self.node} does already exist. Check for Duplicates")
 
-        if self.model is not None:
+        if self.model is not None and ISDISCOVER:
+            logger.info(f"{self.name} checking {self.model.__name__} - Checking")
 
             manager: Manager = self.model.objects
             try:
@@ -143,6 +156,10 @@ class register_node(object):
         it a single argument, which is the function object.
         """
         if self.node in NODES: raise Exception(f"The node {self.node} does already exist. Check for Duplicates")
+        if ISDISCOVER is False:
+            NODES[self.node] = cls
+            return cls
+
         try:
             try:
                 node = Node.objects.get(hash=createUniqeNodeName(self.node))

@@ -61,6 +61,8 @@ RUN mkdir -p /media
 RUN mkdir -p /config
 RUN mkdir -p /notebooks
 RUN mkdir -p /tmp
+ADD .config/dask /config/.config/dask
+ADD .jupyter/jupyter_notebook_config.py /config/.jupyter/jupyter_notebook_config.py
 ADD . /tmp
 WORKDIR /tmp
 RUN pip install -r requirements.txt

@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
+from django.template.loader import render_to_string
+
 from bioconverter.managers import DistributedRepresentationManager, RepresentationManager
 from biouploader.models import BioSeries
 from elements.models import Experiment, Sample, Zarr
@@ -40,6 +42,8 @@ class Representation(LarvikArrayProxy):
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE,related_name='representations')
     zarr: Zarr = models.ForeignKey(Zarr, on_delete=models.CASCADE, blank=True, null=True)
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True)
+    type = models.CharField(max_length=400, blank=True, null=True)
+    chain = models.CharField(max_length=9000, blank=True, null=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     meta = models.CharField(max_length=6000, null=True, blank=True) #deprecated
 

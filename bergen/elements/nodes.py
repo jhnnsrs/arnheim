@@ -9,6 +9,11 @@ class CollectorType(NodeType):
 class WatcherType(NodeType):
     type = "watcher"
 
+class IteratorType(NodeType):
+    type = "iterator"
+
+class FilterType(NodeType):
+    type = "filter"
 
 
 @register_node("rep-selector")
@@ -19,4 +24,13 @@ class RepresentationSelector(SelectorType):
     path = "RepresentationSelector"
     settings = {"rescale": True}
 
+
+@register_node("impulsor")
+class Impulsor(NodeType):
+    type= "impulsor"
+    inputs = ["*"]
+    outputs = ["Impuls"]
+    name = "Impulsor    "
+    path = "Impulsor"
+    settings = {"rescale": True}
 

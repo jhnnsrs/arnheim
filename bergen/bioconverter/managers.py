@@ -25,13 +25,22 @@ class RepQueryMixin(object):
         for rep in self.all():
             rep.delete()
 
-class RepresentationQuerySet(RepQueryMixin, QuerySet):
-    pass
+class RepresentationQuerySet(LarvikArrayQueryset):
+
+    def _repr_html_(self):
+        from django.template.loader import render_to_string
+        count = self.count()
+        limit = 3
+        if count < limit:
+            return render_to_string('ipython/representation.html', {'representations': self, "more": 0})
+        else:
+            return render_to_string('ipython/representation.html', {'representations': self[:limit], "more": count - limit})
+
 
 class RepresentationManager(Manager):
 
     def get_queryset(self):
-        return RepresentationQuerySet(self.model, using=self._db)
+        return LarvikArrayQueryset(self.model, using=self._db)
 
     def from_xarray(self, array: xarray.DataArray,
                     sample: Sample= None,
@@ -41,7 +50,8 @@ class RepresentationManager(Manager):
                     inputrep = None,
                     experiment = None,
                     nodeid= None,
-                    compute=True):
+                    compute=True,
+                    **kwargs):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
 
@@ -57,8 +67,9 @@ class RepresentationManager(Manager):
                                   inputrep=inputrep,
                                   zarr= zarr,
                                   experiment=experiment,
-                                  nodeid=nodeid)  # Python 3 syntax!!
-
+                                  nodeid=nodeid,
+                                  **kwargs)
+        # Python 3 syntax!!
 
 
 
@@ -66,7 +77,7 @@ class DistributedRepresentationManager(Manager):
 
 
     def get_queryset(self):
-        return LarvikArrayQueryset(self.model, using=self._db)
+        return RepresentationQuerySet(self.model, using=self._db)
 
 
     def from_xarray(self, array: xarray.DataArray,
@@ -76,7 +87,8 @@ class DistributedRepresentationManager(Manager):
                     creator: User = None,
                     inputrep = None,
                     experiment = None,
-                    nodeid= None):
+                    nodeid= None,
+                    **kwargs):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
         zarrname = buildZarrName(name, nodeid)
@@ -91,14 +103,16 @@ class DistributedRepresentationManager(Manager):
                                   inputrep=inputrep,
                                   zarr=zarr,
                                   experiment=experiment,
-                                  nodeid=nodeid), delayed
+                                  nodeid=nodeid,
+                                  **kwargs), delayed
 
 
-    def from_xarray_and_request(self, array: xarray.DataArray, request, name: str= None):
+    def from_xarray_and_request(self, array: xarray.DataArray, request, name: str= None, **kwargs):
         return self.from_xarray(array,
                                 sample=request.sample,
                                 name=name,
                                 creator=request.creator,
                                 inputrep=request.representation,
-                                nodeid=request.nodeid)
+                                nodeid=request.nodeid,
+                                **kwargs)
 

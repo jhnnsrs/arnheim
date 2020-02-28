@@ -1,5 +1,6 @@
 from biouploader.models import BioImage, Locker, BioSeries
-from elements.nodes import WatcherType, CollectorType
+from elements.models import Impuls
+from elements.nodes import WatcherType, CollectorType, IteratorType
 from larvik.discover import register_node
 
 
@@ -10,6 +11,18 @@ class LockerWatcherNode(WatcherType):
     name = "Locker Watcher"
     path = "LockerWatcher"
     settings = {"rescale": True}
+
+
+@register_node("iterator-locker")
+class LockerIteratorNode(IteratorType):
+    inputs = [Locker, Impuls]
+    outputs = [BioImage]
+    name = "Locker Iterator"
+    path = "LockerIterator"
+    settings = {"rescale": True}
+
+
+
 
 @register_node("watcher-bioimage")
 class BioImageWatcher(WatcherType):

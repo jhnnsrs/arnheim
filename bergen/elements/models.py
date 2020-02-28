@@ -186,6 +186,9 @@ class Channel(object):
 class Slice(object):
     pass
 
+class Impuls(object):
+    pass
+
 
 class ChannelMap(object):
     pass

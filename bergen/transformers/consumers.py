@@ -1,6 +1,6 @@
 import json
 from typing import Dict, Any, Callable, Awaitable, List, Tuple
-
+import xarray as xr
 import numpy as np
 from django.db import models
 from rest_framework import serializers
@@ -43,7 +43,7 @@ class LineRectifierTransformer(DaskSyncLarvikConsumer):
         return {"overwrite": True}
 
     def parse(self, request: Transforming, settings: dict) -> List[Tuple[str, Any]]:
-        array = request.representation.loadArray()
+        array = request.representation.array
         roi = request.roi
 
         self.progress("Getting Vectors")
@@ -58,7 +58,7 @@ class LineRectifierTransformer(DaskSyncLarvikConsumer):
         self.progress("Converting array")
         image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, settings.get("scale", 10))
 
-        print(array)
+        array = xr.DataArray
         transformation = Transformation.distributed.from_xarray(image)
         return [("create",transformation)]
 
@@ -139,5 +139,5 @@ class SliceLineTransformer(ModelFuncAsyncLarvikConsumer):
         await self.progress("Transforming")
         image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(scale))
 
-
-        return { "array" : image }
+        array = xr.DataArray(image, dims=["x","y","c"])
+        return { "array" : array }
