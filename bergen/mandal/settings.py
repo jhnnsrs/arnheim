@@ -16,9 +16,10 @@ from larvik.logging import get_module_logger
 logger = get_module_logger(__name__)
 # General Debug or Production Settings
 arnheim_debug = os.getenv("ARNHEIM_DEBUG", "False") == "True"
-
+ARNHEIM_DEBUG = arnheim_debug
 # Arnheim Settings
 arnheim_host = os.getenv("ARNHEIM_DOMAIN","localhost")
+ARNHEIM_HOST = arnheim_host
 
 # Compression Settings
 TRANSFORMATION_DTYPE =  os.getenv("TRANSFORMATION_DTYPE",None)
@@ -105,7 +106,6 @@ INSTALLED_APPS = [
     'evaluators',
     'mutaters',
     'bioconverter',
-    'biouploader',
     'drawing',
     'elements',
     'revamper',
@@ -222,21 +222,16 @@ WSGI_APPLICATION = 'mandal.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-if arnheim_debug or True:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("POSTGRES_DB", os.path.join(BASE_DIR, "db.sqlite3")),
+        "USER": os.environ.get("POSTGRES_USER", "user"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "password"),
+        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
-    }
-
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators

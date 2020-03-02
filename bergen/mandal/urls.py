@@ -23,7 +23,6 @@ from rest_framework import routers
 
 import answers.routes
 import bioconverter.routes
-import biouploader.routes
 import drawing.routes
 import elements.routes
 import evaluators.routes
@@ -37,7 +36,6 @@ import social.routes
 import strainers.routes
 import transformers.routes
 import visualizers.routes
-from biouploader.views import upload_complete
 from chat.views import index, test
 
 router = routers.DefaultRouter()
@@ -46,7 +44,6 @@ router.registry.extend(drawing.routes.router.registry)
 router.registry.extend(elements.routes.router.registry)
 router.registry.extend(filters.routes.router.registry)
 router.registry.extend(bioconverter.routes.router.registry)
-router.registry.extend(biouploader.routes.router.registry)
 router.registry.extend(metamorphers.routes.router.registry)
 router.registry.extend(visualizers.routes.router.registry)
 router.registry.extend(strainers.routes.router.registry)
@@ -62,7 +59,6 @@ router.registry.extend(revamper.routes.router.registry)
 urlpatterns = [
     path('', index, name='index'),
     path('trontheim', test),
-    re_path(r'^uploaded?/$', upload_complete, name='upload_complete'),
     url(r'^accounts/', include('registration.backends.simple.urls')),
     url(r'^graphql$', GraphQLView.as_view(graphiql=True)),
     path('admin/', admin.site.urls),

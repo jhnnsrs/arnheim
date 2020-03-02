@@ -1,28 +1,19 @@
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
 
-from bioconverter.models import Representation
-from bioconverter.serializers import RepresentationSerializer
-from drawing.models import ROI
-from drawing.serializers import RoiSerializer
+from drawing.models import LineROI
+from drawing.serializers import LineROISerializer
 from larvik.views import LarvikViewSet
 
 
-class RoiViewSet(LarvikViewSet):
-    queryset = ROI.objects.all()
-    serializer_class = RoiSerializer
-    publishers = [["representation"],["creator"],["sample"],["sample","display"]]
+class LineROIViewSet(LarvikViewSet):
+    queryset = LineROI.objects.all()
+    serializer_class = LineROISerializer
+    publishers = [["representation"],["creator"],["sample"],["sample"]]
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("representation","sample","creator","display")
+    filter_fields = ("representation","sample","creator")
 
 
-class RepresentationViewSet(LarvikViewSet):
-
-    queryset = Representation.objects.all()
-    serializer_class = RepresentationSerializer
-    filter_backends = (DjangoFilterBackend,)
-    publishers = [["sample"],["creator"]]
-    filter_fields = ("sample",)
 
 
 

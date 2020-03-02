@@ -7,7 +7,7 @@ from larvik.consumers import AsyncLarvikConsumer
 from larvik.discover import register_consumer
 from revamper.models import Revamping, Mask, Revamper
 from revamper.utils import get_revamping_or_error, update_outputtransformation_or_create
-from transformers.models import Transformation
+from elements.models import Transformation
 from transformers.serializers import TransformationSerializer
 from trontheim.consumers import OsloJobConsumer
 

@@ -4,9 +4,8 @@ import xarray
 from channels.db import database_sync_to_async
 from django.db import models
 
-from bioconverter.models import Conversing, Representation
-from biouploader.models import BioMeta
-from elements.models import Sample
+from bioconverter.models import Conversing, BioSeries, Analyzing
+from elements.models import Sample, Representation
 from larvik.structures import LarvikStatus
 
 
@@ -51,7 +50,7 @@ def update_outputrepresentation_or_create2(request: Conversing, sample: Sample, 
     """
 
 
-    rep = Representation.objects.from_xarray(xarray, name="Initial Stack", creator=request.creator, overwrite=True, type="initial", chain="initial",
+    rep = Representation.objects.from_xarray(xarray, name="Initial Stack", creator=request.creator, type="initial", chain="initial",
                                        sample=sample, nodeid=request.nodeid)
 
 
@@ -66,24 +65,18 @@ def create_sample_or_override(request: Conversing,settings):
     Tries to fetch a room for the user, checking permissions along the way.
     """
     ## if override it should create a new Sample
-    method = "error"
-    sample: Sample = Sample.objects.filter(name=request.bioserie.name).first()
-    if sample is None:
-        method = "create"
-        # TODO make creation of outputvid
-        sample = Sample.objects.create(name=request.bioserie.name, creator=request.creator, location="null",
-                                       experiment=request.experiment, nodeid=request.nodeid, bioseries=request.bioserie)
-        return sample, method
-    elif sample is not None:
-        # TODO: update array of output
-        if not settings.get("overwrite", False):
-            method = "create"
-            return Sample.objects.create(name=request.bioserie.name, creator=request.creator, location="null",
-                                         experiment=request.experiment, nodeid=request.nodeid,
-                                         bioseries=request.bioserie), method
-        else:
-            method = "update"
-            return sample, method
+    bioseries = request.bioserie
+    if bioseries.sample is None:
+        print("THIS IS CALLED?")
+        sample = Sample.objects.create(name=request.bioserie.name, creator=request.creator,
+                              experiment=request.experiment, nodeid= request.nodeid)
+
+        bioseries.sample = sample
+        bioseries.save()
+        return bioseries.sample, "create"
+    else:
+        return bioseries.sample, "update"
+
 
 
 @database_sync_to_async
@@ -96,24 +89,12 @@ def update_sample_with_meta(sample: Sample, meta: dict,settings=None):
         raise ClientError(f"Sample {sample} does not exist")
     elif sample is not None:
         # TODO: update array of output
-        outputmeta = BioMeta.objects.create(channellist=json.dumps(meta.channellist),
-                                            xresolution=meta.sizex,
-                                            yresolution=meta.sizey,
-                                            zresolution=meta.sizez,
-                                            cresolution=meta.sizec,
-                                            tresolution=meta.sizet,
-                                            xphysical=meta.physicalsizex,
-                                            yphysical=meta.physicalsizey,
-                                            zphysical=meta.physicalsizex,  # TODO: MAASSSSIVEE BUG
-                                            spacial_units=meta.physicalsizexunit,
-                                            temporal_units=meta.physicalsizeyunit,  # TODO: MASSIVE BUG HERE)
-                                            )
-
-        outputmeta.save()
-        sample.meta = outputmeta
         sample.save()
         method = "update"
     return sample, method
+
+
+
 
 @database_sync_to_async
 def update_sample_with_meta2(sample: Sample, meta: dict,settings=None):
@@ -128,21 +109,6 @@ def update_sample_with_meta2(sample: Sample, meta: dict,settings=None):
         scan = meta["scan"]
         channellist = json.dumps(meta["channels"])
 
-        outputmeta = BioMeta.objects.create(channellist=channellist,
-                                            xresolution=scan["SizeX"],
-                                            yresolution=scan["SizeY"],
-                                            zresolution=scan["SizeZ"],
-                                            cresolution=scan["SizeC"],
-                                            tresolution=scan["SizeT"],
-                                            xphysical=scan["PhysicalSizeX"],
-                                            yphysical=scan["PhysicalSizeY"],
-                                            zphysical=scan["PhysicalSizeZ"],  # TODO: MAASSSSIVEE BUG
-                                            spacial_units=scan["PhysicalSizeXUnit"],
-                                            temporal_units=scan["TimeIncrement"],  # TODO: MASSIVE BUG HERE)
-                                            )
-
-        outputmeta.save()
-        sample.meta = outputmeta
         sample.save()
         method = "update"
     return sample, method
@@ -171,3 +137,98 @@ class ClientError(Exception):
     def __init__(self, code):
         super().__init__(code)
         self.code = code
+
+
+
+
+@database_sync_to_async
+def get_analyzing_or_error(request: dict) -> Analyzing:
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    parsing = Analyzing.objects.get(pk=request["id"])
+    if parsing is None:
+        raise ClientError("Analyzing {0} does not exist".format(str(request["id"])))
+    return parsing
+
+@database_sync_to_async
+def get_analyzing_or_error(request: dict) -> Analyzing:
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    parsing = Analyzing.objects.get(pk=request["id"])
+    if parsing is None:
+        raise ClientError("Analyzing {0} does not exist".format(str(request["id"])))
+    return parsing
+
+@database_sync_to_async
+def bioseries_create_or_update(series: [], request: Analyzing, settings):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    print(request.bioimage.locker_id)
+    createBioseries = []
+    for bio in series:
+        method = "error"
+        outputseries: BioSeries = BioSeries.objects.filter(bioimage=request.bioimage).filter(index=bio["index"]).first()
+        if outputseries is None:
+            method = "create"
+            # TODO make creation of outputvid
+            outputseries = BioSeries.objects.create(name=bio["name"],
+                                                    creator=request.creator,
+                                                    index=bio["index"],
+                                                    isconverted=False,
+                                                    bioimage=request.bioimage,
+                                                    nodeid=request.nodeid,
+                                                    locker=request.bioimage.locker)
+
+        elif outputseries is not None:
+            # TODO: update array of output
+            method = "update"
+            outputseries.name = bio["name"]
+            outputseries.creator = request.creator
+            outputseries.index = bio["index"]
+            outputseries.nodeid = request.nodeid
+            outputseries.locker = request.bioimage.locker
+            outputseries.save()
+
+        createBioseries.append((outputseries, method))
+
+    return createBioseries
+
+
+
+@database_sync_to_async
+def update_bioseries_or_create(request: Analyzing, bio: BioSeries):
+    """
+    Tries to fetch a room for the user, checking permissions along the way.
+    """
+    print(bio.locker_id)
+    method = "error"
+    outputseries: BioSeries = BioSeries.objects.filter(bioimage=request.bioimage).filter(index=bio.index).first()
+    if outputseries is None:
+        method = "create"
+        # TODO make creation of outputvid
+        outputseries = BioSeries.objects.create(name=bio.name,
+                                                creator=request.creator,
+                                                index=bio.index,
+                                                isconverted=False,
+                                                bioimage=request.bioimage,
+                                                nodeid=bio.nodeid,
+                                                locker_id=bio.locker_id)
+
+    elif outputseries is not None:
+        # TODO: update array of output
+        method = "update"
+        outputseries.name = bio.name
+        outputseries.creator = request.creator
+        outputseries.index = bio.index
+        outputseries.nodeid = bio.nodeid
+        outputseries.locker_id = bio.locker_id
+        outputseries.save()
+    return outputseries, method
+
+
+
+
+

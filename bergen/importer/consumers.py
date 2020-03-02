@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from rest_framework import serializers
 
-from biouploader.serializers import BioImageSerializer
+from bioconverter.serializers import BioImageSerializer
 from importer.models import Importer
 from importer.serializers import ImportingSerializer
 from importer.utils import *

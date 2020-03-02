@@ -3,7 +3,7 @@ import json
 from channels.db import database_sync_to_async
 
 from revamper.models import Revamping
-from transformers.models import Transformation
+from elements.models import Transformation
 
 
 @database_sync_to_async

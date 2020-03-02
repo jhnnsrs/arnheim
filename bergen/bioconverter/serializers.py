@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from bioconverter.models import Converter, Conversing, Representation
+from bioconverter.models import Converter, Conversing, BioImage, BioSeries, Locker, Analyzing, Analyzer
 
 
 class ConverterSerializer(serializers.ModelSerializer):
@@ -15,7 +15,28 @@ class ConversingSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class RepresentationSerializer(serializers.ModelSerializer):
+class BioImageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Representation
+        model = BioImage
+        fields = "__all__"
+
+
+class BioSeriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BioSeries
+        fields = "__all__"
+
+class LockerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Locker
+        fields = "__all__"
+
+class AnalyzingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Analyzing
+        fields = "__all__"
+
+class AnalyzerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Analyzer
         fields = "__all__"

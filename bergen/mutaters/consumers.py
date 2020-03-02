@@ -10,7 +10,7 @@ from larvik.utils import update_status_on_larvikjob
 from mutaters.models import Mutating, Mutater, Reflection
 from mutaters.serializers import ReflectionSerializer, MutatingSerializer
 from mutaters.utils import get_mutating_or_error, reflection_update_or_create
-from transformers.models import Transformation
+from elements.models import Transformation
 from trontheim.consumers import OsloJobConsumer
 
 

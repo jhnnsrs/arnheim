@@ -1,6 +1,6 @@
 from graphene_django_extras import DjangoObjectType
 
-from elements.models import Experiment, Sample, ExperimentalGroup
+from elements.models import Experiment, Sample, ExperimentalGroup, ROI
 
 
 class ExperimentType(DjangoObjectType):
@@ -33,4 +33,15 @@ class ExperimentalGroupType(DjangoObjectType):
         filter_fields = {
             "creator": ("exact",),
         }
+
+
+class RoiType(DjangoObjectType):
+    class Meta:
+        model = ROI
+        description = "All the Rois"
+        filter_fields = {
+            "creator": ("exact",),
+            "representation__name": ("icontains", "iexact"),
+        }
+
 

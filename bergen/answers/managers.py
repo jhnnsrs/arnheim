@@ -2,7 +2,7 @@ from django.db import models
 
 from elements.models import Pandas
 from larvik.logging import get_module_logger
-from mandal import settings
+from django.conf import settings
 
 logger = get_module_logger(__name__)
 

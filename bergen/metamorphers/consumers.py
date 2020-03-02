@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 from django.db import models
 
-from bioconverter.models import Representation
+from elements.models import Representation
 from larvik.consumers import LarvikError, DaskSyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob

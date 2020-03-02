@@ -4,7 +4,7 @@ from datetime import datetime
 
 from channels.db import database_sync_to_async
 
-from biouploader.models import Locker, BioImage
+from bioconverter.models import Locker, BioImage
 from importer.models import Importing
 from larvik.logging import get_module_logger
 # Get an instance of a logger

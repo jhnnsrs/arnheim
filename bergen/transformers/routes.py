@@ -1,7 +1,8 @@
 
 from rest_framework import routers
 
-from transformers.views import TransformerViewSet, TransformingViewSet, TransformationViewSet
+from transformers.views import TransformerViewSet, TransformingViewSet
+from elements.views import TransformationViewSet
 
 router = routers.SimpleRouter()
 router.register(r"transformers", TransformerViewSet)

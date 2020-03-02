@@ -1,7 +1,7 @@
 from django.db import models
 
 # Create your models here.
-from biouploader.models import Locker
+from bioconverter.models import Locker
 from larvik.models import LarvikConsumer, LarvikJob
 
 

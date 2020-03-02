@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from transformers.models import Transformer, Transforming, Transformation
+from transformers.models import Transformer, Transforming
+from elements.models import Transformation
 
 
 class TransformerSerializer(serializers.ModelSerializer):

@@ -1,9 +1,8 @@
 from django.db import models
 
 # Create your models here.
-from elements.models import Experiment, Sample
+from elements.models import Experiment, Sample, Transformation
 from larvik.models import LarvikConsumer, LarvikJob
-from transformers.models import Transformation
 
 
 class Strainer(LarvikConsumer):
