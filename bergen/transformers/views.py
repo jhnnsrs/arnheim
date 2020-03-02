@@ -1,9 +1,8 @@
 # Create your views here.
-from django_filters.rest_framework import DjangoFilterBackend
 
 from larvik.views import LarvikViewSet, LarvikJobViewSet
-from transformers.models import Transformer, Transforming, Transformation
-from transformers.serializers import TransformerSerializer, TransformingSerializer, TransformationSerializer
+from transformers.models import Transformer, Transforming
+from transformers.serializers import TransformerSerializer, TransformingSerializer
 
 
 class TransformerViewSet(LarvikViewSet):
@@ -12,19 +11,6 @@ class TransformerViewSet(LarvikViewSet):
     """
     queryset = Transformer.objects.all()
     serializer_class = TransformerSerializer
-
-
-
-
-class TransformationViewSet(LarvikViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment", "creator", "roi","representation","sample")
-    queryset = Transformation.objects.all()
-    serializer_class = TransformationSerializer
-
 
 
 class TransformingViewSet(LarvikJobViewSet):

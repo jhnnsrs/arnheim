@@ -1,12 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from bioconverter.models import Representation
-from biouploader.models import BioMeta
-from drawing.models import ROI
-from elements.models import Experiment, Sample
+from elements.models import Experiment, Sample, Representation, Transformation, ROI
 from larvik.models import LarvikConsumer, LarvikJob
-from transformers.models import Transformation
 
 
 # Create your models here.
@@ -44,14 +40,12 @@ class Data(models.Model):
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE, related_name='datas',blank=True, null=True)
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE, related_name='datas',blank=True, null=True)
     representation = models.ForeignKey(Representation, on_delete=models.CASCADE, blank=True, null=True)
-    biometa = models.ForeignKey(BioMeta, on_delete=models.CASCADE, blank=True, null=True)
     evaluating = models.ForeignKey(Evaluating, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.name
 
 class VolumeData(Data):
-    meta = models.ForeignKey(BioMeta, on_delete=models.CASCADE)
     b4channel = models.IntegerField()
     aisstart = models.IntegerField()
     aisend = models.IntegerField()
@@ -75,7 +69,6 @@ class LengthData(Data):
 
 
 class ClusterData(Data):
-    meta = models.ForeignKey(BioMeta, on_delete=models.CASCADE, blank=True, null=True)
     clusternumber = models.IntegerField()
     clusterareapixels = models.IntegerField()
     clusterarea = models.FloatField()

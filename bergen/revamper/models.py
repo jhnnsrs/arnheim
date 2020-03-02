@@ -2,9 +2,8 @@ from django.db import models
 # Create your models here.
 from registration.forms import User
 
-from elements.models import Experiment, Sample
+from elements.models import Experiment, Sample, Transformation
 from larvik.models import LarvikJob, LarvikConsumer
-from transformers.models import Transformation
 
 
 class Mask(models.Model):

@@ -4,7 +4,7 @@ import numpy as np
 from django.db import models
 from rest_framework import serializers
 
-from elements.models import Sample
+from elements.models import Sample, Transformation
 from evaluators.logic.clusterAnalysis import findConnectedCluster
 from evaluators.models import Evaluating, Evaluator, ClusterData, LengthData
 from evaluators.serializers import EvaluatingSerializer, ClusterDataSerializer, \
@@ -13,7 +13,6 @@ from evaluators.utils import get_evaluating_or_error, lengthdata_update_or_creat
 from larvik.consumers import ModelFuncAsyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.utils import update_status_on_larvikjob
-from transformers.models import Transformation
 
 
 @register_consumer("lengthdata", model= Evaluator)

@@ -1,11 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from drawing.models import ROI
 # Create your models here.
-from elements.models import Experiment, Sample
+from elements.models import Experiment, Sample, Transformation, ROI
 from larvik.models import LarvikConsumer, LarvikJob
-from transformers.models import Transformation
 
 
 class Reflection(models.Model):

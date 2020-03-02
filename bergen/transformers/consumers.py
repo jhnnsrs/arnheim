@@ -5,14 +5,13 @@ import numpy as np
 from django.db import models
 from rest_framework import serializers
 
-from bioconverter.models import Representation
-from drawing.models import ROI
+from elements.models import Representation, Transformation, ROI
 from larvik.consumers import LarvikError, ModelFuncAsyncLarvikConsumer, DaskSyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob
 from larvik.utils import update_status_on_larvikjob
 from transformers.logic.linerectifier_logic import translateImageFromLine
-from transformers.models import Transforming, Transformation, Transformer
+from transformers.models import Transforming, Transformer
 from transformers.serializers import TransformationSerializer, TransformingSerializer
 from transformers.utils import get_transforming_or_error, outputtransformation_update_or_create
 

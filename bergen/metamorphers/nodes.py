@@ -1,4 +1,4 @@
-from drawing.models import ROI
+from elements.models import ROI
 from larvik.discover import register_node, NodeType
 from metamorphers.models import Display
 

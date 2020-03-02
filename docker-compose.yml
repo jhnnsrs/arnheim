@@ -1,8 +1,26 @@
 version: "3.4"
 
 services:
+  postgres:
+    image: postgres:12.0-alpine
+    volumes:
+      - postgresdata:/var/lib/postgresql/data/
+    env_file:
+      - arnheim.env
   redis:
     image: redis:latest
+  arbeider:
+    image: jhnnsrs/arbeider
+    command: python manage.py runallworkers
+    env_file:
+      - arnheim.env
+      - development.env
+    volumes:
+      - ./arbeider:/code
+      - media:/code/media
+    links:
+      - postgres
+      - redis
   web:
     image: jhnnsrs/bergen:dask
     command: python manage.py runserver 0.0.0.0:8000
@@ -14,6 +32,7 @@ services:
       - media:/code/media
       - files:/code/files
     links:
+      - postgres
       - redis
       - worker
   worker:
@@ -81,7 +100,7 @@ services:
 
 volumes:
   vscode:
-  dbdata:
+  postgresdata:
   media:
     driver_opts:
       type: none

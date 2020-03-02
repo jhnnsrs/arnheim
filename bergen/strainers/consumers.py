@@ -11,7 +11,7 @@ from larvik.utils import update_status_on_larvikjob
 from strainers.models import Straining, Strainer
 from strainers.serializers import StrainingSerializer
 from strainers.utils import get_straining_or_error, outputtransformation_update_or_create
-from transformers.models import Transformation
+from elements.models import Transformation
 from transformers.serializers import TransformationSerializer
 
 

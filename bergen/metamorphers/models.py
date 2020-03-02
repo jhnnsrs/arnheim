@@ -3,9 +3,8 @@ import os
 from django.contrib.auth.models import User
 from django.db import models
 
-from bioconverter.models import Representation
 # Create your models here.
-from elements.models import Experiment, Sample
+from elements.models import Experiment, Sample, Representation
 from larvik.models import LarvikJob, LarvikConsumer
 from metamorphers.managers import DisplayManager
 

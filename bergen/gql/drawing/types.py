@@ -1,15 +1,15 @@
 from graphene_django_extras import DjangoObjectType
 
-from drawing.models import ROI
+from drawing.models import LineROI
 
 
-class RoiType(DjangoObjectType):
+class LineROIType(DjangoObjectType):
     class Meta:
-        model = ROI
-        description = "All the Rois"
+        model = LineROI
+        description = "All the Lines"
         filter_fields = {
             "creator": ("exact",),
-            "display__name": ("icontains", "iexact"),
+            "representation__name": ("icontains", "iexact"),
         }
 
 

@@ -1,21 +1,76 @@
+import os
 import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
 
+from elements.models import Experiment
 # Create your models here.
-from django.template.loader import render_to_string
+from elements.models import Sample
+from larvik.logging import get_module_logger
+from larvik.models import LarvikConsumer, LarvikJob
 
-from bioconverter.managers import DistributedRepresentationManager, RepresentationManager
-from biouploader.models import BioSeries
-from elements.models import Experiment, Sample, Zarr
-from larvik.models import LarvikConsumer, LarvikJob, LarvikArrayProxy
+# Create your models here.
+
+logger = get_module_logger(__name__)
+
+class Locker(models.Model):
+    creator = models.ForeignKey(User,on_delete=models.CASCADE)
+    name = models.CharField(max_length=1000)
+    location = models.CharField(max_length=1000)
+
+    def __str__(self):
+        return self.name
+
+
+class BioImage(models.Model):
+    creator = models.ForeignKey(User,on_delete=models.CASCADE)
+    name = models.CharField(max_length=1000)
+    file = models.FileField(verbose_name="bioimage",upload_to="bioimages", max_length=1000)
+    locker = models.ForeignKey(Locker,  on_delete=models.CASCADE, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    def delete(self, *args, **kwargs):
+        logger.info("Trying to remove Bioimage of path {0}".format(self.file.path))
+        if os.path.isfile(self.file.path):
+            os.remove(self.file.path)
+            logger.info("Removed Bioimage of path {0}".format(self.file.path))
+
+        super(BioImage, self).delete(*args, **kwargs)
+
+
+class BioSeries(models.Model):
+    sample = models.ForeignKey(Sample, on_delete=models.CASCADE, null=True, blank=True, related_name="bioseries")
+    bioimage = models.ForeignKey(BioImage, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    index = models.IntegerField()
+    name = models.CharField(max_length=1000)
+    image = models.ImageField(blank=True,null=True)
+    isconverted = models.BooleanField()
+    nodeid = models.CharField(max_length=300, null=True, blank=True)
+    locker = models.ForeignKey(Locker,  on_delete=models.CASCADE, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+
+class Analyzer(LarvikConsumer):
+    def __str__(self):
+        return f"Analyzer {self.name}"
+
+
+class Analyzing(LarvikJob):
+    analyzer = models.ForeignKey(Analyzer, on_delete=models.CASCADE, blank=True, null=True)
+    bioimage = models.ForeignKey(BioImage, on_delete=models.CASCADE)
+
 
 
 class Converter(LarvikConsumer):
     name = models.CharField(max_length=100)
-    channel = models.CharField(max_length=100, unique=True, default=uuid.uuid4())
-    defaultsettings = models.CharField(max_length=1000)  # json decoded standardsettings
 
     def __str__(self):
         return "{0} at Channel {1}".format(self.name, self.channel)
@@ -33,31 +88,3 @@ class Conversing(LarvikJob):
         return "ConversionRequest for Converter: {0}".format(self.converter)
 
 
-class Representation(LarvikArrayProxy):
-    name = models.CharField(max_length=1000)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    vid = models.CharField(max_length=1000,blank=True, null=True) #deprecated
-    inputrep = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null= True)
-    shape = models.CharField(max_length=100, blank=True, null= True) #deprecated
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE,related_name='representations')
-    zarr: Zarr = models.ForeignKey(Zarr, on_delete=models.CASCADE, blank=True, null=True)
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, blank=True, null=True)
-    type = models.CharField(max_length=400, blank=True, null=True)
-    chain = models.CharField(max_length=9000, blank=True, null=True)
-    nodeid = models.CharField(max_length=400, null=True, blank=True)
-    meta = models.CharField(max_length=6000, null=True, blank=True) #deprecated
-
-    objects = RepresentationManager()
-    distributed = DistributedRepresentationManager()
-
-    def __str__(self):
-        return self.name
-
-    def _repr_html_(self):
-        return f"<h3>{self.name}</h3><ul><li>Sample Name: {self.sample.name}</li></ul>"
-
-    def delete(self, *args, **kwargs):
-        if self.zarr:
-            self.zarr.delete()
-
-        super(Representation, self).delete(*args, **kwargs)
