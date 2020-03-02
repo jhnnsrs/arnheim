@@ -7,7 +7,7 @@ class MaxISP(LarvikParser):
 
     @staticmethod
     def filter(array: xr.DataArray, settings: dict, manager = LarvikManager()) -> xr.DataArray:
-        return array.max(axis=3, keep_attrs=True)
+        return array.max(dim="z", keep_attrs=True)
 
 
 class SlicedMaxISP(LarvikParser):

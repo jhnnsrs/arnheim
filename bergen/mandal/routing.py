@@ -28,5 +28,4 @@ application = ProtocolTypeRouter({
             path("oslo", OsloConsumer)
         ]),
     ),
-    "channel": ChannelNameRouter(autodiscover()),
 })
