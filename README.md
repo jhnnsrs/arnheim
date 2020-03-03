@@ -1,6 +1,7 @@
+![Design](./images/arnheim.svg)
 ## Arnheim (pre-alpha)
 
-#### Consider this a Preview
+#### Consider this a preview, as the ineptly norwegian codenames might suggest
 
 ### Idea
 
