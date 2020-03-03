@@ -1,4 +1,4 @@
-![Design](./images/arnheim.svg)
+![Design](./images/arnheim.svg | width=100)
 ## Arnheim (pre-alpha)
 
 #### Consider this a preview, as the ineptly norwegian codenames might suggest
