@@ -1,16 +1,19 @@
-# Arnheim
+#### Consider this a Preview
 
 ### Idea
 
 This is a basic implementation of the Arnheim Framework, that seeks to implement a working pipeline for the processing
 and analysis of microscopic data. Arnheim uses Docker-Containers to ensure most of its workflow is as modular and scalable as
 possible. Its architrecture consists of
+
  * Bergen (the Backend, a django-driven API-Backend)
- * Oslo (the Frontend, react-based orchestrator of the modules, separate GitHub)
+ * Trontheim (the Frontend, react-based orchestrator of the modules, separate GitHub)
+ * Arbeider ( a worker module that connects to the channel layer and ORM (can isolate heavyweight dependencies like tensorflow and Java)
  * Database (either sqlite or postgres database for object persistence)
  * JupJup (the Jupyter-Server for easy Access to the Models Provided and the Dask Runtime)
  * Dask (Scheduler and Worker for cluster analysis)
- 
+
+
  
 Production Modules are also included in this repository: Apache Kafka, Certbot, VSCode
 
@@ -48,7 +51,13 @@ From now on you can run the project through
 ```
 docker-compose up
 ```
+### Kubernetes
 
+A helm based kubernetes charts is on the roadmap. So far scaling is done via 
+''' 
+docker-compose scale abeider=2
+'''
+for local development onlny
 
 ## Populating the Database
 
@@ -66,6 +75,41 @@ docker-compose run web python manage.py createsuperuser
 ```
 in the Docker context
 
+# Basic Information
+
+## Node and Arbeider modules
+
+Modularity is at the heart of the framework. Arnheim relies heavily on the idea of representating an analysis workflow as a graph with multiple nodes. Each node represents an analysis task (for example an Maximum Intensity projection, Edge Enhancing Filter, ROI Isolation,...) that can be chained together with another task. These graphs can then run in batch and intermitten user interaction. (for detailed information visit the documentation (ones up)).
+
+Nodes can be implemented in a variety of programming languages (that can consume task from a REDIS queue and access a postgres database) and are easyily encapsulated in a Docker container. However in order to facilitate the development of these Nodes the framework provided the Arbeider Template:
+
+These modules can rely on the django ORM to access the database, the Dask Cluster, xarray as an accesible interface for the multidimensional arrays, as well as using bindings to tensorflow or the Java ecosystem of image analysis (if so desired through extension of the standard template).
+
+Here an example of a standard implementation of a Node within the arbeider framework
+
+```python
+
+@register_consumer("maxisp",model= Filter)
+class MaxIntensityProjection(FilterConsumer):
+    name = "Max ISP"
+    path = "MaxISP"
+    unique = "maxisp"
+    settings = {"reload": True}
+    inputs = [Representation]
+    outputs = [Representation]
+
+    @staticmethod
+    def filter(array: xr.DataArray, settings: dict, manager: LarvikManager) -> xr.DataArray:
+        return array.max(dim="z", keep_attrs=True)
+
+```
+
+These nodes than can be registered within the framework with a call to
+
+```
+docker-compose run %arbeider% python manage.py discoverworkers
+```
+
 
 ### Testing and Documentation
 
@@ -78,7 +122,7 @@ please beware that you are using an Alpha-Version
 - Import and Export of Samples
 - Implementation of standard image processing
 - Machine Learning Pipeline (Kafka)
-- Transition to Zarr (dropping HDF5, for multithreaded access)
+- ~~Transition to Zarr (dropping HDF5, for multithreaded access)~~ done
 
 ## Deployment
 
@@ -105,9 +149,6 @@ There is not yet a working versioning profile in place, consider non-stable for 
 
 See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
-## License
-
-This project is yet to be licensed, consider private
 
 ## Acknowledgments
 
