@@ -1,7 +1,5 @@
 <img src="./images/arnheim.svg" height="100"/>
 
-## Arnheim (pre-alpha)
-
 #### Consider this a preview, as the ineptly norwegian codenames might suggest
 
 ### Idea
