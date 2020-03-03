@@ -10,13 +10,29 @@ services:
   redis:
     image: redis:latest
   arbeider:
-    image: jhnnsrs/arbeider
+    image: jhnnsrs/arbeider:base
     command: python manage.py runallworkers
+    environment:
+      - ARNHEIM_MODULES=filters
     env_file:
       - arnheim.env
       - development.env
     volumes:
-      - ./arbeider:/code
+      - ./bergen/filters:/code/filters
+      - media:/code/media
+    links:
+      - postgres
+      - redis
+  javarbeiter:
+    image: jhnnsrs/arbeider:java
+    command: python manage.py runallworkers
+    environment:
+      - ARNHEIM_MODULES=bioconverter
+    env_file:
+      - arnheim.env
+      - development.env
+    volumes:
+      - ./bergen/bioconverter:/code/bioconverter
       - media:/code/media
     links:
       - postgres

@@ -1,7 +1,0 @@
-{
-    "python.dataScience.jupyterServerURI": "http://localhost:90/lab?",
-    "python.pythonPath": "/usr/local/bin/python",
-    "files.exclude": {
-        "**/__pycache__": true
-    }
-}

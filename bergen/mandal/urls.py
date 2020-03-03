@@ -17,6 +17,8 @@ from django.conf import settings
 from django.conf.urls import url
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 from django.urls import path, include, re_path
 from graphene_django.views import GraphQLView
 from rest_framework import routers
@@ -36,8 +38,9 @@ import social.routes
 import strainers.routes
 import transformers.routes
 import visualizers.routes
-from chat.views import index, test
 
+
+# Rest Framework Routers
 router = routers.DefaultRouter()
 router.registry.extend(social.routes.router.registry)
 router.registry.extend(drawing.routes.router.registry)
@@ -56,9 +59,15 @@ router.registry.extend(flow.routes.router.registry)
 router.registry.extend(revamper.routes.router.registry)
 
 
+# Bootstrap Backend
+@login_required
+def index(request):
+        # Render that in the index template
+    return render(request, "index-oslo.html")
+
+
 urlpatterns = [
     path('', index, name='index'),
-    path('trontheim', test),
     url(r'^accounts/', include('registration.backends.simple.urls')),
     url(r'^graphql$', GraphQLView.as_view(graphiql=True)),
     path('admin/', admin.site.urls),
