@@ -1,0 +1,7 @@
+docutils
+et-xmlfile
+
+beautifulsoup4
+lxml
+javabridge
+python-bioformats

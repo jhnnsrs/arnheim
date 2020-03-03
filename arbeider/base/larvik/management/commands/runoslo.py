@@ -7,9 +7,8 @@ from channels.worker import Worker
 from django.core.management import BaseCommand, CommandError
 
 from larvik.discover import CONSUMERS, autodiscover
-from larvik.logging import get_module_logger
 
-logger = get_module_logger(__name__)
+logger = logging.getLogger("django.channels.worker")
 
 
 class Command(BaseCommand):
@@ -39,12 +38,9 @@ class Command(BaseCommand):
         if self.channel_layer is None:
             raise CommandError("You do not have any CHANNEL_LAYERS configured.")
         # Autodiscover all of the the worker
-        autodiscover()
-        allchannels = [key for key, _ in CONSUMERS.items()]
-        logger.info("Running worker for channels %s", allchannels)
         worker = self.worker_class(
             application=get_default_application(),
-            channels=allchannels,
+            channels="websocket",
             channel_layer=self.channel_layer,
         )
         worker.run()

@@ -6,6 +6,7 @@ from graphene_django_extras import DjangoObjectType
 from gql.drawing.queries import DrawingQueries
 from gql.elements.queries import ElementQueries
 from gql.evaluators.queries import EvaluatorQueries
+from gql.bioconverter.queries import BioConverterQueries
 
 
 class UserType(DjangoObjectType):
@@ -13,7 +14,11 @@ class UserType(DjangoObjectType):
         model = User
 
 
-class Query(EvaluatorQueries, ElementQueries, DrawingQueries, graphene.ObjectType):
+class Query(EvaluatorQueries,
+            ElementQueries,
+            DrawingQueries,
+            BioConverterQueries,
+            graphene.ObjectType):
     user = DjangoObjectField(UserType, description='Single User query')
 
 

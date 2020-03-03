@@ -11,61 +11,6 @@ from mutaters.models import Mutating, Mutater, Reflection
 from mutaters.serializers import ReflectionSerializer, MutatingSerializer
 from mutaters.utils import get_mutating_or_error, reflection_update_or_create
 from elements.models import Transformation
-from trontheim.consumers import OsloJobConsumer
-
-
-class MutatingOsloJob(OsloJobConsumer):
-
-    def __init__(self, scope):
-        super().__init__(scope)
-        self.request = None
-
-    async def startconverting(self, data):
-        await self.register(data)
-        print(data)
-        request: Mutating = await get_mutating_or_error(data["data"])
-        self.request = request
-        settings: dict = await self.getsettings(request.settings, request.mutater.defaultsettings)
-
-        array = request.transformation.numpy.get_array()
-
-        file = await self.convert(array, settings)
-
-        func = self.getDatabaseFunction()
-        model, method = await func(request, file)
-
-        await self.modelCreated(model, self.getSerializer(), method)
-
-    async def convert(self, settings: dict, array: np.array):
-        """ If you create objects make sure you are handling them in here
-        and publish if necessary with its serializer """
-        raise NotImplementedError
-
-    def getDatabaseFunction(self):
-        """ This should update the newly generated model, will get called with the request and the convert"""
-        raise NotImplementedError
-
-    def getSerializer(self) -> serializers.ModelSerializer:
-        raise NotImplementedError
-
-    async def getsettings(self, settings: str, defaultsettings: str):
-        """Updateds the Settings with the Defaultsettings"""
-        import json
-        try:
-            settings = json.loads(settings)
-            try:
-                defaultsettings = json.loads(defaultsettings)
-            except:
-                defaultsettings = {}
-
-        except:
-            defaultsettings = {}
-            settings = {}
-
-        defaultsettings.update(settings)
-        return defaultsettings
-
-
 
 
 @register_consumer("imagemutater", model= Mutater)
