@@ -2,6 +2,7 @@ import os
 from typing import Dict, List, Tuple
 
 import dask.array as da
+import xarray as xr
 import nibabel as nib
 import numpy as np
 from django.db import models
@@ -10,13 +11,17 @@ from elements.models import Representation
 from larvik.consumers import LarvikError, DaskSyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob
-from mandal.settings import NIFTI_ROOT, MEDIA_ROOT
+from django.conf import settings
 from metamorphers.models import Metamorphing, Exhibit, Display, Metamorpher
 from metamorphers.serializers import DisplaySerializer, ExhibitSerializer, MetamorphingSerializer
 
 
+NIFTI_ROOT = settings.NIFTI_ROOT
+MEDIA_ROOT = settings.MEDIA_ROOT
+
 @register_consumer("exhibit", model=Metamorpher, )
 class ExhibitMetamorpher(DaskSyncLarvikConsumer):
+    requestClass = Metamorphing
     type="metamorpher"
     name = "ExhibitMetamorpher"
     path = "ExhibitMetamorpher"
@@ -24,18 +29,18 @@ class ExhibitMetamorpher(DaskSyncLarvikConsumer):
     inputs = [Representation]
     outputs = [Exhibit]
 
-    def getDefaultSettings(self, request: models.Model) -> str:
+    def getDefaultSettings(self, request: models.Model) -> Dict:
         return {"hallo": True}
-
-    def getRequest(self, data):
-        return Metamorphing.objects.get(pk=data["id"])
 
     def getSerializers(self):
         return {"Metamorphing": MetamorphingSerializer, "Exhibit": ExhibitSerializer}
 
     def parse(self, request: Metamorphing, settings: dict) -> List[Tuple[models.Model, str]]:
+        self.progress("Building Graph")
+        array: xr.DataArray = request.representation.array
 
-        array = request.representation.array
+        raise LarvikError("NOT IMPLEMENTED YET")
+
         self.progress(f"Trying to Metamorph Array of Shape {array.shape}")
 
         print(array.dtype)
@@ -45,7 +50,7 @@ class ExhibitMetamorpher(DaskSyncLarvikConsumer):
         if "z" not in array.dims:
             raise LarvikError("This is not a Z-Stack")
 
-        array.helpers.addChannel(tosize=3)  # Making sure we have enough
+        self.helpers.addChannel(tosize=3)  # Making sure we have enough
 
         self.progress(f"Scaling")
 
@@ -82,6 +87,7 @@ class ExhibitMetamorpher(DaskSyncLarvikConsumer):
 
 @register_consumer("image", model=Metamorpher)
 class ImageMetamorpher(DaskSyncLarvikConsumer):
+    requestClass = Metamorphing
     type="metamorpher"
     name = "Image Metamorpher"
     path = "ImageMetamorpher"
@@ -90,8 +96,6 @@ class ImageMetamorpher(DaskSyncLarvikConsumer):
     inputs = [Representation]
     outputs = [Display]
 
-    def getRequest(self, data) -> LarvikJob:
-        return Metamorphing.objects.get(pk=data["id"])
 
     def getSerializers(self):
         return {"Metamorphing": MetamorphingSerializer, "Display": DisplaySerializer}

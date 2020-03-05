@@ -28,6 +28,7 @@ class BioImage(models.Model):
     name = models.CharField(max_length=1000)
     file = models.FileField(verbose_name="bioimage",upload_to="bioimages", max_length=1000)
     locker = models.ForeignKey(Locker,  on_delete=models.CASCADE, blank=True, null=True)
+    nodeid = models.CharField(max_length=2000)
 
     def __str__(self):
         return self.name

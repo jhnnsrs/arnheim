@@ -4,6 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 
 from larvik.views import LarvikViewSet, LarvikJobViewSet
+from metamorphers.filters import DisplayFilter
 from metamorphers.models import Metamorpher, Metamorphing, Display, Exhibit
 from metamorphers.serializers import MetamorpherSerializer, MetamorphingSerializer, DisplaySerializer, \
     ExhibitSerializer
@@ -14,10 +15,10 @@ class DisplayViewSet(LarvikViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment","creator","representation","sample")
+    filterset_class = DisplayFilter
     queryset = Display.objects.all()
     serializer_class = DisplaySerializer
-    publishers = [["creator"],["sample"]]
+    publishers = [["creator"]]
 
 
 class ExhibitViewSet(LarvikViewSet):
@@ -25,10 +26,10 @@ class ExhibitViewSet(LarvikViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment","creator","sample","representation")
+    filter_fields = ("creator","representation__sample")
     queryset = Exhibit.objects.all()
     serializer_class = ExhibitSerializer
-    publishers = [["creator"],["sample"]]
+    publishers = [["creator"]]
 
     @action(methods=['get'], detail=True,
             url_path='asnifti', url_name='asnifti')

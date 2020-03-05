@@ -9,7 +9,7 @@ from larvik.views import LarvikViewSet
 class LineROIViewSet(LarvikViewSet):
     queryset = LineROI.objects.all()
     serializer_class = LineROISerializer
-    publishers = [["representation"],["creator"],["sample"],["sample"]]
+    publishers = [["nodeid",]]
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ("representation","sample","creator")
 

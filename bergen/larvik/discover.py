@@ -68,7 +68,6 @@ class register_consumer(object):
         self.settings = json.dumps(cls.settings) if cls.settings is not None else json.dumps({})
 
 
-        from flow.models import Node
         """
         If there are decorator arguments, __call__() is only called
         once, as part of the decoration process! You can only give
@@ -81,6 +80,8 @@ class register_consumer(object):
         if self.channel in CONSUMERS: raise Exception(f"The node {self.node} does already exist. Check for Duplicates")
 
         if self.model is not None and ISDISCOVER:
+
+            from flow.models import Node
             logger.info(f"{self.name} checking {self.model.__name__} - Checking")
 
             manager: Manager = self.model.objects
@@ -172,6 +173,8 @@ class register_node(object):
                 node.channel = "None"
                 node.entityid = None
                 node.save()
+
+                logger.info(f"Updating {cls.__name__} as {self.node} on {self.node}")
 
             except ObjectDoesNotExist as e:
                 node = Node.objects.create(hash=createUniqeNodeName(self.node),

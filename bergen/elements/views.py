@@ -5,9 +5,9 @@ import logging
 from django_filters.rest_framework import DjangoFilterBackend
 
 from elements.models import Antibody, Sample, Experiment, ExperimentalGroup, Animal, FileMatchString, Representation, \
-    Transformation
+    Transformation, ROI
 from elements.serializers import AntibodySerializer, SampleSerializer, ExperimentSerializer, \
-    ExperimentalGroupSerializer, AnimalSerializer, FileMatchStringSerializer, RepresentationSerializer
+    ExperimentalGroupSerializer, AnimalSerializer, FileMatchStringSerializer, RepresentationSerializer, ROISerializer
 from larvik.views import LarvikViewSet
 
 # Get an instance of a logger
@@ -90,6 +90,16 @@ class TransformationViewSet(LarvikViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment", "creator", "roi","representation","sample")
+    filter_fields = ("representation",)
     queryset = Transformation.objects.all()
     serializer_class = TransformationSerializer
+
+
+class RoiViewSet(LarvikViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ("representation",)
+    queryset = ROI.objects.all()
+    serializer_class = ROISerializer

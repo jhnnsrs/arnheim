@@ -35,7 +35,7 @@ class FilterConsumer(DaskSyncLarvikConsumer):
 
         filtered = self.filter(array, settings, self)
 
-        repout, graph = Representation.distributed.from_xarray_and_request(filtered, request,
+        repout, graph = Representation.delayed.from_xarray_and_request(filtered, request,
                                                                            name=f"{self.name} of {request.representation.name}",
                                                                            type=self.unique,
                                                                            chain=f'{request.representation.chain}|{self.unique}')

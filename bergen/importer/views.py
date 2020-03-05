@@ -22,7 +22,7 @@ class ImportingViewSet(LarvikJobViewSet):
     serializer_class = ImportingSerializer
     permission_classes = (ImportingAccessPolicy,)
     publishers = [["nodeid"]]
-    actionpublishers = {"importing": [("creator",)], "bioimage": [["creator"], ["locker"]]}
+    actionpublishers = {"importing": [("nodeid",)], "bioimage": [["nodeid"], ["locker"]]}
     # this publishers will be send to the Action Handles and then they can send to the according
 
     def preprocess_jobs(self, serializer):

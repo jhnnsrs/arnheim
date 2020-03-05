@@ -2,9 +2,11 @@ import json
 from typing import Dict, Any, Callable, Awaitable, List, Tuple
 import xarray as xr
 import numpy as np
+import dask.array as da
 from django.db import models
 from rest_framework import serializers
 
+from drawing.models import LineROI
 from elements.models import Representation, Transformation, ROI
 from larvik.consumers import LarvikError, ModelFuncAsyncLarvikConsumer, DaskSyncLarvikConsumer
 from larvik.discover import register_consumer
@@ -14,23 +16,19 @@ from transformers.logic.linerectifier_logic import translateImageFromLine
 from transformers.models import Transforming, Transformer
 from transformers.serializers import TransformationSerializer, TransformingSerializer
 from transformers.utils import get_transforming_or_error, outputtransformation_update_or_create
-
+import larvik.extenders
 
 # import the logging library
-
-
-
-
 @register_consumer("linerect", model= Transformer)
 class LineRectifierTransformer(DaskSyncLarvikConsumer):
+    requestClass = Transforming
+    type = "transformer"
     name = "Line Rectifier"
     path = "LineRectifier"
     settings = {"reload": True}
-    inputs = [Representation, ROI]
+    inputs = [Representation, LineROI]
     outputs = [Transformation]
 
-    def getRequest(self, data) -> LarvikJob:
-        return Transforming.objects.get(pk=data["id"])
 
     def getSerializers(self):
         return {
@@ -45,6 +43,11 @@ class LineRectifierTransformer(DaskSyncLarvikConsumer):
         array = request.representation.array
         roi = request.roi
 
+
+        physy = float(array.biometa.scan["PhysicalSizeY"])
+        physx = float(array.biometa.scan["PhysicalSizeX"])
+
+
         self.progress("Getting Vectors")
         vectors = json.loads(roi.vectors)
         vertices = [[key["x"], key["y"]] for key in vectors]
@@ -52,20 +55,38 @@ class LineRectifierTransformer(DaskSyncLarvikConsumer):
         self.logger.info("Array has max of {0}".format(array.max()))
 
         self.progress("Conversing to Float64 for OpenCV")
-        array = np.float64(array)
+        work = np.float64(array)
+
 
         self.progress("Converting array")
-        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, settings.get("scale", 10))
+        image, boxwidths, pixelwidths, boxes = translateImageFromLine(work, vertices, settings.get("scale", 10))
 
-        array = xr.DataArray
-        transformation = Transformation.distributed.from_xarray(image)
-        return [("create",transformation)]
+        self.progress("It actually Worked")
+        outarray = xr.DataArray(da.array(image), dims=["x","y","c"])
+        if physx != physy:
+            self.progress("The Transformation is anisotropic. Discarding Physical Dimenions")
+        else:
+            outarray = xr.DataArray(outarray, coords = {"physx": outarray.x * physx, "physy": outarray.y * physy, "channels": array.channels})
+
+        transformation, delayed = Transformation.delayed.from_xarray(outarray,
+                                                            name="Line Rectification",
+                                                            roi= request.roi,
+                                                            transformer= request.transformer,
+                                                            nodeid= request.nodeid,
+                                                            creator = request.creator,
+                                                            representation = request.representation
+                                                            )
+
+        delayed.compute()
+        return [(transformation,"create")]
 
 
 
 
 @register_consumer("sliceline", model= Transformer)
 class SliceLineTransformer(ModelFuncAsyncLarvikConsumer):
+    requestClass = Transforming
+    type = "transformer"
     name = "Slice Line Rectifier"
     path = "SliceLineRectifier"
     settings = {"reload": True}
@@ -82,7 +103,7 @@ class SliceLineTransformer(ModelFuncAsyncLarvikConsumer):
 
         return {"array": outputtransformation_update_or_create}
 
-    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
+    def getSerializerDict(self) -> Dict[str, Any]:
 
         return {
             "Transforming": TransformingSerializer,
