@@ -43,7 +43,9 @@ class LarvikViewSet(viewsets.ModelViewSet):
         serializedData = json.loads(json.dumps(serializedData, cls=UUIDEncoder)) #Shit workaround to get UUUID to be string
 
         if self.publishers is not None:
+            self.logger.info(f"Publishers {self.publishers}")
             for el in self.publishers:
+                self.logger.info(f"What up dog {el}")
                 modelfield = "empty"
                 try:
                     path = ""

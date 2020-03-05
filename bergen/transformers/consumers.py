@@ -2,9 +2,11 @@ import json
 from typing import Dict, Any, Callable, Awaitable, List, Tuple
 import xarray as xr
 import numpy as np
+import dask.array as da
 from django.db import models
 from rest_framework import serializers
 
+from drawing.models import LineROI
 from elements.models import Representation, Transformation, ROI
 from larvik.consumers import LarvikError, ModelFuncAsyncLarvikConsumer, DaskSyncLarvikConsumer
 from larvik.discover import register_consumer
@@ -17,16 +19,12 @@ from transformers.utils import get_transforming_or_error, outputtransformation_u
 
 
 # import the logging library
-
-
-
-
 @register_consumer("linerect", model= Transformer)
 class LineRectifierTransformer(DaskSyncLarvikConsumer):
     name = "Line Rectifier"
     path = "LineRectifier"
     settings = {"reload": True}
-    inputs = [Representation, ROI]
+    inputs = [Representation, LineROI]
     outputs = [Transformation]
 
     def getRequest(self, data) -> LarvikJob:
@@ -57,9 +55,10 @@ class LineRectifierTransformer(DaskSyncLarvikConsumer):
         self.progress("Converting array")
         image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, settings.get("scale", 10))
 
-        array = xr.DataArray
-        transformation = Transformation.distributed.from_xarray(image)
-        return [("create",transformation)]
+
+        outarray = xr.DataArray(da.array(image), dims=["x","y","z"])
+        transformation = Transformation.delayed.from_xarray(outarray)
+        return [(transformation,"create")]
 
 
 

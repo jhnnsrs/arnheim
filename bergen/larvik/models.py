@@ -73,8 +73,12 @@ class Zarr(models.Model):
         return dataset.to_zarr(store=getStore(self.store), mode="w", group=self.group,compute=compute)
 
     def delete(self, *args, **kwargs):
-        store = getStore(self.store)
+
+        super(Zarr, self).delete(*args, **kwargs)
         try:
+
+            store = getStore(self.store)
+
             if zr.storage.contains_group(store, self.group):
                 logger.info(f"Removing Group {self.group} from Store {self.store}")
                 zr.storage.rmdir(store, self.group)
@@ -84,7 +88,6 @@ class Zarr(models.Model):
         except Exception as e:
             logger.error(f"Error while handling Store {self.store}: {e}")
 
-        super(Zarr, self).delete(*args, **kwargs)
 
     def __str__(self):
         return f"Zarr Group {self.group} at Store {self.store}"
@@ -105,8 +108,6 @@ class LarvikArrayProxy(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def __getattr__(self, item):
-        return getattr(self.array, item)
 
     class Meta:
         abstract = True

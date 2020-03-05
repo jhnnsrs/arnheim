@@ -4,4 +4,4 @@ from rest_framework import routers
 from drawing.views import LineROIViewSet
 
 router = routers.SimpleRouter()
-router.register(r"rois", LineROIViewSet)
+router.register(r"linerois", LineROIViewSet)

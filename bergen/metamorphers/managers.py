@@ -25,14 +25,11 @@ class DisplayManager(models.Manager):
                             name=name,
                             creator=request.creator,
                             nodeid=request.nodeid,
-                            sample=request.sample,
-                            shape=json.dumps(list(array.shape)),
-                            experiment=request.representation.experiment)
+                            shape=json.dumps(list(array.shape)),)
 
 
         # TODO: update array of output
-        path = "sample-{0}_representation-{1}_node-{2}".format(str(display.sample.id), str(display.representation.id),
-                                                               str(request.nodeid))
+        path = f"representation-{display.representation.id}_node-{request.nodeid}"
         img_io = io.BytesIO()
         img.save(img_io, format='jpeg', quality=100)
         thumb_file = InMemoryUploadedFile(img_io, None, path + ".jpeg", 'image/jpeg',

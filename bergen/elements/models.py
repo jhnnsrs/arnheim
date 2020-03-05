@@ -4,7 +4,7 @@ from django.db import models
 # Create your models here.
 from pandas import HDFStore
 
-from elements.managers import PandasManager, RepresentationManager, DistributedRepresentationManager, TransformationManager, DistributedTransformationManager
+from elements.managers import PandasManager, RepresentationManager, DelayedRepresentationManager, TransformationManager, DelayedTransformationManager
 from larvik.logging import get_module_logger
 from larvik.models import LarvikArrayProxy
 
@@ -146,7 +146,7 @@ class Representation(LarvikArrayProxy):
     meta = models.CharField(max_length=6000, null=True, blank=True) #deprecated
 
     objects = RepresentationManager()
-    distributed = DistributedRepresentationManager()
+    delayed = DelayedRepresentationManager()
 
     def __str__(self):
         return self.name
@@ -177,13 +177,12 @@ class ROI(models.Model):
 class Transformation(LarvikArrayProxy):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='transformations')
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE, related_name='transformations')
     representation = models.ForeignKey(Representation, on_delete=models.SET_NULL, blank=True, null=True)
     inputtransformation = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null= True)
 
     objects = TransformationManager()
-    distributed = DistributedTransformationManager()
+    delayed = DelayedTransformationManager()
 
     def __str__(self):
         return self.name

@@ -19,6 +19,25 @@ services:
       - development.env
     volumes:
       - ./bergen/filters:/code/filters
+      - ./bergen/larvik:/code/larvik
+      - ./bergen/elements:/code/elements
+      - media:/code/media
+    links:
+      - postgres
+      - redis
+  extended:
+    image: jhnnsrs/arbeider:extensive
+    command: python manage.py runallworkers
+    environment:
+      - ARNHEIM_MODULES=metamorphers
+    env_file:
+      - arnheim.env
+      - development.env
+    volumes:
+      - ./bergen/metamorphers:/code/metamorphers
+      - ./bergen/transformers:/code/transformers
+      - ./bergen/larvik:/code/larvik
+      - ./bergen/elements:/code/elements
       - media:/code/media
     links:
       - postgres
@@ -27,18 +46,22 @@ services:
     image: jhnnsrs/arbeider:java
     command: python manage.py runallworkers
     environment:
-      - ARNHEIM_MODULES=bioconverter
+      - ARNHEIM_MODULES=bioconverter,importer
     env_file:
       - arnheim.env
       - development.env
     volumes:
       - ./bergen/bioconverter:/code/bioconverter
+      - ./bergen/importer:/code/importer
+      - ./bergen/larvik:/code/larvik
+      - ./bergen/elements:/code/elements
       - media:/code/media
+      - files:/code/files
     links:
       - postgres
       - redis
   web:
-    image: jhnnsrs/bergen:dask
+    image: jhnnsrs/bergen:base
     command: python manage.py runserver 0.0.0.0:8000
     env_file:
       - arnheim.env
@@ -46,12 +69,11 @@ services:
     volumes:
       - ./bergen:/code
       - media:/code/media
-      - files:/code/files
     links:
       - postgres
       - redis
   oslo:
-    image: jhnnsrs/bergen:dask
+    image: jhnnsrs/bergen:base
     command: python manage.py runoslo
     env_file:
       - arnheim.env
@@ -59,7 +81,6 @@ services:
     volumes:
       - ./bergen:/code
       - media:/code/media
-      - files:/code/files
     links:
       - redis
       - web
@@ -92,7 +113,6 @@ services:
       - ./bergen:/code/
       - ./jupjup/.config/dask:/config/.config/dask
       - media:/code/media
-      - files:/code/files
     ports:
       - 90:90
     links:
@@ -111,7 +131,6 @@ services:
     volumes:
       - ./bergen:/code
       - media:/code/media
-      - files:/code/files
 
 volumes:
   vscode:

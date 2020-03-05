@@ -1,0 +1,9 @@
+nibabel
+SimpleITK
+opencv-python
+scipy
+tables
+seaborn
+pandas-profiling
+openpyxl
+scikit-learn

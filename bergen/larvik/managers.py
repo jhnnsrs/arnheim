@@ -12,15 +12,20 @@ logger = logging.getLogger(__name__)
 
 class ZarrQueryMixin(object):
     """ Methods that appear both in the manager and queryset. """
+
+
+class ZarrQuerySet(QuerySet):
+
     def delete(self):
         # Use individual queries to the attachment is removed.
         for zarr in self.all():
             zarr.delete()
 
-class ZarrQuerySet(ZarrQueryMixin, QuerySet):
-    pass
+
+        super().delete()
 
 class ZarrManager(Manager):
+
     def get_queryset(self):
         return ZarrQuerySet(self.model, using=self._db)
 

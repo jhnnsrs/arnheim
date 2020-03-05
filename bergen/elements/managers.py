@@ -3,11 +3,11 @@ import logging
 import os
 
 import xarray
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 
+from elements.utils import buildRepresentationName, buildTransformationName
 from larvik.models import Zarr
 from larvik.querysets import LarvikArrayQueryset
 from django.db import models
@@ -47,14 +47,6 @@ class PandasManager(models.Manager):
         return super(PandasManager,self).create(**obj_data)
 
 
-
-
-def buildZarrName(name, nodeid):
-    if nodeid is not None:
-        return f"{name} {nodeid}"
-    else:
-        return f"{name}"
-
 class RepQueryMixin(object):
     """ Methods that appear both in the manager and queryset. """
     def delete(self):
@@ -89,9 +81,9 @@ class RepresentationManager(Manager):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
 
-        zarrname = buildZarrName(name, nodeid)
+        zarrname = buildRepresentationName(name, nodeid)
         store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
-        zarr = Zarr.objects.fromRequest(name=name, store=store, type="representation", overwrite=True)
+        zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="representation", overwrite=True)
         delayed = zarr.saveArray(array,compute=True)
 
             # Now call the super method which does the actual creation
@@ -106,7 +98,7 @@ class RepresentationManager(Manager):
 
 
 
-class DistributedRepresentationManager(Manager):
+class DelayedRepresentationManager(Manager):
 
 
     def get_queryset(self):
@@ -123,9 +115,8 @@ class DistributedRepresentationManager(Manager):
                     **kwargs):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
-        zarrname = buildZarrName(name, nodeid)
+        zarrname = buildRepresentationName(name, nodeid)
         store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
-
         zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="representation", overwrite=overwrite)
         delayed = zarr.saveArray(array,compute=False)
 
@@ -151,37 +142,24 @@ class DistributedRepresentationManager(Manager):
 class TransformationManager(models.Manager):
 
     def from_xarray(self, array: xarray.DataArray,
-                    sample = None,
-                    name: str ="Initial Stack",
+                    name: str ="transformation",
                     overwrite=True,
                     creator: User = None,
-                    inputrep = None,
-                    experiment = None,
-                    nodeid= None,
-                    compute=True):
+                    representation = None,
+                    nodeid= None):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
-        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
-        zarr = Zarr.objects.fromRequest(name=name, store=store, type="transformation", overwrite=overwrite)
-        delayed = zarr.saveArray(array,compute=compute)
+        zarrname = buildTransformationName(name, nodeid)
+        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(representation.sample.id))
+        zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="transformation", overwrite=overwrite)
+        delayed = zarr.saveArray(array,compute=True)
 
-            # Now call the super method which does the actual creation
-        if compute:
-            return super().create(name=name,#
-                                  creator=creator,
-                                  sample= sample,
-                                  inputrep=inputrep,
-                                  numpy= None,
-                                  zarr= zarr,
-                                  nodeid=nodeid)  # Python 3 syntax!!
-        else:
-            return super().create(name=name,  #
-                                  creator=creator,
-                                  sample=sample,
-                                  inputrep=inputrep,
-                                  numpy=None,
-                                  zarr=zarr,
-                                  nodeid=nodeid), delayed
+        return super().create(name=name,#
+                              creator=creator,
+                              representation=representation,
+                              zarr= zarr,
+                              nodeid=nodeid)  # Python 3 syntax!!
+
 
 
 
@@ -199,44 +177,34 @@ class DistributedTransformationQuerySet(QuerySet):
 
 
 
-class DistributedTransformationManager(Manager):
+class DelayedTransformationManager(Manager):
 
     def get_queryset(self):
         return DistributedTransformationQuerySet(self.model, using=self._db)
 
     def from_xarray(self, array: xarray.DataArray,
-                    sample: None,
-                    name: str ="Initial Stack",
+                    name: str ="transformation",
                     overwrite=True,
                     creator: User = None,
-                    inputrep = None,
-                    experiment = None,
-                    nodeid= None,
-                    compute=True):
+                    representation = None,
+                    transformer = None,
+                    inputtransformation = None,
+                    roi = None,
+                    nodeid= None):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
-        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
-        zarr = Zarr.objects.fromRequest(name=name, store=store, type="transformation", overwrite=overwrite)
-        delayed = zarr.saveArray(array,compute=compute)
+        zarrname = buildTransformationName(roi, representation, transformer, inputtransformation, nodeid)
+        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(representation.sample.id))
+        zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="transformation", overwrite=overwrite)
+        delayed = zarr.saveArray(array,compute=False)
 
             # Now call the super method which does the actual creation
-        if compute:
-            return super().create(name=name,#
+        return super().create(name=name,  #
                                   creator=creator,
-                                  sample= sample,
-                                  inputrep=inputrep,
-                                  numpy= None,
-                                  zarr= zarr,
-                                  experiment=experiment,
-                                  nodeid=nodeid)  # Python 3 syntax!!
-        else:
-            return super().create(name=name,  #
-                                  creator=creator,
-                                  sample=sample,
-                                  inputrep=inputrep,
-                                  numpy=None,
+                                  representation=representation,
+                                  roi=roi,
+                                  inputtransformation=inputtransformation,
                                   zarr=zarr,
-                                  experiment=experiment,
                                   nodeid=nodeid), delayed
 
 

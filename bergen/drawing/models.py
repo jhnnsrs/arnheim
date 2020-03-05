@@ -5,4 +5,4 @@ from elements.models import ROI
 
 
 class LineROI(ROI):
-    length = models.IntegerField()
+    length = models.IntegerField(blank=True, null=True)

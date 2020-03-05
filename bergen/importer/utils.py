@@ -9,10 +9,10 @@ from importer.models import Importing
 from larvik.logging import get_module_logger
 # Get an instance of a logger
 from larvik.structures import LarvikStatus
-from mandal.settings import BIOIMAGE_ROOT
+from django.conf import settings
 
 logger = get_module_logger(__name__)
-
+BIOIMAGE_ROOT = settings.BIOIMAGE_ROOT
 
 @database_sync_to_async
 def get_importing_or_error(request: dict):
