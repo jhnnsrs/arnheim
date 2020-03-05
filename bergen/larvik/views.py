@@ -68,6 +68,7 @@ class LarvikViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         super().perform_create(serializer)
+        self.logger.info("CALLED create")
         self.publish(serializer, "create")
 
     def perform_update(self, serializer):

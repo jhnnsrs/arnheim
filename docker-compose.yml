@@ -29,12 +29,13 @@ services:
     image: jhnnsrs/arbeider:extensive
     command: python manage.py runallworkers
     environment:
-      - ARNHEIM_MODULES=metamorphers
+      - ARNHEIM_MODULES=drawing,metamorphers,transformers
     env_file:
       - arnheim.env
       - development.env
     volumes:
       - ./bergen/metamorphers:/code/metamorphers
+      - ./bergen/drawing:/code/drawing
       - ./bergen/transformers:/code/transformers
       - ./bergen/larvik:/code/larvik
       - ./bergen/elements:/code/elements
