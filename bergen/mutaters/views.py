@@ -12,7 +12,7 @@ class ReflectionViewSet(LarvikViewSet):
     API endpoint that allows users to be viewed or edited.
     """
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("experiment","creator","roi")
+    filter_fields = ("transformation",)
     queryset = Reflection.objects.all()
     serializer_class = ReflectionSerializer
     publishers = [["creator"],["sample"]]

@@ -105,6 +105,7 @@ class ImageMetamorpher(DaskSyncLarvikConsumer):
 
     def parse(self, request: Metamorphing, settings: dict) -> List[Tuple[models.Model, str]]:
 
+        rescale = True
         array = request.representation.array
 
         if "z" in array.dims:
@@ -113,20 +114,41 @@ class ImageMetamorpher(DaskSyncLarvikConsumer):
             array = array.sel(t=0)
 
         if "c" in array.dims:
-            if array.c.size >= 3:
-                array = array.sel(c=[0,1,2]).data
-            elif array.c.size == 2:
-                array = da.concatenate([array.sel(c=[0,1]).data,da.zeros((array.x.size, array.y.size, 1))], axis=2)
-            elif array.c.size == 1:
-                raise NotImplementedError("We need to figure Matplotlib conversion for single-Channel Images")
+            # Check if we have to convert to monoimage
+            if array.c.size == 1:
+                array = array.sel(c=0)
+
+                if rescale == True:
+                    self.progress("Rescaling")
+                    min, max = array.min(), array.max()
+                    image = np.interp(array, (min, max), (0, 255)).astype(np.uint8)
+                else:
+                    image = (array * 255).astype(np.uint8)
+
+                from matplotlib import cm
+                mapped = cm.viridis(image)
+
+                finalarray = (mapped * 255).astype(np.uint8)
+
+            else:
+                if array.c.size >= 3:
+                    array = array.sel(c=[0,1,2]).data
+                elif array.c.size == 2:
+                    # Two Channel Image will be displayed with a Dark Channel
+                    array = da.concatenate([array.sel(c=[0,1]).data,da.zeros((array.x.size, array.y.size, 1))], axis=2)
+
+                if rescale == True:
+                    self.progress("Rescaling")
+                    min, max = array.min(), array.max()
+                    image = np.interp(array.compute(), (min, max), (0, 255)).astype(np.uint8)
+                else:
+                    image = (array * 255).astype(np.uint8)
+
+                finalarray = image
+
         else:
-            raise NotImplementedError("We need to figure Matplotlib conversion for single-Channel Images")
+            raise NotImplementedError("Image Does not provide the channel Argument")
 
 
-        self.progress("Rescaling")
-        min, max = array.min(), array.max()
-        array = np.interp(array.compute(), (min, max), (0, 255))
-        array = array.astype(np.uint8)
-
-        display = Display.objects.from_xarray_and_request(array, request)
+        display = Display.objects.from_xarray_and_request(finalarray, request)
         return [(display, "create")]

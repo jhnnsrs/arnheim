@@ -1,11 +1,17 @@
 import numpy as np
 import xarray as xr
-from django.conf import settings
+try:
+    from django.conf import settings
+except:
+    class Settings(object):
+        ZARR_DTYPE = "float64"
+    settings = Settings()
 
 DTYPEMAP = {
     "uint8": np.dtype("uint8"),
     "uint16": np.dtype("uint16"),
     "uint32": np.dtype("uint32"),
+    "int16": np.dtype("int16"),
 }
 
 DESIRED_DTYPE = np.dtype(settings.ZARR_DTYPE)
@@ -43,7 +49,7 @@ async def calculateRescaleAndScaleFactor(scan, progress):
 
     if "SignificantBits" in scan:
         # Bitwise scaling because of weird bioformats rescaling issuess
-        leastsig = int(scan.get("SignificantBits"))
+        leastsig = int(scan.get("SignificantBits") if scan.get("SignificantBits") else bitness)
         await progress(f"Input dtype has {leastsig} significant Bits")
         significantfactor = 2 ** bitness // 2 ** leastsig
     else:

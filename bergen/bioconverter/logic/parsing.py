@@ -2,6 +2,7 @@ import xarray as xr
 import bioformats
 import dask.array as da
 import xarray as xr
+import numpy as np
 
 from bioconverter.logic.meta import loadBioMetaFromFile, parseMeta
 from bioconverter.logic.ome import imagetree
@@ -35,7 +36,9 @@ async def convertBioImageToXArray(filepath, index, progress):
     newfile = xr.DataArray(newfile, coords={"physx": newfile.x * float(scan["PhysicalSizeX"]),
                                             "physy": newfile.y * float(scan["PhysicalSizeY"]),
                                             "phsyz": newfile.z * float(scan["PhysicalSizeZ"]),
-                                            "physt": newfile.t * float(scan.get("TimeIncrement", 1) if scan.get("TimeIncrement", 1) is not None else 1),
+                                            "physt": newfile.t * float(
+                                                scan.get("TimeIncrement", 1) if scan.get("TimeIncrement",
+                                                                                         1) is not None else 1),
                                             "x": newfile.x,
                                             "y": newfile.y,
                                             "z": newfile.z,
@@ -65,8 +68,13 @@ async def convertBioImageToXArray(filepath, index, progress):
                                 im2 = im1
                         else:
                             im2 = im1
+                        if im2.shape[0] == shape[1] and im2.shape[0] != shape[0]:
+                            # Transposed axes for whatever reason
+                            im3 = np.swapaxes(im2, 0, 1)
+                        else:
+                            im3 = im2
 
-                        newfile[:, :, c, z, t] = im2
+                        newfile[:, :, c, z, t] = im3
 
         await progress("BioImage Parsed")
     finally:
@@ -74,5 +82,7 @@ async def convertBioImageToXArray(filepath, index, progress):
 
     newfile.attrs["scan"] = [scan]
     newfile.attrs["seriesname"] = name
+
+    newfile.name = name
 
     return newfile, parsedimagemeta
