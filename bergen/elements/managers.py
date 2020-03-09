@@ -1,6 +1,9 @@
 # import the logging library
+import json
 import logging
 import os
+import pandas as pd
+import dask.dataframe as df
 
 import xarray
 from django.contrib.auth.models import User
@@ -47,14 +50,11 @@ class PandasManager(models.Manager):
         return super(PandasManager,self).create(**obj_data)
 
 
-class RepQueryMixin(object):
-    """ Methods that appear both in the manager and queryset. """
-    def delete(self):
-        # Use individual queries to the attachment is removed.
-        for rep in self.all():
-            rep.delete()
-
 class RepresentationQuerySet(LarvikArrayQueryset):
+
+    def delete(self):
+        for rep in self.all():
+            rep.delete
 
     def _repr_html_(self):
         from django.template.loader import render_to_string
@@ -67,6 +67,7 @@ class RepresentationQuerySet(LarvikArrayQueryset):
 
 
 class RepresentationManager(Manager):
+    use_for_related_fields = True
 
     def get_queryset(self):
         return LarvikArrayQueryset(self.model, using=self._db)
@@ -91,6 +92,7 @@ class RepresentationManager(Manager):
                               zarr= zarr,
                               creator=creator,
                               sample= sample,
+                              shape=json.dumps(array.shape),
                               inputrep=inputrep,
                               nodeid=nodeid,
                               **kwargs)
@@ -99,6 +101,7 @@ class RepresentationManager(Manager):
 
 
 class DelayedRepresentationManager(Manager):
+
 
 
     def get_queryset(self):
@@ -120,11 +123,13 @@ class DelayedRepresentationManager(Manager):
         zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="representation", overwrite=overwrite)
         delayed = zarr.saveArray(array,compute=False)
 
+
         # Now call the super method which does the actual creation
         return super().create(name=name,  #
                               creator=creator,
                               sample=sample,
                               inputrep=inputrep,
+                              shape=json.dumps(array.shape),
                               zarr=zarr,
                               nodeid=nodeid,), delayed
 
@@ -140,6 +145,7 @@ class DelayedRepresentationManager(Manager):
 
 
 class TransformationManager(models.Manager):
+    use_for_related_fields = True
 
     def from_xarray(self, array: xarray.DataArray,
                     name: str ="transformation",
@@ -157,6 +163,7 @@ class TransformationManager(models.Manager):
         return super().create(name=name,#
                               creator=creator,
                               representation=representation,
+                              shape=json.dumps(array.shape),
                               zarr= zarr,
                               nodeid=nodeid)  # Python 3 syntax!!
 
@@ -202,10 +209,41 @@ class DelayedTransformationManager(Manager):
         return super().create(name=name,  #
                                   creator=creator,
                                   representation=representation,
+                                    shape=json.dumps(array.shape),
                                   roi=roi,
                                   inputtransformation=inputtransformation,
                                   zarr=zarr,
                                   nodeid=nodeid), delayed
+
+
+class RoiQuerySet(QuerySet):
+
+    def frame(self, *args, npartitions=1):
+        values = list(self.all().values(*args))
+        return df.from_pandas(pd.DataFrame.from_records(values), npartitions=npartitions)
+
+    def _repr_html_(self):
+        from django.template.loader import render_to_string
+        count = self.count()
+        limit = 3
+        if count < limit:
+            return render_to_string('ipython/rois.html', {'rois': self, "more": 0})
+        else:
+            return render_to_string('ipython/rois.html',
+                                    {'rois': self[:limit], "more": count - limit})
+
+
+class ROIManager(Manager):
+    use_for_related_fields = True
+
+    def frame(self,*args,**kwargs):
+        return self.get_queryset().frame(*args,**kwargs)
+
+    def get_queryset(self):
+        return RoiQuerySet(self.model, using=self._db)
+
+
+        # Python 3 syntax!!
 
 
 

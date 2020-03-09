@@ -58,7 +58,7 @@ class LineRectifierTransformer(DaskSyncLarvikConsumer):
 
 
         self.progress("Converting array")
-        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, settings.get("scale", 10))
+        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(settings.get("scale", 10)))
 
         self.progress("It actually Worked")
         outarray = xr.DataArray(da.array(image), dims=["x","y","c"])

@@ -113,9 +113,19 @@ class LarvikArrayProxy(models.Model):
         abstract = True
 
     @property
+    def viewer(self):
+        import larvik.extenders
+        return self.array.viewer
+
+    @property
+    def biometa(self):
+        import larvik.extenders
+        return self.array.biometa
+
+    @property
     def array(self):
         if self.zarr:
-            array =  self.zarr.openArray(chunks="auto", name="data")
+            array = self.zarr.openArray(chunks="auto", name="data")
             if self.name is not None:
                 array.name = str(self.name)
             return array
