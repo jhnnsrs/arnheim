@@ -9,8 +9,13 @@ django-filter
 djangorestframework
 drf-access-policy
 psycopg2
+pytest-django
+pytest-asyncio
 
-
+python-slugify
+s3fs
+boto3
+django-storages
 scipy
 graphene-django
 

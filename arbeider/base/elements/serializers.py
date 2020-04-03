@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from elements.models import Antibody, Experiment, Sample, ExperimentalGroup, Animal, FileMatchString, Representation
+from elements.models import Antibody, Experiment, Sample, ExperimentalGroup, Animal, FileMatchString, Representation, \
+    ROI
 
 
 class AntibodySerializer(serializers.ModelSerializer):
@@ -35,8 +36,15 @@ class RepresentationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ROISerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ROI
+        fields = "__all__"
+
+
+
 class SampleSerializer(serializers.ModelSerializer):
-    representations =  serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    representations = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     bioseries = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:

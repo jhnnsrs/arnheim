@@ -1,16 +1,14 @@
-import os
-import uuid
-
 from django.contrib.auth.models import User
 from django.db import models
 
 from elements.models import Experiment
 # Create your models here.
 from elements.models import Sample
+from larvik.fields import BioImageFileField
 from larvik.logging import get_module_logger
 from larvik.models import LarvikConsumer, LarvikJob
-
 # Create your models here.
+from larvik.storage.default import get_default_storagemode
 
 logger = get_module_logger(__name__)
 
@@ -26,7 +24,7 @@ class Locker(models.Model):
 class BioImage(models.Model):
     creator = models.ForeignKey(User,on_delete=models.CASCADE)
     name = models.CharField(max_length=1000)
-    file = models.FileField(verbose_name="bioimage",upload_to="bioimages", max_length=1000)
+    file = BioImageFileField(verbose_name="bioimage",upload_to="bioimages", storage=get_default_storagemode().media())
     locker = models.ForeignKey(Locker,  on_delete=models.CASCADE, blank=True, null=True)
     nodeid = models.CharField(max_length=2000)
 
@@ -34,11 +32,7 @@ class BioImage(models.Model):
         return self.name
 
     def delete(self, *args, **kwargs):
-        logger.info("Trying to remove Bioimage of path {0}".format(self.file.path))
-        if os.path.isfile(self.file.path):
-            os.remove(self.file.path)
-            logger.info("Removed Bioimage of path {0}".format(self.file.path))
-
+        self.file.delete(save=False)
         super(BioImage, self).delete(*args, **kwargs)
 
 

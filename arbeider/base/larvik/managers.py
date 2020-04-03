@@ -1,40 +1,53 @@
 # import the logging library
+import json
 import logging
-import random
-import string
-
-from django.core.exceptions import ObjectDoesNotExist
+import xarray as xr
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 
 # Get an instance of a logger
+from larvik.generators import ArnheimGenerator
+
 logger = logging.getLogger(__name__)
 
 class ZarrQueryMixin(object):
     """ Methods that appear both in the manager and queryset. """
+
+
+class ZarrQuerySet(QuerySet):
+
     def delete(self):
         # Use individual queries to the attachment is removed.
         for zarr in self.all():
             zarr.delete()
 
-class ZarrQuerySet(ZarrQueryMixin, QuerySet):
-    pass
 
-class ZarrManager(Manager):
+        super().delete()
+
+
+class LarvikArrayManager(Manager):
+    generatorClass = ArnheimGenerator
+    group = None
+    queryset = ZarrQuerySet
+
     def get_queryset(self):
-        return ZarrQuerySet(self.model, using=self._db)
+        return self.queryset(self.model, using=self._db)
 
-    def id_generator(self, size=6, chars=string.ascii_uppercase + string.digits):
-        return ''.join(random.choice(chars) for _ in range(size))
 
-    def fromRequest(self, name="", store="", type="transformation", overwrite=True):
-        #Test if instance Already Exists
-        from django.template.defaultfilters import slugify
+    def from_xarray(self, array: xr.DataArray, **kwargs):
+        # Do some extra stuff here on the submitted data before saving...
+        # For example...
 
-        group = type + "/" + slugify(name) if overwrite else type + "/" + slugify(name+self.id_generator())
-        logger.info("Looking for Group {0}".format(group))
-        try:
-            item = super(ZarrManager,self).get(group=group,store=store)
-            return item
-        except ObjectDoesNotExist:
-            return super(ZarrManager, self).create(store=store, group=group)
+        item = self.model(**kwargs)
+        generated = self.generatorClass(item, self.group)
+        array.name = generated.name
+
+        # Store Generation
+        item.store.name = generated.path
+        item.shape = json.dumps(array.shape)
+
+        # Actually Saving
+        item.store.dump(array)
+        item.save()
+        return item
+

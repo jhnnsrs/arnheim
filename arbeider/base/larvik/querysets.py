@@ -2,16 +2,33 @@ import xarray
 from dask.bag import Bag
 from django.db.models.query import QuerySet
 import dask.bag as db
+import dask.dataframe as dd
 from dask.bag.core import Bag
 
 from larvik.helpers import LarvikManager
-from larvik.storage.store import openDataset
+
+
+class BioMetaAccesor(object):
+
+    def __init__(self, bag):
+        self.bag = bag
+
+    @property
+    def channels(self):
+        def get_biometa(array):
+            df = dd.from_dask_array(array.channels.data)
+            df["Array"] = array.name
+            return df
+
+        datasets = self.bag.map(get_biometa)
+        return datasets.fold(lambda x,y: dd.concat([x,y]))
 
 
 class LarvikBag(object):
 
     def __init__(self, bag, *args, **kwargs):
         self.bag = bag
+        self._biometa = None
         self.settings = {}
 
     def __getattr__(self, item):
@@ -38,21 +55,29 @@ class LarvikBag(object):
 
         return LarvikBag(parsedb)
 
+    @property
+    def biometa(self):
+        if not self._biometa:
+            self._biometa = BioMetaAccesor(self.bag)
+        return self._biometa
+
     def __repr__(self):
         return self.bag.__repr__()
 
 class LarvikArrayQueryset(QuerySet):
 
+    def delete(self):
+        for el in self.all():
+            el.zarr.delete()
 
-    def asBag(self):
 
-        def toarray(params) -> xarray.DataArray:
-            xr = openDataset(params["zarr__store"], params["zarr__group"])["data"]
-            xr.name = params["name"]
-            return xr
+    def spread(self):
 
-        b = db.from_sequence(list(self.values("name","zarr__store","zarr__group")), partition_size=1)
-        return LarvikBag(b.map(toarray))
+        arrayslist = []
+        for el in self.all():
+            arrayslist.append(el.store.load())
+
+        return LarvikBag(db.from_sequence(arrayslist))
 
     def asDataset(self, **kwargs):
-        return xarray.merge(self.asBag().bag, **kwargs)
+        return xarray.merge(self.spread().bag, **kwargs)

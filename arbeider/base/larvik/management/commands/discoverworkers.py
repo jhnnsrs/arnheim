@@ -9,10 +9,6 @@ logger = logging.getLogger("django.channels.worker")
 
 
 class Command(BaseCommand):
-
-    leave_locale_alone = True
-    worker_class = Worker
-
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
 

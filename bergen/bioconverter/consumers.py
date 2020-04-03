@@ -19,7 +19,7 @@ from elements.serializers import SampleSerializer, RepresentationSerializer
 from larvik.consumers import AsyncLarvikConsumer, ModelFuncAsyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob
-from larvik.utils import update_status_on_larvikjob
+from larvik.utils import update_status_on_larvikjob, TemporaryFile
 
 javabridge.start_vm(class_path=bioformats.JARS, run_headless=True)
 
@@ -79,10 +79,10 @@ class BioConverter(ConverterConsumer):
         await self.progress(message)
 
     async def convert(self, request, settings: Dict):
-        filepath = request.bioserie.bioimage.file.path
-        index = request.bioserie.index
+        with request.bioserie.bioimage.file.local as filepath:
+            index = request.bioserie.index
 
-        array, parseimagemeta = await convertBioImageToXArray(filepath, index, self.progress)
+            array, parseimagemeta = await convertBioImageToXArray(filepath, index, self.progress)
         return array, parseimagemeta
 
 
@@ -115,16 +115,16 @@ class BioAnalyzer(ModelFuncAsyncLarvikConsumer):
         return {"overwrite": True}
 
     async def parse(self, request: Analyzing, settings: dict) -> Dict[str, Any]:
-        filepath = request.bioimage.file.path
-        self.logger.info("Trying to parse bioimage at Path {0}".format(filepath))
-        await self.progress("Opening Files")
+        with request.bioimage.file.local as filepath:
+            self.logger.info("Trying to parse bioimage at Path {0}".format(filepath))
+            await self.progress("Opening Files")
 
-        seriesnames = getSeriesNamesForFile(filepath)
-        bioseries = []
-        for index, seriesname in enumerate(seriesnames):
-            bioseries.append({"name": seriesname, "index": index})
+            seriesnames = getSeriesNamesForFile(filepath)
+            bioseries = []
+            for index, seriesname in enumerate(seriesnames):
+                bioseries.append({"name": seriesname, "index": index})
 
-        await self.progress("Database Action Files")
+            await self.progress("Database Action Files")
         return {"BioSeries": bioseries}
 
 

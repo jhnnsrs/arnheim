@@ -6,7 +6,6 @@ import dask.dataframe as dd
 from dask.bag.core import Bag
 
 from larvik.helpers import LarvikManager
-from larvik.storage.store import openDataset
 
 
 class BioMetaAccesor(object):
@@ -74,13 +73,11 @@ class LarvikArrayQueryset(QuerySet):
 
     def spread(self):
 
-        def toarray(params) -> xarray.DataArray:
-            xr = openDataset(params["zarr__store"], params["zarr__group"])["data"]
-            xr.name = params["name"]
-            return xr
+        arrayslist = []
+        for el in self.all():
+            arrayslist.append(el.store.load())
 
-        b = db.from_sequence(list(self.values("name","zarr__store","zarr__group")), partition_size=1)
-        return LarvikBag(b.map(toarray))
+        return LarvikBag(db.from_sequence(arrayslist))
 
     def asDataset(self, **kwargs):
         return xarray.merge(self.spread().bag, **kwargs)
