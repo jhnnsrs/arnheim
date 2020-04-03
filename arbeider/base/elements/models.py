@@ -4,12 +4,13 @@ from django.db import models
 # Create your models here.
 from pandas import HDFStore
 
-from elements.managers import PandasManager, RepresentationManager, DistributedRepresentationManager, TransformationManager, DistributedTransformationManager
+from elements.managers import PandasManager, RepresentationManager, DelayedRepresentationManager, TransformationManager, \
+    DelayedTransformationManager, ROIManager
 from larvik.logging import get_module_logger
 from larvik.models import LarvikArrayProxy
 
 logger = get_module_logger(__name__)
-
+from django.core import serializers
 
 def get_sentinel_user():
     return get_user_model().objects.get_or_create(username='deleted')[0]
@@ -35,11 +36,11 @@ class Experiment(models.Model):
         return "Experiment {0} by {1}".format(self.name,self.creator.username)
 
 class ExperimentalGroup(models.Model):
-    name = models.CharField(max_length=200)
-    description = models.CharField(max_length=1000)
+    name = models.CharField(max_length=200, help_text="The experimental groups name")
+    description = models.CharField(max_length=1000,  help_text="A brief summary of applied techniques in this group")
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    iscontrol = models.BooleanField()
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, help_text="The experiment this Group belongs too")
+    iscontrol = models.BooleanField(help_text="Is this Experimental Group a ControlGroup?")
 
 
     def __str__(self):
@@ -82,6 +83,14 @@ class Sample(models.Model):
     def delete(self, *args, **kwargs):
         logger.info("Trying to remove Sample H5File")
         super(Sample, self).delete(*args, **kwargs)
+
+
+    def _repr_html_(self):
+        from django.core import serializers
+        from django.forms.models import model_to_dict
+        import pandas as pd
+
+        return pd.DataFrame.from_records([model_to_dict(self)])._repr_html_()
 
 
 
@@ -146,44 +155,52 @@ class Representation(LarvikArrayProxy):
     meta = models.CharField(max_length=6000, null=True, blank=True) #deprecated
 
     objects = RepresentationManager()
-    distributed = DistributedRepresentationManager()
+    delayed = DelayedRepresentationManager()
+
+    class Meta:
+        base_manager_name = "objects"
+        default_manager_name = "objects"
 
     def __str__(self):
-        return self.name
+        return f'Representation of {self.name}'
 
     def _repr_html_(self):
         return f"<h3>{self.name}</h3><ul><li>Sample Name: {self.sample.name}</li></ul>"
 
-    def delete(self, *args, **kwargs):
-        if self.zarr:
-            self.zarr.delete()
-
-        super(Representation, self).delete(*args, **kwargs)
 
 class ROI(models.Model):
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
-    vectors = models.CharField(max_length=3000)
+    vectors = models.CharField(max_length=3000, help_text= "A json dump of the ROI Vectors (specific for each type)")
     color = models.CharField(max_length=100, blank=True, null=True)
     signature = models.CharField(max_length=300,null=True, blank=True)
     created_at = models.DateTimeField(auto_now=True)
-    sample = models.ForeignKey(Sample,on_delete=models.CASCADE,blank=True, null=True)
-    representation = models.ForeignKey(Representation, on_delete=models.CASCADE,blank=True, null=True)
+    representation = models.ForeignKey(Representation, on_delete=models.CASCADE,blank=True, null=True, related_name="rois")
     experimentalgroup = models.ForeignKey(ExperimentalGroup, on_delete=models.SET_NULL, blank=True, null=True)
 
+    objects = ROIManager()
+
+    class Meta:
+        base_manager_name = "objects"
+        default_manager_name = "objects"
+
+
     def __str__(self):
-        return "ROI created by {0} on {1} of {2}".format(self.creator.username,self.display.name,self.sample.name)
+        return f"ROI created by {self.creator.username} on {self.representation.name}"
 
 class Transformation(LarvikArrayProxy):
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE, related_name='transformations')
     roi = models.ForeignKey(ROI, on_delete=models.CASCADE, related_name='transformations')
-    representation = models.ForeignKey(Representation, on_delete=models.SET_NULL, blank=True, null=True)
+    representation = models.ForeignKey(Representation, on_delete=models.SET_NULL, blank=True, null=True, related_name="transformations")
     inputtransformation = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null= True)
 
     objects = TransformationManager()
-    distributed = DistributedTransformationManager()
+    delayed = DelayedTransformationManager()
+
+    class Meta:
+        base_manager_name = "objects"
+        default_manager_name = "objects"
 
     def __str__(self):
         return self.name

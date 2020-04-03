@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 # Create your views here.
 from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
 
 from social.models import Comment
 from social.serializers import UserSerializer, CommentSerializer
@@ -21,7 +23,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
 
 
-class MeViewSet(viewsets.ModelViewSet):
+class MeViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -30,4 +32,4 @@ class MeViewSet(viewsets.ModelViewSet):
         return self.request.user
 
     def list(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        return Response(self.get_serializer_class()(self.get_object()).data)

@@ -11,13 +11,10 @@ from elements.models import Representation
 from larvik.consumers import LarvikError, DaskSyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob
-from django.conf import settings
 from metamorphers.models import Metamorphing, Exhibit, Display, Metamorpher
 from metamorphers.serializers import DisplaySerializer, ExhibitSerializer, MetamorphingSerializer
 
 
-NIFTI_ROOT = settings.NIFTI_ROOT
-MEDIA_ROOT = settings.MEDIA_ROOT
 
 @register_consumer("exhibit", model=Metamorpher, )
 class ExhibitMetamorpher(DaskSyncLarvikConsumer):
@@ -74,6 +71,8 @@ class ExhibitMetamorpher(DaskSyncLarvikConsumer):
                                                                               request.representation.id, request.nodeid)
         niftipath = os.path.join(NIFTI_ROOT, niftipaths)
         nib.save(nifti, niftipath)
+        raise NotImplementedError("BROKEN")
+        MEDIA_ROOT = "None"
         niftiwebpath = os.path.join(os.path.join(MEDIA_ROOT, "/nifti"), niftipaths)
         name = "Exhibit of" + request.representation.name
 

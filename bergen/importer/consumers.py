@@ -10,12 +10,10 @@ from importer.serializers import ImportingSerializer
 from importer.utils import *
 from larvik.consumers import LarvikError, ModelFuncAsyncLarvikConsumer, SyncLarvikConsumer, TypedSyncLarvikConsumer
 from larvik.discover import register_consumer
-from django.conf import settings
 
 import os
 from larvik.models import LarvikJob
 
-FILES_ROOT = settings.FILES_ROOT
 
 
 @register_consumer("importer", model= Importer)
@@ -64,7 +62,8 @@ class ImportingConsumer(TypedSyncLarvikConsumer[Importing]):
                 progress("Moving file " + path)
 
                 directory = "{0}/{1}/".format(request.creator.id, request.locker.id)
-                directory = os.path.join(BIOIMAGE_ROOT, directory)
+                raise NotImplementedError("Updated  Here")
+                directory = os.path.join("sd", directory)
 
                 if not os.path.exists(directory):
                     os.makedirs(directory)

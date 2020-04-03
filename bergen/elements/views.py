@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 class AntibodyViewSet(LarvikViewSet):
     """
-    API endpoint that allows users to be viewed or edited.
+    Returns a list of all **active** accounts in the system.
+
+    For more details on how accounts are activated please [see here][ref].
+
+    [ref]: http://example.com/activating-accounts
     """
     filter_backends = (DjangoFilterBackend,)
     queryset = Antibody.objects.all()

@@ -20,8 +20,11 @@ from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.urls import path, include, re_path
+from django.views.generic import TemplateView
 from graphene_django.views import GraphQLView
 from rest_framework import routers
+from rest_framework.schemas import get_schema_view
+
 
 import answers.routes
 import bioconverter.routes
@@ -66,6 +69,7 @@ def index(request):
     return render(request, "index-oslo.html")
 
 
+
 urlpatterns = [
     path('', index, name='index'),
     url(r'^accounts/', include('registration.backends.simple.urls')),
@@ -73,5 +77,14 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^api/', include((router.urls, 'api'))),
+    path('openapi', get_schema_view(
+            title="Arnheim",
+            description="API for accessing the underlying Architecture",
+            version="1.0.0"
+        ), name='openapi-schema'),
+    path('redoc/', TemplateView.as_view(
+            template_name='redoc.html',
+            extra_context={'schema_url':'openapi-schema'}
+        ), name='redoc'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

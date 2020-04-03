@@ -162,16 +162,11 @@ class Representation(LarvikArrayProxy):
         default_manager_name = "objects"
 
     def __str__(self):
-        return self.name
+        return f'Representation of {self.name}'
 
     def _repr_html_(self):
         return f"<h3>{self.name}</h3><ul><li>Sample Name: {self.sample.name}</li></ul>"
 
-    def delete(self, *args, **kwargs):
-        if self.zarr:
-            self.zarr.delete()
-
-        super(Representation, self).delete(*args, **kwargs)
 
 class ROI(models.Model):
     nodeid = models.CharField(max_length=400, null=True, blank=True)
