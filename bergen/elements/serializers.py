@@ -44,7 +44,7 @@ class ROISerializer(serializers.ModelSerializer):
 
 
 class SampleSerializer(serializers.ModelSerializer):
-    representations =  serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    representations = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     bioseries = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:

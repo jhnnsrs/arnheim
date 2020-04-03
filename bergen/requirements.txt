@@ -14,8 +14,14 @@ djangorestframework
 drf-access-policy
 django-oauth-toolkit
 psycopg2
-
+python-slugify
+pyyaml
+uritemplate
+boto3
+django-storages
 graphene-django
+s3fs
+
 graphene-django-extras
 
 zarr
@@ -24,3 +30,4 @@ xarray
 lz4
 numcodecs
 dask[complete]==2.9.2
+markdown

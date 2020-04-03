@@ -9,10 +9,8 @@ from importer.models import Importing
 from larvik.logging import get_module_logger
 # Get an instance of a logger
 from larvik.structures import LarvikStatus
-from django.conf import settings
 
 logger = get_module_logger(__name__)
-BIOIMAGE_ROOT = settings.BIOIMAGE_ROOT
 
 @database_sync_to_async
 def get_importing_or_error(request: dict):
@@ -67,7 +65,7 @@ def create_bioimages_from_list(filelist, request: Importing, settings):
             logger.info("Moving file from " + path)
 
             directory = "{0}/{1}/".format(request.creator.id, request.locker.id)
-            directory = os.path.join(BIOIMAGE_ROOT, directory)
+
 
             if not os.path.exists(directory):
                 os.makedirs(directory)
@@ -75,6 +73,8 @@ def create_bioimages_from_list(filelist, request: Importing, settings):
             new_path = os.path.join(directory, os.path.basename(name))
             shutil.move(path, new_path)
 
+            logger.error("THIS IS BROKEN")
+            raise NotImplementedError("Needs new implementation with storage Adaptors")
             logger.info("To New Path of " + new_path)
             name = name if name else os.path.basename(path)
             image = BioImage.objects.create(file=new_path,

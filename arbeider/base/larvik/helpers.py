@@ -20,14 +20,30 @@ class MetaMethods(object):
         merge["Name"] = f"Merged Channel ({name})"
         return merge
 
+class HelperMethods(object):
+
+    def addChannel(self,tosize=2):
+        pass
+
 
 
 class LarvikManager(object):
 
     def __init__(self):
-        self.meta = MetaMethods()
+        self._helpers = None
+        self._meta = None
         self.iteration = None
         self.name = self.__class__.__name__
+
+    @property
+    def helpers(self):
+        if self._meta is None: self._meta = MetaMethods()
+        return self._meta
+
+    @property
+    def helpers(self):
+        if self._helpers is None: self._helpers = HelperMethods()
+        return self._helpers
 
     @staticmethod
     def fromIteration(iteration, name):

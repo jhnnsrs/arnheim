@@ -20,6 +20,7 @@ class DisplayManager(models.Manager):
         # Do some extra stuff here on the submitted data before saving...
         # For example...
         img = Image.fromarray(array)
+        img = img.convert('RGB')
         name = "Display of " + request.representation.name
         display = self.create(representation=request.representation,
                             name=name,

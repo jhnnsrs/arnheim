@@ -11,13 +11,10 @@ from elements.models import Representation
 from larvik.consumers import LarvikError, DaskSyncLarvikConsumer
 from larvik.discover import register_consumer
 from larvik.models import LarvikJob
-from django.conf import settings
 from metamorphers.models import Metamorphing, Exhibit, Display, Metamorpher
 from metamorphers.serializers import DisplaySerializer, ExhibitSerializer, MetamorphingSerializer
 
 
-NIFTI_ROOT = settings.NIFTI_ROOT
-MEDIA_ROOT = settings.MEDIA_ROOT
 
 @register_consumer("exhibit", model=Metamorpher, )
 class ExhibitMetamorpher(DaskSyncLarvikConsumer):
@@ -74,6 +71,8 @@ class ExhibitMetamorpher(DaskSyncLarvikConsumer):
                                                                               request.representation.id, request.nodeid)
         niftipath = os.path.join(NIFTI_ROOT, niftipaths)
         nib.save(nifti, niftipath)
+        raise NotImplementedError("BROKEN")
+        MEDIA_ROOT = "None"
         niftiwebpath = os.path.join(os.path.join(MEDIA_ROOT, "/nifti"), niftipaths)
         name = "Exhibit of" + request.representation.name
 
@@ -105,6 +104,7 @@ class ImageMetamorpher(DaskSyncLarvikConsumer):
 
     def parse(self, request: Metamorphing, settings: dict) -> List[Tuple[models.Model, str]]:
 
+        rescale = True
         array = request.representation.array
 
         if "z" in array.dims:
@@ -113,20 +113,41 @@ class ImageMetamorpher(DaskSyncLarvikConsumer):
             array = array.sel(t=0)
 
         if "c" in array.dims:
-            if array.c.size >= 3:
-                array = array.sel(c=[0,1,2]).data
-            elif array.c.size == 2:
-                array = da.concatenate([array.sel(c=[0,1]).data,da.zeros((array.x.size, array.y.size, 1))], axis=2)
-            elif array.c.size == 1:
-                raise NotImplementedError("We need to figure Matplotlib conversion for single-Channel Images")
+            # Check if we have to convert to monoimage
+            if array.c.size == 1:
+                array = array.sel(c=0)
+
+                if rescale == True:
+                    self.progress("Rescaling")
+                    min, max = array.min(), array.max()
+                    image = np.interp(array, (min, max), (0, 255)).astype(np.uint8)
+                else:
+                    image = (array * 255).astype(np.uint8)
+
+                from matplotlib import cm
+                mapped = cm.viridis(image)
+
+                finalarray = (mapped * 255).astype(np.uint8)
+
+            else:
+                if array.c.size >= 3:
+                    array = array.sel(c=[0,1,2]).data
+                elif array.c.size == 2:
+                    # Two Channel Image will be displayed with a Dark Channel
+                    array = da.concatenate([array.sel(c=[0,1]).data,da.zeros((array.x.size, array.y.size, 1))], axis=2)
+
+                if rescale == True:
+                    self.progress("Rescaling")
+                    min, max = array.min(), array.max()
+                    image = np.interp(array.compute(), (min, max), (0, 255)).astype(np.uint8)
+                else:
+                    image = (array * 255).astype(np.uint8)
+
+                finalarray = image
+
         else:
-            raise NotImplementedError("We need to figure Matplotlib conversion for single-Channel Images")
+            raise NotImplementedError("Image Does not provide the channel Argument")
 
 
-        self.progress("Rescaling")
-        min, max = array.min(), array.max()
-        array = np.interp(array.compute(), (min, max), (0, 255))
-        array = array.astype(np.uint8)
-
-        display = Display.objects.from_xarray_and_request(array, request)
+        display = Display.objects.from_xarray_and_request(finalarray, request)
         return [(display, "create")]

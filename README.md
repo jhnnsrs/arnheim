@@ -1,6 +1,8 @@
 <img src="./images/arnheim.svg" height="100"/>
 
-#### Consider this a preview, as the ineptly norwegian codenames might suggest
+# DEPRECATED 
+#### Arnheim was split up in separate Releases and one common helm-chart
+
 
 ### Idea
 

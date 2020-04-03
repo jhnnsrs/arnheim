@@ -202,6 +202,8 @@ class ModelFuncAsyncLarvikConsumer(AsyncLarvikConsumer):
 
 
 class SyncLarvikConsumer(SyncConsumer, NodeType, LarvikManager):
+    requestClass = None
+    requestClassSerializer = None
 
     def __init__(self, scope):
         super().__init__(scope)
@@ -246,7 +248,7 @@ class SyncLarvikConsumer(SyncConsumer, NodeType, LarvikManager):
                         path += "{0}_".format((str(modelfield)))
                 path = path[:-1] # Trim the last underscore
 
-                #self.logger.info("Publishing to Channel {0}".format(path))
+                self.logger.info("Publishing to Channel {0}".format(path))
 
                 async_to_sync(channel_layer.group_send)(
                     path,
@@ -262,7 +264,10 @@ class SyncLarvikConsumer(SyncConsumer, NodeType, LarvikManager):
 
     def getRequest(self,data) -> LarvikJob:
         '''Should return a Function that returns the Model and not the Serialized instance'''
-        raise NotImplementedError
+        if self.requestClass is None:
+            raise NotImplementedError("Please specifiy 'requestModel' or override getRequest")
+        else:
+            return self.requestClass.objects.get(pk = data["id"])
 
     def getSerializers(self):
         '''Should return a Function that returns the Model and not the Serialized instance'''
@@ -348,10 +353,6 @@ class DaskSyncLarvikConsumer(SyncLarvikConsumer):
     def persist(self, graph):
         return graph.persist()
 
-
-    def getRequest(self, data) -> LarvikJob:
-        raise NotImplementedError
-
     def getSerializers(self):
         raise NotImplementedError
 
@@ -375,3 +376,13 @@ class DaskSyncLarvikConsumer(SyncLarvikConsumer):
             self.logger.info("RETRYING")
             self.start(request,settings)  # recuversive
 
+
+
+from typing import TypeVar, Generic
+
+T = TypeVar('T')
+
+class TypedSyncLarvikConsumer(Generic[T], SyncLarvikConsumer):
+
+    def start(self, request: T, settings: dict):
+        pass

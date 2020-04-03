@@ -1,81 +1,80 @@
-from typing import Dict, Any, Callable, Awaitable
+from typing import Dict, List, Tuple
 
 import numpy as np
 from django.db import models
-from rest_framework import serializers
 
-from larvik.consumers import AsyncLarvikConsumer
-from larvik.discover import register_consumer
-from larvik.utils import update_status_on_larvikjob
-from mutaters.models import Mutating, Mutater, Reflection
-from mutaters.serializers import ReflectionSerializer, MutatingSerializer
-from mutaters.utils import get_mutating_or_error, reflection_update_or_create
+import dask.array as da
 from elements.models import Transformation
+from larvik.consumers import DaskSyncLarvikConsumer
+from larvik.discover import register_consumer
+from mutaters.models import Mutater, Reflection, Mutating
+from mutaters.serializers import MutatingSerializer, ReflectionSerializer
 
 
 @register_consumer("imagemutater", model= Mutater)
-class ImageMutator(AsyncLarvikConsumer):
+class ImageMutator(DaskSyncLarvikConsumer):
+    requestClass = Mutating
     name = "Image Mutater"
-    path = "Image Mutater"
+    path = "ImageMutater"
+    type = "mutater"
     settings = {"reload": True}
     inputs = [Transformation]
     outputs = [Reflection]
 
-    def getRequestFunction(self) -> Callable[[Dict], Awaitable[models.Model]]:
-        return get_mutating_or_error
+    def getSerializers(self):
+        return {"Mutating": MutatingSerializer, "Reflection": ReflectionSerializer}
 
-    def updateRequestFunction(self) -> Callable[[models.Model, str], Awaitable[models.Model]]:
-        return update_status_on_larvikjob
+    def getDefaultSettings(self, request: models.Model) -> Dict:
+        return {"hallo": True}
 
-    def getModelFuncDict(self) -> Dict[str, Callable[[Any, models.Model, dict], Awaitable[Any]]]:
-        return { "image": reflection_update_or_create}
+    def parse(self, request: Mutating, settings: dict) -> List[Tuple[models.Model, str]]:
 
-    def getSerializerDict(self) -> Dict[str, type(serializers.Serializer)]:
-        return { "Mutating": MutatingSerializer,
-                 "Reflection": ReflectionSerializer}
+        rescale = True
+        array = request.transformation.array
 
-    async def parse(self, request: Mutating, settings: dict) -> Dict[str, Any]:
-        array = request.transformation.numpy.get_array()
+        if "z" in array.dims:
+            array = array.max(dim="z")
+        if "t" in array.dims:
+            array = array.sel(t=0)
 
-        # TODO: Maybe faktor this one out
-        if len(array.shape) == 5:
-            array = np.nanmax(array[:, :, :3, :, 0], axis=3)
-        if len(array.shape) == 4:
-            array = np.nanmax(array[:, :, :3, :], axis=3)
-        if len(array.shape) == 3:
-            array = array[:, :, :3]
-            if array.shape[2] == 1:
-                x = array[:, :, 0]
+        if "c" in array.dims:
+            # Check if we have to convert to monoimage
+            if array.c.size == 1:
+                array = array.sel(c=0)
 
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3))
+                if rescale == True:
+                    self.progress("Rescaling")
+                    min, max = array.min(), array.max()
+                    image = np.interp(array, (min, max), (0, 255)).astype(np.uint8)
+                else:
+                    image = (array * 255).astype(np.uint8)
 
-                # do expand
-                target[:x.shape[0], :x.shape[1], 0] = x
+                from matplotlib import cm
+                mapped = cm.viridis(image)
 
-                array = target
-            if array.shape[2] == 2:
-                x = array[:, :, :1]
+                finalarray = (mapped * 255).astype(np.uint8)
 
-                # expand to what shape
-                target = np.zeros((array.shape[0], array.shape[1], 3))
+            else:
+                if array.c.size >= 3:
+                    array = array.sel(c=[0, 1, 2]).data
+                elif array.c.size == 2:
+                    # Two Channel Image will be displayed with a Dark Channel
+                    array = da.concatenate([array.sel(c=[0, 1]).data, da.zeros((array.x.size, array.y.size, 1))],
+                                           axis=2)
 
-                # do expand
-                target[:x.shape[0], :x.shape[1], :1] = x
+                if rescale == True:
+                    self.progress("Rescaling")
+                    min, max = array.min(), array.max()
+                    image = np.interp(array.compute(), (min, max), (0, 255)).astype(np.uint8)
+                else:
+                    image = (array * 255).astype(np.uint8)
 
-                array = target
-        if len(array.shape) == 2:
-            x = array[:, :]
+                finalarray = image
 
-            # expand to what shape
-            target = np.zeros((array.shape[0], array.shape[1], 3))
+        else:
+            raise NotImplementedError("Image Does not provide the channel Argument")
 
-            # do expand
-            target[:x.shape[0], :x.shape[1], 0] = x
+        reflection = Reflection.objects.from_xarray_and_request(finalarray, request)
+        return [(reflection, "create")]
 
-            array = target
-
-        self.logger.info("Output image has shape {0}".format(array.shape))
-        img = None # TODO: Impelemnt
-        return {"image": img }
 

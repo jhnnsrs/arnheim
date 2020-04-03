@@ -1,6 +1,10 @@
 # import the logging library
+import json
 import logging
 import os
+import pandas as pd
+import dask.dataframe as df
+
 
 import xarray
 from django.contrib.auth.models import User
@@ -8,7 +12,8 @@ from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 
 from elements.utils import buildRepresentationName, buildTransformationName
-from larvik.models import Zarr
+from larvik.generators import ArnheimGenerator
+from larvik.managers import LarvikArrayManager
 from larvik.querysets import LarvikArrayQueryset
 from django.db import models
 
@@ -47,14 +52,11 @@ class PandasManager(models.Manager):
         return super(PandasManager,self).create(**obj_data)
 
 
-class RepQueryMixin(object):
-    """ Methods that appear both in the manager and queryset. """
-    def delete(self):
-        # Use individual queries to the attachment is removed.
-        for rep in self.all():
-            rep.delete()
-
 class RepresentationQuerySet(LarvikArrayQueryset):
+
+    def delete(self):
+        for rep in self.all():
+            rep.delete
 
     def _repr_html_(self):
         from django.template.loader import render_to_string
@@ -66,99 +68,32 @@ class RepresentationQuerySet(LarvikArrayQueryset):
             return render_to_string('ipython/representation.html', {'representations': self[:limit], "more": count - limit})
 
 
-class RepresentationManager(Manager):
+class RepresentationGenerator(ArnheimGenerator):
 
-    def get_queryset(self):
-        return LarvikArrayQueryset(self.model, using=self._db)
+    def build_name(self):
+        return f"{self.model.name}"
 
-    def from_xarray(self, array: xarray.DataArray,
-                    name: str ="Initial Stack",
-                    sample = None,
-                    creator: User = None,
-                    inputrep = None,
-                    nodeid= None,
-                    **kwargs):
-        # Do some extra stuff here on the submitted data before saving...
-        # For example...
+class RepresentationManager(LarvikArrayManager):
+    generatorClass = RepresentationGenerator
+    group = "representation"
+    use_for_related_fields = True
 
-        zarrname = buildRepresentationName(name, nodeid)
-        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
-        zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="representation", overwrite=True)
-        delayed = zarr.saveArray(array,compute=True)
 
-            # Now call the super method which does the actual creation
-        return super().create(name=name,
-                              zarr= zarr,
-                              creator=creator,
-                              sample= sample,
-                              inputrep=inputrep,
-                              nodeid=nodeid,
-                              **kwargs)
         # Python 3 syntax!!
 
 
 
 class DelayedRepresentationManager(Manager):
 
-
     def get_queryset(self):
         return RepresentationQuerySet(self.model, using=self._db)
 
 
-    def from_xarray(self, array: xarray.DataArray,
-                    sample = None,
-                    name: str ="Initial Stack",
-                    overwrite=True,
-                    creator: User = None,
-                    inputrep = None,
-                    nodeid= None,
-                    **kwargs):
-        # Do some extra stuff here on the submitted data before saving...
-        # For example...
-        zarrname = buildRepresentationName(name, nodeid)
-        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(sample.id))
-        zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="representation", overwrite=overwrite)
-        delayed = zarr.saveArray(array,compute=False)
-
-        # Now call the super method which does the actual creation
-        return super().create(name=name,  #
-                              creator=creator,
-                              sample=sample,
-                              inputrep=inputrep,
-                              zarr=zarr,
-                              nodeid=nodeid,), delayed
-
-
-    def from_xarray_and_request(self, array: xarray.DataArray, request, name: str= None, **kwargs):
-        return self.from_xarray(array,
-                                sample=request.sample,
-                                name=name,
-                                creator=request.creator,
-                                inputrep=request.representation,
-                                nodeid=request.nodeid)
-
 
 
 class TransformationManager(models.Manager):
-
-    def from_xarray(self, array: xarray.DataArray,
-                    name: str ="transformation",
-                    overwrite=True,
-                    creator: User = None,
-                    representation = None,
-                    nodeid= None):
-        # Do some extra stuff here on the submitted data before saving...
-        # For example...
-        zarrname = buildTransformationName(name, nodeid)
-        store = os.path.join(settings.ZARR_ROOT, "sample-{0}".format(representation.sample.id))
-        zarr = Zarr.objects.fromRequest(name=zarrname, store=store, type="transformation", overwrite=overwrite)
-        delayed = zarr.saveArray(array,compute=True)
-
-        return super().create(name=name,#
-                              creator=creator,
-                              representation=representation,
-                              zarr= zarr,
-                              nodeid=nodeid)  # Python 3 syntax!!
+    use_for_related_fields = True
+    group = "transformation"
 
 
 
@@ -202,11 +137,41 @@ class DelayedTransformationManager(Manager):
         return super().create(name=name,  #
                                   creator=creator,
                                   representation=representation,
+                                    shape=json.dumps(array.shape),
                                   roi=roi,
                                   inputtransformation=inputtransformation,
                                   zarr=zarr,
                                   nodeid=nodeid), delayed
 
+
+class RoiQuerySet(QuerySet):
+
+    def frame(self, *args, npartitions=1):
+        values = list(self.all().values(*args))
+        return df.from_pandas(pd.DataFrame.from_records(values), npartitions=npartitions)
+
+    def _repr_html_(self):
+        from django.template.loader import render_to_string
+        count = self.count()
+        limit = 3
+        if count < limit:
+            return render_to_string('ipython/rois.html', {'rois': self, "more": 0})
+        else:
+            return render_to_string('ipython/rois.html',
+                                    {'rois': self[:limit], "more": count - limit})
+
+
+class ROIManager(Manager):
+    use_for_related_fields = True
+
+    def frame(self,*args,**kwargs):
+        return self.get_queryset().frame(*args,**kwargs)
+
+    def get_queryset(self):
+        return RoiQuerySet(self.model, using=self._db)
+
+
+        # Python 3 syntax!!
 
 
 

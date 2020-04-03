@@ -11,7 +11,7 @@ class LineROIViewSet(LarvikViewSet):
     serializer_class = LineROISerializer
     publishers = [["nodeid",]]
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ("representation","sample","creator")
+    filter_fields = ("representation","creator")
 
 
 

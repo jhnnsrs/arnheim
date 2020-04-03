@@ -1,42 +1,19 @@
 import cv2
 import numpy as np
+import xarray as xr
 
-
-def translateImageFromLine(image, line, scale) -> (np.array, list, list, list):
+def translateImageFromLine(image: xr.DataArray, line, scale) -> (np.array, list, list, list):
     ''' Translates the Image according to the Line and the Scale'''
-    if len(image.shape) == 2:
-        print(" X,Y ")
-        newimage = image[:,:]
+    if "z" in image.dims:
+        raise NotImplementedError("We cannot yet Rectififie in 3D")
+    if "t" in image.dims:
+        image = image.sel(t=0) # TODO: Maybe raise warning here
+    if "c" not in image.dims:
+        raise NotImplementedError("Please provide image with Channels")
 
-        # Automatic using the first for transformation
-        boxes, boxeswidths = getBoxesFromLine(line, scale)
-        outimage, pixelwidths = straightenImageFromBoxes(newimage, boxes, scale)
-
-    elif len(image.shape) == 3:
-        print(" X,Y C Image")
-        newimage = image[:,:,:]
-
-        # Automatic using the first for transformation
-        boxes, boxeswidths = getBoxesFromLine(line, scale)
-        outimage, pixelwidths = straightenImageFromBoxes(newimage, boxes, scale)
-
-    elif len(image.shape) == 4:
-        print(" X,Y C, Z Image")
-        newimage = image[:,:,:,0]
-
-        # This is then a 3D Representation
-        boxes, boxeswidths = getBoxesFromLine(line, scale)
-        outimage, pixelwidths = straightenImageFromBoxes(newimage, boxes, scale)
-
-
-    elif len(image.shape) == 5:
-        print(" X,Y C, Z, T Image")
-        newimage = image[:,:,:,0,0]
-    else:
-        print("ERROR FROM REP")
-        newimage = np.zeros((1025,1025,3))
-
-
+    # Automatic using the first for transformation
+    boxes, boxeswidths = getBoxesFromLine(line, scale)
+    outimage, pixelwidths = straightenImageFromBoxes(image, boxes, scale)
 
     return outimage, boxeswidths, pixelwidths, boxes
 
@@ -76,32 +53,26 @@ def getBoxesFromLine(line, scale):
     return boxes,boxeswidths
 
 
-def straightenImageFromBoxes(image, boxes, scale) ->(np.array, float):
+def straightenImageFromBoxes(image: xr.DataArray, boxes, scale) ->(np.array, float):
     images = []
     widths = []
+    _image = np.float64(image.compute())
     for box in boxes:
-        partimage, pixelwidth = translateImageFromBox(image,box,scale)
+        partimage, pixelwidth = translateImageFromBox(_image,box,scale)
         images.append(partimage)
         widths.append(pixelwidth)
 
 
     total_height = scale * 2
     total_width = np.sum(widths)
-    if len(image.shape) > 2:
-        total_channels = image.shape[2]
-        if total_channels == 1:
-            straigtened_image = np.zeros(shape=(total_height, total_width), dtype=np.float64)
-        else:
-            print("Straightened Multichannelimage has shape {0},".format(str(image.shape)))
-            straigtened_image = np.zeros(shape=(total_height, total_width, total_channels), dtype=np.float64)
-    else:
-        print("Straightened SingleChannelImage has shape ({0},{1})".format(total_height, total_width))
-        straigtened_image = np.zeros(shape=(total_height, total_width), dtype=np.float64)
+
+    newshape = (total_height, total_width, image.c.size)
+    straigtened_image = np.zeros(shape=newshape, dtype=np.float64)
 
     widthincrement = 0
     for index, nanaimage in enumerate(images):
         width = widths[index]
-        straigtened_image[:total_height, widthincrement:widthincrement+width] = nanaimage
+        straigtened_image[:total_height, widthincrement:widthincrement+width,:] = nanaimage.reshape((total_height, width, image.c.size))
         widthincrement += width
 
     print("Straightened Image has shape of {0}".format(straigtened_image.shape))

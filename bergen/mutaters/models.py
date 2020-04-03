@@ -4,17 +4,18 @@ from django.db import models
 # Create your models here.
 from elements.models import Experiment, Sample, Transformation, ROI
 from larvik.models import LarvikConsumer, LarvikJob
+from mutaters.managers import ReflectionManager
 
 
 class Reflection(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True, blank=True)
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
-    roi = models.ForeignKey(ROI, on_delete=models.CASCADE, blank=True, null=True)
+    name = models.CharField(max_length=300)
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     shape = models.CharField(max_length=100, blank=True, null=True)
     nodeid = models.CharField(max_length=400, null=True, blank=True)
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(upload_to="transformation_images", blank=True, null=True)
+
+    objects = ReflectionManager()
 
     def delete(self,*args,**kwargs):
         self.image.delete()
@@ -30,7 +31,6 @@ class Mutater(LarvikConsumer):
 
 class Mutating(LarvikJob):
     mutater = models.ForeignKey(Mutater, on_delete=models.CASCADE)
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
     transformation = models.ForeignKey(Transformation, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):

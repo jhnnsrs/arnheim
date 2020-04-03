@@ -55,18 +55,22 @@ class LineRectifierTransformer(DaskSyncLarvikConsumer):
         self.logger.info("Array has max of {0}".format(array.max()))
 
         self.progress("Conversing to Float64 for OpenCV")
-        work = np.float64(array)
 
 
         self.progress("Converting array")
-        image, boxwidths, pixelwidths, boxes = translateImageFromLine(work, vertices, settings.get("scale", 10))
+        image, boxwidths, pixelwidths, boxes = translateImageFromLine(array, vertices, int(settings.get("scale", 10)))
 
         self.progress("It actually Worked")
         outarray = xr.DataArray(da.array(image), dims=["x","y","c"])
         if physx != physy:
             self.progress("The Transformation is anisotropic. Discarding Physical Dimenions")
         else:
-            outarray = xr.DataArray(outarray, coords = {"physx": outarray.x * physx, "physy": outarray.y * physy, "channels": array.channels})
+            outarray = xr.DataArray(outarray, coords = {"physx": outarray.x * physx,
+                                                        "physy": outarray.y * physy,
+                                                        "channels": array.channels,
+                                                        "c": outarray.c,
+                                                        "y": outarray.y,
+                                                        "x": outarray.x})
 
         transformation, delayed = Transformation.delayed.from_xarray(outarray,
                                                             name="Line Rectification",
